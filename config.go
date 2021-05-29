@@ -7,7 +7,8 @@ import (
 )
 
 type Listener struct {
-	Command string `mapstructure:"command" validate:"required"`
+	Command string   `mapstructure:"command" validate:"required"`
+	Args    []string `mapstructure:"args"`
 }
 
 type Config struct {

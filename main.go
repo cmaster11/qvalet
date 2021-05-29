@@ -19,6 +19,7 @@ func main() {
 	config := MustLoadConfig(*flagConfigFilename)
 
 	router := gin.Default()
+	router.Use(gin.ErrorLogger())
 
 	router.GET("/healthz", func(context *gin.Context) {
 		context.AbortWithStatus(http.StatusOK)

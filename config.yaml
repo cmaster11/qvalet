@@ -3,4 +3,8 @@ port: 7055
 listeners:
 
   /hello:
-    command: echo "Hello!"
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello {{ .name }}"
