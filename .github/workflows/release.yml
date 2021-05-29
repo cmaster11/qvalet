@@ -30,7 +30,7 @@ jobs:
         with:
           platforms: 'linux/amd64, linux/arm64, darwin/amd64, windows/amd64'
           dest: 'dist'
-          program: 'gotoexec'
+          name: 'gotoexec'
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
