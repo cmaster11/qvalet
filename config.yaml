@@ -1,0 +1,6 @@
+port: 7055
+
+listeners:
+
+  /hello:
+    command: echo "Hello!"
