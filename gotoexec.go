@@ -14,6 +14,9 @@ import (
 )
 
 type CompiledListener struct {
+	config *ListenerConfig
+	log    logrus.FieldLogger
+
 	path string
 
 	tplCmd  *template.Template
@@ -43,6 +46,8 @@ func (gte *GoToExec) mountRoutes(engine *gin.Engine) {
 		}
 
 		listener := &CompiledListener{
+			config:  listenerConfig,
+			log:     log,
 			path:    path,
 			tplCmd:  tplCmd,
 			tplArgs: tplArgs,
@@ -60,6 +65,11 @@ func (gte *GoToExec) mountRoutes(engine *gin.Engine) {
 func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		args := make(map[string]interface{})
+
+		// Use path params, if any
+		for _, param := range c.Params {
+			args[param.Key] = param.Value
+		}
 
 		if c.Request.Method != http.MethodGet {
 			b := binding.Default(c.Request.Method, c.ContentType())
@@ -117,9 +127,17 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 }
 
 func (gte *GoToExec) execCommand(listener *CompiledListener, args map[string]interface{}) (string, error) {
+	log := listener.log
+
+	if listener.config.LogArgs {
+		log = log.WithField("args", args)
+	}
+
 	var tplCmdOutput bytes.Buffer
 	if err := listener.tplCmd.Execute(&tplCmdOutput, args); err != nil {
-		return "", errors.WithMessage(err, "failed to execute command template")
+		err := errors.WithMessage(err, "failed to execute command template")
+		log.WithError(err).Error("error")
+		return "", err
 	}
 
 	cmdStr := tplCmdOutput.String()
@@ -128,7 +146,9 @@ func (gte *GoToExec) execCommand(listener *CompiledListener, args map[string]int
 	for _, tpl := range listener.tplArgs {
 		var tplArgOutput bytes.Buffer
 		if err := tpl.Execute(&tplArgOutput, args); err != nil {
-			return "", errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
+			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
+			log.WithError(err).Error("error")
+			return "", err
 		}
 		arg := tplArgOutput.String()
 		cmdArgs = append(cmdArgs, arg)
@@ -136,8 +156,20 @@ func (gte *GoToExec) execCommand(listener *CompiledListener, args map[string]int
 
 	out, err := exec.Command(cmdStr, cmdArgs...).Output()
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to execute command")
+		err := errors.WithMessage(err, "failed to execute command")
+		log.WithError(err).Error("error")
+		return "", err
 	}
 
-	return string(out), nil
+	if listener.config.LogOutput {
+		log = log.WithField("output", string(out))
+	}
+
+	log.Info("command executed")
+
+	if listener.config.ReturnOutput {
+		return string(out), nil
+	}
+
+	return "success", nil
 }

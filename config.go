@@ -6,15 +6,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Listener struct {
+type ListenerConfig struct {
 	Command string   `mapstructure:"command" validate:"required"`
 	Args    []string `mapstructure:"args"`
+
+	// If true, logs output
+	LogOutput bool `mapstructure:"logOutput"`
+
+	// If true, logs args
+	LogArgs bool `mapstructure:"logArgs"`
+
+	// If true, returns output to request
+	ReturnOutput bool `mapstructure:"returnOutput"`
 }
 
 type Config struct {
 	Port int `mapstructure:"port" validate:"required,min=1,max=65535"`
 
-	Listeners map[string]*Listener `mapstructure:"listeners"`
+	Listeners map[string]*ListenerConfig `mapstructure:"listeners"`
 }
 
 var validate = validator.New()

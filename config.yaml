@@ -2,7 +2,10 @@ port: 7055
 
 listeners:
 
-  /hello:
+  /hello/:boh:
+    logOutput: true
+    logArgs: true
+    returnOutput: true
     command: bash
     args:
       - -c
