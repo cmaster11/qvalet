@@ -4,9 +4,9 @@ ARG BUILDPLATFORM
 
 WORKDIR /app
 
-COPY ./src .
+COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o gotoexec .
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o gotoexec ./src
 
 FROM --platform=$BUILDPLATFORM scratch
 
