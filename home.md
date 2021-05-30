@@ -27,10 +27,10 @@ Run with:
 
 ```bash
 # Go version
-go run . --config config.yaml
+go run ./src --config src/config.yaml
 
 # Compiled version
-gotoexec --config config.yaml
+gotoexec --config src/config.yaml
 ```
 
 Alternatively, the docker image `cmaster11/go-to-exec` is served on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
@@ -51,4 +51,4 @@ curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-T
 
 ## Configuration example
 
-[filename](config.yaml ':include :type=code')
+[filename](src/config.yaml ':include :type=code')
