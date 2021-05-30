@@ -47,8 +47,8 @@ curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-T
 
 ## Configuration struct
 
-[filename](config.go ':include :type=code :fragment=config-docs')
+[filename](./src/config.go ':include :type=code :fragment=config-docs')
 
 ## Configuration example
 
-[filename](src/config.yaml ':include :type=code')
+[filename](./src/config.yaml ':include :type=code')
