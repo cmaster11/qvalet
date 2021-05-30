@@ -21,7 +21,7 @@ Templates are populated with all parameters from:
 * The query: `?name=Anderson"` will let you use `{{ .name }}`.
 * The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json` header.
 
-# Run and test
+## Run and test
 
 Run with:
 
