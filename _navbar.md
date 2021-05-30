@@ -1,1 +1,0 @@
-* [GitHub repo](https://github.com/cmaster11/go-to-exec)

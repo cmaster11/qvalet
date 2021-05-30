@@ -10,7 +10,7 @@ listeners:
     logArgs: true
     returnOutput: true
 
-    # Command to run and list of arguments
+    # Command to run, and list of arguments
     command: bash
     args:
       - -c

@@ -5,7 +5,7 @@
 Commands can be customized using go templates syntax:
 
 ```yaml
-# Command to run and list of arguments
+# Command to run, and list of arguments
 command: bash
 args:
   - -c
@@ -20,6 +20,10 @@ Templates are populated with all parameters from:
 * The path: when listening on `/hello/:myParam`, it is possible to use `{{ .myParam }}`.
 * The query: `?name=Anderson"` will let you use `{{ .name }}`.
 * The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json` header.
+
+## Configuration example
+
+[filename](../src/config.yaml ':include :type=code')
 
 ## Run and test
 
@@ -47,8 +51,4 @@ curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-T
 
 ## Configuration struct
 
-[filename](./src/config.go ':include :type=code :fragment=config-docs')
-
-## Configuration example
-
-[filename](./src/config.yaml ':include :type=code')
+[filename](../src/config.go ':include :type=code :fragment=config-docs')

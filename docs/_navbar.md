@@ -1,0 +1,1 @@
+* [![GitHub repo](https://img.shields.io/badge/-repo-black?&logo=github)](https://github.com/cmaster11/go-to-exec)
