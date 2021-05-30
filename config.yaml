@@ -15,4 +15,4 @@ listeners:
     args:
       - -c
       - |
-        echo "Hello {{ .name }}"
+        echo "Hello {{ .name | upper }}, with param {{ .param1 }}"

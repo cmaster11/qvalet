@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/pkg/errors"
@@ -31,14 +32,14 @@ func (gte *GoToExec) mountRoutes(engine *gin.Engine) {
 	for path, listenerConfig := range gte.config.Listeners {
 		log := logrus.WithField("listener", path)
 
-		tplCmd, err := template.New(path).Parse(listenerConfig.Command)
+		tplCmd, err := template.New(path).Funcs(sprig.TxtFuncMap()).Parse(listenerConfig.Command)
 		if err != nil {
 			log.WithError(err).WithField("template", listenerConfig.Command).Fatal("failed to parse listener command template")
 		}
 
 		var tplArgs []*template.Template
 		for idx, str := range listenerConfig.Args {
-			tpl, err := template.New(fmt.Sprintf("%s-%d", path, idx)).Parse(str)
+			tpl, err := template.New(fmt.Sprintf("%s-%d", path, idx)).Funcs(sprig.TxtFuncMap()).Parse(str)
 			if err != nil {
 				log.WithError(err).WithField("template", tpl).Fatal("failed to parse listener args template")
 			}
