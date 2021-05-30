@@ -6,9 +6,23 @@ import (
 	"github.com/spf13/viper"
 )
 
+/// [config-docs]
+type Config struct {
+
+	// HTTP port used by go-to-exec to listen for incoming requests
+	Port int `mapstructure:"port" validate:"required,min=1,max=65535"`
+
+	// Map of path -> listener
+	Listeners map[string]*ListenerConfig `mapstructure:"listeners"`
+}
+
 type ListenerConfig struct {
-	Command string   `mapstructure:"command" validate:"required"`
-	Args    []string `mapstructure:"args"`
+
+	// Command to run
+	Command string `mapstructure:"command" validate:"required"`
+
+	// Arguments for `Command`
+	Args []string `mapstructure:"args"`
 
 	// If true, logs output
 	LogOutput bool `mapstructure:"logOutput"`
@@ -16,15 +30,11 @@ type ListenerConfig struct {
 	// If true, logs args
 	LogArgs bool `mapstructure:"logArgs"`
 
-	// If true, returns output to request
+	// If true, returns command execution output to request
 	ReturnOutput bool `mapstructure:"returnOutput"`
 }
 
-type Config struct {
-	Port int `mapstructure:"port" validate:"required,min=1,max=65535"`
-
-	Listeners map[string]*ListenerConfig `mapstructure:"listeners"`
-}
+/// [config-docs]
 
 var validate = validator.New()
 

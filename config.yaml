@@ -2,10 +2,15 @@ port: 7055
 
 listeners:
 
-  /hello/:boh:
+  # Listener with path parameter, which is accessible
+  # via .param1
+  /hello/:param1:
+
     logOutput: true
     logArgs: true
     returnOutput: true
+
+    # Command to run and list of arguments
     command: bash
     args:
       - -c
