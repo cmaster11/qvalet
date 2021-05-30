@@ -44,5 +44,4 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm
           tags: |
             cmaster11/go-to-exec:latest
-            cmaster11/go-to-exec:${{ github.sha }}
             cmaster11/go-to-exec:${{ env.TAG }}
