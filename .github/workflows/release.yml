@@ -28,7 +28,7 @@ jobs:
       - name: Generate build files
         uses: thatisuday/go-cross-build@v1
         with:
-          platforms: 'linux/amd64, linux/arm, linux/arm64, darwin/amd64, windows/amd64'
+          platforms: 'linux/386, linux/amd64, linux/arm, linux/arm64, darwin/amd64, windows/amd64'
           package: 'src'
           dest: 'dist'
           name: 'gotoexec'
