@@ -25,7 +25,7 @@ Templates are populated with all parameters from:
 
 [filename](src/config.yaml ':include :type=code')
 
-## Run and test
+## Run
 
 Run with:
 
@@ -38,6 +38,14 @@ gotoexec --config src/config.yaml
 ```
 
 Alternatively, the docker image `cmaster11/go-to-exec` is served on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
+
+To run the docker image on e.g. a local Windows machine:
+
+```
+docker run -i -t -v "C:/path/to/config.yaml:/mnt/config.yaml" --rm cmaster11/go-to-exec --config /mnt/config.yaml 
+```
+
+### Test
 
 Test with:
 
