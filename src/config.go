@@ -39,26 +39,30 @@ type ListenerConfig struct {
 var validate = validator.New()
 
 func MustLoadConfig(filename string) *Config {
-	viper.SetEnvPrefix("GTE")
-	viper.AutomaticEnv()
+	// TODO: once Viper supports casing, replace
+	// Ref: https://github.com/spf13/viper/pull/860
+	myViper := viper.NewWithOptions(viper.KeyPreserveCase())
+
+	myViper.SetEnvPrefix("GTE")
+	myViper.AutomaticEnv()
 
 	if filename != "" {
-		viper.SetConfigFile(filename)
+		myViper.SetConfigFile(filename)
 	} else {
-		viper.SetConfigName("config")
-		viper.SetConfigType("yaml")
-		viper.AddConfigPath(".")
-		viper.AddConfigPath("./config")
+		myViper.SetConfigName("config")
+		myViper.SetConfigType("yaml")
+		myViper.AddConfigPath(".")
+		myViper.AddConfigPath("./config")
 	}
 
-	err := viper.ReadInConfig()
+	err := myViper.ReadInConfig()
 	if err != nil {
 		logrus.WithError(err).Fatalf("failed to load config")
 	}
 
 	config := new(Config)
 
-	if err := viper.Unmarshal(config); err != nil {
+	if err := myViper.Unmarshal(config); err != nil {
 		logrus.WithError(err).Fatalf("failed to unmarshal config")
 	}
 

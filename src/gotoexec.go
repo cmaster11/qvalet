@@ -155,9 +155,21 @@ func (gte *GoToExec) execCommand(listener *CompiledListener, args map[string]int
 		cmdArgs = append(cmdArgs, arg)
 	}
 
-	out, err := exec.Command(cmdStr, cmdArgs...).Output()
+	out, err := exec.Command(cmdStr, cmdArgs...).CombinedOutput()
 	if err != nil {
-		err := errors.WithMessage(err, "failed to execute command")
+		msg := "failed to execute command"
+
+		if listener.config.ReturnOutput {
+			msg += ": " + string(out)
+		}
+
+		err := errors.WithMessage(err, msg)
+
+		log := log
+		if listener.config.LogOutput {
+			log = log.WithField("output", string(out))
+		}
+
 		log.WithError(err).Error("error")
 		return "", err
 	}
