@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: restart-helper
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: restart-helper
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "namespaces" ]
+    verbs: [ "get" ]
+  - apiGroups: [ "apps", "extensions" ]
+    resources: [ "deployments", "statefulsets" ]
+    verbs: [ "get", "patch" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: restart-helper
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: restart-helper
+subjects:
+  - kind: ServiceAccount
+    name: restart-helper
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restart-helper
+spec:
+  selector:
+    app: restart-helper
+  ports:
+    - port: 7055
+      name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restart-helper-headless
+spec:
+  clusterIP: None
+  selector:
+    app: restart-helper
+  ports:
+    - port: 7055
+      name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restart-helper
+  labels:
+    app: restart-helper
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        bump: bump-0
+      name: restart-helper
+      labels:
+        app: restart-helper
+    spec:
+      serviceAccountName: restart-helper
+      containers:
+        - name: restart-helper
+          image: alpine:3.14.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7055
+              name: http
+          readinessProbe:
+            httpGet:
+              port: 7055
+              path: /healthz
+              scheme: HTTP
+          command:
+            - sh
+            - -c
+            - |
+              set -ex
+
+              GOTOEXEC="/gotoexec"
+              KUBECTL="/kubectl"
+
+              # Download the required tools
+              wget -O "$GOTOEXEC" "https://github.com/cmaster11/go-to-exec/releases/download/v1.0.3/gotoexec-linux-386"
+              wget -O "$KUBECTL" "https://dl.k8s.io/release/$(wget -O- https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+              chmod +x "$GOTOEXEC"
+              chmod +x "$KUBECTL"
+
+              cat << EOF > /config.yaml
+              port: 7055
+
+              listeners:
+
+                "/restart/:type/:name":
+
+                  logOutput: true
+                  logArgs: true
+                  returnOutput: true
+
+                  # Command to run, and list of arguments
+                  command: "$KUBECTL"
+                  args:
+                    # Uncomment to force a specific namespace
+                    # - -n
+                    # - my-namespace
+                    - rollout
+                    - restart
+                    - "{{ .type }}/{{ .name }}"
+
+              EOF
+
+              exec $GOTOEXEC
+          volumeMounts:
+            - mountPath: /config
+              name: config
+      volumes:
+        - name: config
+          emptyDir: { }
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: restart-helper
