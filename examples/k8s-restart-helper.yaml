@@ -3,6 +3,11 @@ kind: ServiceAccount
 metadata:
   name: restart-helper
 ---
+# Allows the service account to:
+#
+# - Get namespaces (if we need to restrict actions to a specific ns)
+# - Get/patch our deployments and statefulsets, to allow the
+#   "restart rollout" command to work.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -27,17 +32,6 @@ subjects:
   - kind: ServiceAccount
     name: restart-helper
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: restart-helper
-spec:
-  selector:
-    app: restart-helper
-  ports:
-    - port: 7055
-      name: http
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,16 +43,20 @@ spec:
   template:
     metadata:
       annotations:
-        bump: bump-0
+        # Increase to force a restart
+        bump: bump-1
       name: restart-helper
       labels:
         app: restart-helper
     spec:
+      # Binds to the previously created service account
       serviceAccountName: restart-helper
       containers:
         - name: restart-helper
           image: alpine:3.14.0
           imagePullPolicy: IfNotPresent
+          # The port needs to be the same as the one defined in
+          # go-to-exec configuration
           ports:
             - containerPort: 7055
               name: http
@@ -73,16 +71,19 @@ spec:
             - |
               set -ex
 
+              GOTOEXEC_VERSION="v1.0.5"
+
               GOTOEXEC="/gotoexec"
               KUBECTL="/kubectl"
 
               # Download the required tools
-              wget -O "$GOTOEXEC" "https://github.com/cmaster11/go-to-exec/releases/download/v1.0.3/gotoexec-linux-386"
+              wget -O "$GOTOEXEC" "https://github.com/cmaster11/go-to-exec/releases/download/$GOTOEXEC_VERSION/gotoexec-linux-amd64"
               wget -O "$KUBECTL" "https://dl.k8s.io/release/$(wget -O- https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
               chmod +x "$GOTOEXEC"
               chmod +x "$KUBECTL"
 
+              # Defines the configuration for go-to-exec
               cat << EOF > /config.yaml
               port: 7055
 
@@ -103,7 +104,6 @@ spec:
                     - rollout
                     - restart
                     - "{{ .type }}/{{ .name }}"
-
               EOF
 
               exec $GOTOEXEC
@@ -117,3 +117,15 @@ spec:
   selector:
     matchLabels:
       app: restart-helper
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restart-helper
+spec:
+  selector:
+    app: restart-helper
+  ports:
+    - port: 7055
+      name: http
+---
