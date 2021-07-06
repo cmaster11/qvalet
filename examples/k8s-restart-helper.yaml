@@ -106,6 +106,9 @@ spec:
                     - "{{ .type }}/{{ .name }}"
               EOF
 
+              # By using `exec`, we replace the current process with
+              # go-to-exec one, which allows the program to receive all
+              # system signals. Necessary for graceful shutdown
               exec $GOTOEXEC
       restartPolicy: Always
   selector:
