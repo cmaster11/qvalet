@@ -107,12 +107,6 @@ spec:
               EOF
 
               exec $GOTOEXEC
-          volumeMounts:
-            - mountPath: /config
-              name: config
-      volumes:
-        - name: config
-          emptyDir: { }
       restartPolicy: Always
   selector:
     matchLabels:
