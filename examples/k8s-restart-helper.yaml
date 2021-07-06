@@ -5,7 +5,7 @@ metadata:
 ---
 # Allows the service account to:
 #
-# - Get namespaces
+# - Get namespaces.
 # - Get/patch our deployments and statefulsets, to allow the
 #   "restart rollout" command to work.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -123,3 +123,19 @@ spec:
     - port: 7055
       name: http
 ---
+# Uncomment to use the default ingress resource type
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: restart-helper
+#spec:
+#  rules:
+#    - http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: restart-helper
+#                port:
+#                  number: 7055
