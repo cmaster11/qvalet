@@ -5,7 +5,7 @@ metadata:
 ---
 # Allows the service account to:
 #
-# - Get namespaces (if we need to restrict actions to a specific ns)
+# - Get namespaces
 # - Get/patch our deployments and statefulsets, to allow the
 #   "restart rollout" command to work.
 apiVersion: rbac.authorization.k8s.io/v1
@@ -98,9 +98,6 @@ spec:
                   # Command to run, and list of arguments
                   command: "$KUBECTL"
                   args:
-                    # Uncomment to force a specific namespace
-                    # - -n
-                    # - my-namespace
                     - rollout
                     - restart
                     - "{{ .type }}/{{ .name }}"
