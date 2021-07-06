@@ -32,6 +32,10 @@ type ListenerConfig struct {
 
 	// If true, returns command execution output to request
 	ReturnOutput bool `mapstructure:"returnOutput"`
+
+	// Which methods to enable for this listener. Defaults to GET, POST
+	// MUST be UPPERCASE!
+	Methods []string `mapstructure:"methods"`
 }
 
 /// [config-docs]

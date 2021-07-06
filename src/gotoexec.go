@@ -56,10 +56,14 @@ func (gte *GoToExec) mountRoutes(engine *gin.Engine) {
 
 		handler := gte.getGinListenerHandler(listener)
 
-		engine.GET(path, handler)
-		engine.POST(path, handler)
-		engine.PUT(path, handler)
-		engine.DELETE(path, handler)
+		if len(listenerConfig.Methods) == 0 {
+			engine.GET(path, handler)
+			engine.POST(path, handler)
+		} else {
+			for _, method := range listenerConfig.Methods {
+				engine.Handle(method, path, handler)
+			}
+		}
 	}
 }
 
