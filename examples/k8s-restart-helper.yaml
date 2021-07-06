@@ -38,18 +38,6 @@ spec:
     - port: 7055
       name: http
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: restart-helper-headless
-spec:
-  clusterIP: None
-  selector:
-    app: restart-helper
-  ports:
-    - port: 7055
-      name: http
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
