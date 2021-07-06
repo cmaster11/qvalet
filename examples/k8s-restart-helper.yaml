@@ -130,7 +130,8 @@ spec:
 #  name: restart-helper
 #spec:
 #  rules:
-#    - http:
+#    - host: myhost.mydomain.com
+#      http:
 #        paths:
 #          - path: /
 #            pathType: Prefix
