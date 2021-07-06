@@ -4,7 +4,7 @@ name: Release
 on:
   push:
     tags:
-      v*
+      - v*
 
 # workflow tasks
 jobs:
@@ -34,6 +34,7 @@ jobs:
           package: 'src'
           dest: 'dist'
           name: 'gotoexec'
+          ldflags: '-w -s'
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
