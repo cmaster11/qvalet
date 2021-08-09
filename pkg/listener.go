@@ -22,6 +22,7 @@ type CompiledListener struct {
 
 	tplCmd   *template.Template
 	tplArgs  []*template.Template
+	tplEnv   map[string]*template.Template
 	tplFiles map[string]*template.Template
 
 	// Maps fixed file names to execution-time file names
@@ -37,6 +38,12 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		clone, _ := tpl.Clone()
 		tplArgsClones = append(tplArgsClones, clone)
 	}
+	tplEnvClones := make(map[string]*template.Template)
+	for key, tpl := range listener.tplEnv {
+		clone, _ := tpl.Clone()
+		tplEnvClones[key] = clone
+	}
+
 	tplFilesClones := make(map[string]*template.Template)
 	for key, tpl := range listener.tplFiles {
 		clone, _ := tpl.Clone()
@@ -49,6 +56,7 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		listener.route,
 		tplCmdClone,
 		tplArgsClones,
+		tplEnvClones,
 		tplFilesClones,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
@@ -61,6 +69,9 @@ func (listener *CompiledListener) clone() *CompiledListener {
 	// Replace the gte function in all cloned templates
 	newListener.tplCmd.Funcs(funcMap)
 	for _, tpl := range newListener.tplArgs {
+		tpl.Funcs(funcMap)
+	}
+	for _, tpl := range newListener.tplEnv {
 		tpl.Funcs(funcMap)
 	}
 	for _, tpl := range newListener.tplFiles {
@@ -118,6 +129,18 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 		}
 		listener.tplArgs = tplArgs
 	}
+
+	{
+		tplEnv := make(map[string]*template.Template)
+		for key, content := range listener.config.Env {
+			tpl, err := template.New(fmt.Sprintf("env-%s", key)).Funcs(tplFuncs).Parse(content)
+			if err != nil {
+				log.WithError(err).WithField("file", key).WithField("template", tpl).Fatal("failed to parse listener env template")
+			}
+			tplEnv[key] = tpl
+		}
+		listener.tplEnv = tplEnv
+	}
 	return listener
 }
 
@@ -171,18 +194,35 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		cmdArgs = append(cmdArgs, arg)
 	}
 
+	var cmdEnv []string
+	for key, tpl := range l.tplEnv {
+		var tplEnvOutput bytes.Buffer
+		if err := tpl.Execute(&tplEnvOutput, args); err != nil {
+			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
+			log.WithError(err).Error("error")
+			return "", err
+		}
+		env := tplEnvOutput.String()
+		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, env))
+	}
+
+	for cleanPath, realPath := range l.tplTmpFileNames {
+		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
+	}
+
 	if l.config.LogCommand {
 		log = log.WithFields(logrus.Fields{
 			"command":     cmdStr,
 			"commandArgs": cmdArgs,
+			"commandEnv":  cmdEnv,
 		})
 	}
 
 	cmd := exec.Command(cmdStr, cmdArgs...)
 	cmd.Env = os.Environ()
 
-	for cleanPath, realPath := range l.tplTmpFileNames {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
+	for _, env := range cmdEnv {
+		cmd.Env = append(cmd.Env, env)
 	}
 
 	out, err := cmd.CombinedOutput()

@@ -32,6 +32,9 @@ type ListenerConfig struct {
 	// Arguments for `Command`
 	Args []string `mapstructure:"args"`
 
+	// Environment variables to pass to the command
+	Env map[string]string `mapstructure:"env"`
+
 	// If true, logs output of Command
 	LogOutput bool `mapstructure:"logOutput"`
 
