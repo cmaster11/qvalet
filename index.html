@@ -12,13 +12,19 @@
 <div data-app id="main">Please wait...</div>
 
 <script>
+  const basePath = window.location.host === 'cmaster11.github.io' ? '/go-to-exec/docs' : '/docs';
+
   window.$docsify = {
+    basePath: basePath,
     el: '#main',
-    homepage: 'docs/home.md',
-    loadNavbar: 'docs/_navbar.md',
+    homepage: 'home.md',
+    loadNavbar: '_navbar.md',
+    loadSidebar: '_sidebar.md',
+    subMaxLevel: 3,
+    alias: {}
   };
 </script>
-<!-- Docsify v4 -->
+
 <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
 <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>

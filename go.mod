@@ -16,6 +16,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 replace github.com/spf13/viper v1.7.1 => github.com/kublr/viper v1.6.3-0.20200316132607-0caa8e000d5b

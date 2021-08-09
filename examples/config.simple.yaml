@@ -1,0 +1,26 @@
+port: 7055
+
+listeners:
+
+  # Listener with path parameter, which is accessible
+  # via .param1
+  /hello/:param1:
+
+    # Prints the output of the command
+    logOutput: true
+
+    # Prints the args passed to the route
+    logArgs: true
+
+    # Prints the executed command and relative args
+    logCommand: true
+
+    # Returns the output of the command in the response
+    returnOutput: true
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello {{ .name | upper }}, with param {{ .param1 }}"

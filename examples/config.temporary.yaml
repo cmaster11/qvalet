@@ -1,0 +1,25 @@
+port: 7055
+
+listeners:
+
+  # Tests the ability to create temporary files
+  /testTemp:
+
+    logOutput: true
+    logArgs: true
+    returnOutput: true
+    logCommand: true
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        set -ex
+
+        cat $GTE_FILES_tmp1
+        cat {{ (gte).files.tmp1 }}
+
+    files:
+      tmp1: |
+        Just a temporary {{ .name }}!

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"gotoexec/pkg"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +18,11 @@ var (
 func main() {
 	flag.Parse()
 
-	config := MustLoadConfig(*flagConfigFilename)
+	config := pkg.MustLoadConfig(*flagConfigFilename)
+
+	if config.Debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	router := gin.Default()
 	router.Use(gin.ErrorLogger())
@@ -25,11 +31,8 @@ func main() {
 		context.AbortWithStatus(http.StatusOK)
 	})
 
-	gte := GoToExec{
-		config: config,
-	}
-
-	gte.mountRoutes(router)
+	gte := pkg.NewGoToExec(config)
+	gte.MountRoutes(router)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), router); err != nil {
 		logrus.WithError(err).Fatalf("failed to start server")

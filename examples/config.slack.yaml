@@ -1,0 +1,35 @@
+# This shows how you can send a Slack message using Slack webhooks
+# Slack docs: https://slack.com/intl/en-fi/help/articles/115005265063-Incoming-webhooks-for-Slack
+# Test with:
+#
+# curl -v "http://localhost:7055/slack/world"
+#
+
+port: 7055
+
+listeners:
+
+  # The route
+  /slack/:name:
+
+    # For cleanliness and readability, save the Slack payload in a tmp YAML file,
+    # which will be converted to JSON later.
+    files:
+      payload.yaml: |
+        username: Test Slack hook from GTE!
+        icon_emoji: ":jack_o_lantern:"
+        text: |
+          Hello {{ .name }}!
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        # Replace with your hook
+        HOOK="https://hooks.slack.com/services/XXXXXXXX"
+
+        # Send the request, converting the YAML file into a JSON one on the fly
+        curl -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        EOF

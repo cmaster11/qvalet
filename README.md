@@ -9,4 +9,3 @@ View docs at [https://cmaster11.github.io/go-to-exec/](https://cmaster11.github.
 Links:
 
 * [Docker image](https://hub.docker.com/r/cmaster11/go-to-exec/tags?page=1&ordering=last_updated)
-* [Notify17](https://notify17.net), which can be used to trigger HTTP requests from mobile phone notifications!
