@@ -1,0 +1,38 @@
+# This shows how you can send a Telegram message using Telegram Bot API
+# Telegram docs: https://core.telegram.org/bots/api#sendmessage
+# Test with:
+#
+# curl -v "http://localhost:7055/telegram/world"
+#
+
+port: 7055
+
+listeners:
+
+  # The route
+  /telegram/:name:
+
+    # For cleanliness and readability, save the Telegram payload in a tmp YAML file,
+    # which will be converted to JSON later.
+    files:
+      payload.yaml: |
+        # Replace with your chat id
+        chat_id: XXXXXXX
+        # Allow formatting
+        parse_mode: Markdown
+        text: |
+          Hello *{{ .name }}*!
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        # Replace with your bot token
+        TELEGRAM_BOT_TOKEN="abcdefg123123123123123"
+        HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+        # Send the request, converting the YAML file into a JSON one on the fly
+        curl -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        EOF
