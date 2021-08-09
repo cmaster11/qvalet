@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const keyAuthApiKeyQuery = "__gteApiKey"
+
 type GoToExec struct {
 	config *Config
 }
@@ -36,6 +38,11 @@ func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 
 func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if err := gte.verifyAuth(c, listener); err != nil {
+			c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+
 		args := make(map[string]interface{})
 
 		// Use route params, if any
@@ -96,4 +103,44 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 			"output": out,
 		})
 	}
+}
+
+func (gte *GoToExec) verifyAuth(c *gin.Context, listener *CompiledListener) error {
+	if len(listener.config.ApiKeys) == 0 {
+		return nil
+	}
+
+	// Auth check
+	found := false
+
+	// Check if there is any basic auth
+	if username, password, ok := c.Request.BasicAuth(); ok {
+		if username != gte.config.HTTPAuthUsername {
+			return errors.New("bad auth")
+		}
+
+		for _, apiKey := range listener.config.ApiKeys {
+			if password == apiKey {
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		// Check for other auth methods
+		apiKeyQuery := c.Query(keyAuthApiKeyQuery)
+		for _, apiKey := range listener.config.ApiKeys {
+			if apiKeyQuery == apiKey {
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		return errors.New("bad auth")
+	}
+
+	return nil
 }

@@ -18,6 +18,10 @@ type Config struct {
 
 	// Map of route -> listener
 	Listeners map[string]*ListenerConfig `mapstructure:"listeners"`
+
+	// If specified, defines the HTTP username for all listeners' basic auth.
+	// Defaults to "gte".
+	HTTPAuthUsername string `mapstructure:"httpAuthUsername"`
 }
 
 type ListenerConfig struct {
@@ -46,6 +50,10 @@ type ListenerConfig struct {
 
 	// Define which temporary files you want to create
 	Files map[string]string `mapstructure:"files"`
+
+	// If populated, only requests with the right auth credentials will be
+	// accepted for this listener.
+	ApiKeys []string `mapstructure:"apiKeys"`
 }
 
 /// [config-docs]
@@ -83,6 +91,10 @@ func MustLoadConfig(filename string) *Config {
 
 	if err := myViper.Unmarshal(config); err != nil {
 		logrus.WithError(err).Fatalf("failed to unmarshal config")
+	}
+
+	if config.HTTPAuthUsername == "" {
+		config.HTTPAuthUsername = "gte"
 	}
 
 	if err := validate.Struct(config); err != nil {
