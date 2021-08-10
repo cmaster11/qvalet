@@ -1,0 +1,87 @@
+# This example shows how you can send a Telegram message using Telegram Bot API.
+# NOTE: this example uses default listeners configuration, for the purpose
+# of having different listeners, with different content templates, but
+# minimize the amount of repeated code.
+#
+# Telegram docs: https://core.telegram.org/bots/api#sendmessage
+#
+# Test with:
+#
+# curl -v "http://localhost:7055/telegram/world"
+#
+
+port: 7055
+
+defaults:
+  # All logging enabled, to make testing easier
+  logOutput: true
+  logArgs: true
+  logCommand: true
+  returnOutput: true
+
+  # These environment variables will be common to all listeners.
+  env: &env
+    # Replace with your bot token
+    TELEGRAM_BOT_TOKEN: "123123123:xxxxxxxxxxxxxxxxxxxxx"
+    # Replace with your chat id
+    TELEGRAM_CHAT_ID: "123123123"
+
+  files: &files
+    # We save any common values of the `sendMessage` payload in a file,
+    # which gets reused for every listener via YAML anchors (see << : *files).
+    payload_header: |
+      # Allow formatting
+      parse_mode: Markdown
+
+  # Command to run, and list of arguments
+  command: bash
+  args:
+    - -c
+    - |
+      set -Eeuxmo pipefail
+      HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+      # Join the payload header, and add the "text" field, which will point to
+      # the "content" file.
+      # Remember: the templates are executed before the arguments are passed
+      # to the command, which means that in this case we are populating the
+      # `payload` bash variable with simple JSON content.
+      read -r -d '' payload <<'EOF' || true
+      {{ $headerMap := fileReadToString (gte).files.payload_header | yamlDecode }}
+      {{/*
+        Replace all sequences of more than 2 newlines, with 2 newlines, so it prevents
+        groups of empty lines from appearing. Then, limits the result to 4096, as per
+        Telegram API requirements.
+      */}}
+      {{ $content := fileReadToString (gte).files.content | cleanNewLines | trim | trunc 4096 }}
+      {{ $payloadMap := merge $headerMap (dict "text" $content) }}
+      {{ $payloadMap | toJson }}
+      EOF
+
+      # Add the "chat_id" payload field, extracting it from environment variables
+      payload=$(echo "$payload" | jq --arg chat_id "$TELEGRAM_CHAT_ID" '. + {chat_id: $chat_id}')
+      curl --fail -X POST -H "Content-Type: application/json" "$HOOK" --data "$payload"
+
+# Out listeners just need to declare which content they want to send to Telegram
+# as content in the temporary file "content".
+listeners:
+
+  /telegram/hello/:name:
+
+    files:
+      << : *files
+      content: |
+        Hello *{{ .name }}*!
+
+  # To e.g. send the message to another chat, we can just redeclare
+  # out environment, using YAML anchors
+  /telegram/anotherChat:
+
+    env:
+      << : *env
+      TELEGRAM_CHAT_ID: "-12312313"
+
+    files:
+      << : *files
+      content: |
+        Message in another chat!

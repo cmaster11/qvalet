@@ -1,4 +1,4 @@
-# This shows how you can send a Slack message using Slack webhooks
+# This example shows how you can send a Slack message using Slack webhooks.
 # Slack docs: https://slack.com/intl/en-fi/help/articles/115005265063-Incoming-webhooks-for-Slack
 # Test with:
 #

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
@@ -21,10 +22,11 @@ func GetTPLFuncsMap() template.FuncMap {
 	}
 
 	// Own functions
+	tplFuncs["dump"] = tplDump
+	tplFuncs["fileReadToString"] = tplFileReadToString
 	tplFuncs["yamlDecode"] = tplYAMLDecode
 	tplFuncs["yamlToJson"] = tplYAMLToJson
-	tplFuncs["fileReadToString"] = tplFileReadToString
-	tplFuncs["dump"] = tplDump
+	tplFuncs["cleanNewLines"] = tplCleanNewLines
 
 	return tplFuncs
 }
@@ -104,4 +106,10 @@ func tplDump(value interface{}) (string, error) {
 	default:
 		return strval(value), nil
 	}
+}
+
+var regexCleanNewLines = regexp.MustCompile(`(\n\s*){3,}`)
+
+func tplCleanNewLines(text string) string {
+	return regexCleanNewLines.ReplaceAllString(text, "\n\n")
 }

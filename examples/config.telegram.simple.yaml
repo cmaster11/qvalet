@@ -1,4 +1,4 @@
-# This shows how you can send a Telegram message using Telegram Bot API
+# This example shows how you can send a Telegram message using Telegram Bot API.
 # Telegram docs: https://core.telegram.org/bots/api#sendmessage
 # Test with:
 #
