@@ -25,6 +25,8 @@ type CompiledListener struct {
 	tplEnv   map[string]*template.Template
 	tplFiles map[string]*template.Template
 
+	errorHandler *CompiledListener
+
 	// Maps fixed file names to execution-time file names
 	tplTmpFileNames map[string]interface{}
 }
@@ -58,6 +60,7 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		tplArgsClones,
 		tplEnvClones,
 		tplFilesClones,
+		listener.errorHandler,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
 	}
@@ -81,13 +84,26 @@ func (listener *CompiledListener) clone() *CompiledListener {
 	return newListener
 }
 
-func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route string) *CompiledListener {
+func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route string, skipErrorHandler bool) *CompiledListener {
 	log := logrus.WithField("listener", route)
+
+	listenerConfig, err := mergeListenerConfig(&gte.config.Defaults, listenerConfig)
+	if err != nil {
+		log.WithError(err).Fatal("failed to merge listener config")
+	}
+
+	if err := validate.Struct(listenerConfig); err != nil {
+		log.WithError(err).Fatal("failed to validate listener config")
+	}
 
 	listener := &CompiledListener{
 		config: listenerConfig,
 		log:    log,
 		route:  route,
+	}
+
+	if !skipErrorHandler && listenerConfig.ErrorHandler != nil {
+		listener.errorHandler = gte.compileListener(listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
 	}
 
 	tplFuncs := GetTPLFuncsMap()
@@ -141,6 +157,7 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 		}
 		listener.tplEnv = tplEnv
 	}
+
 	return listener
 }
 
@@ -241,6 +258,11 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		}
 
 		log.WithError(err).Error("error")
+
+		if boolVal(l.config.ReturnOutput) {
+			return string(out), err
+		}
+
 		return "", err
 	}
 

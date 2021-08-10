@@ -26,29 +26,20 @@ func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 	for route, listenerConfig := range gte.config.Listeners {
 		log := logrus.WithField("listener", route)
 
-		mergedConfig, err := mergeListenerConfig(&gte.config.Defaults, listenerConfig)
-		if err != nil {
-			log.WithError(err).Fatal("failed to merge listener config")
-		}
-
-		if err := validate.Struct(mergedConfig); err != nil {
-			log.WithError(err).Fatal("failed to validate listener config")
-		}
-
-		listener := gte.compileListener(mergedConfig, route)
+		listener := gte.compileListener(listenerConfig, route, false)
 		handler := gte.getGinListenerHandler(listener)
 
-		if len(mergedConfig.Methods) == 0 {
+		if len(listener.config.Methods) == 0 {
 			engine.GET(route, handler)
 			engine.POST(route, handler)
 		} else {
-			for _, method := range mergedConfig.Methods {
+			for _, method := range listener.config.Methods {
 				engine.Handle(method, route, handler)
 			}
 		}
 
 		log.WithFields(logrus.Fields{
-			"config": spew.Sdump(mergedConfig),
+			"config": spew.Sdump(listener.config),
 		}).Debug("added listener")
 	}
 }
@@ -112,6 +103,23 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 
 		out, err := listener.ExecCommand(args)
 		if err != nil {
+			if listener.errorHandler != nil {
+				handler := listener.errorHandler
+				// Trigger a command on error
+				onErrorArgs := map[string]interface{}{
+					"route":  listener.route,
+					"error":  err.Error(),
+					"output": out,
+					"args":   args,
+				}
+				_, err := handler.ExecCommand(onErrorArgs)
+				if err != nil {
+					handler.log.WithError(err).Error("failed to execute error listener")
+				} else {
+					handler.log.Info("executed error listener")
+				}
+			}
+
 			c.AbortWithError(http.StatusInternalServerError, errors.WithMessagef(err, "failed to execute listener %s", listener.route))
 			return
 		}

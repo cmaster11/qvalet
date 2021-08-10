@@ -62,6 +62,15 @@ defaults:
       payload=$(echo "$payload" | jq --arg chat_id "$TELEGRAM_CHAT_ID" '. + {chat_id: $chat_id}')
       curl --fail -X POST -H "Content-Type: application/json" "$HOOK" --data "$payload"
 
+  # This is a generic catch-all handler, in case a listener fails to execute
+  errorHandler:
+    files:
+      << : *files
+      content: |
+        *Listener ERROR*
+
+        {{ dump . }}
+
 # Out listeners just need to declare which content they want to send to Telegram
 # as content in the temporary file "content".
 listeners:

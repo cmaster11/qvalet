@@ -6,9 +6,12 @@ listeners:
   /testTemp:
 
     logOutput: true
-    logArgs: true
-    returnOutput: true
     logCommand: true
+
+    # Here we define our temporary files
+    files:
+      tmp1: |
+        Just a temporary {{ .name }}!
 
     # Command to run, and list of arguments
     command: bash
@@ -17,9 +20,6 @@ listeners:
       - |
         set -ex
 
+        # Retrieve the temporary file path in different ways
         cat $GTE_FILES_tmp1
         cat {{ (gte).files.tmp1 }}
-
-    files:
-      tmp1: |
-        Just a temporary {{ .name }}!

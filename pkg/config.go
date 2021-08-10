@@ -61,6 +61,10 @@ type ListenerConfig struct {
 
 	// If true, returns Command execution output in the response
 	ReturnOutput *bool `mapstructure:"returnOutput"`
+
+	// If defined, triggers a command whenever an error is raised in
+	// the execution of the current listener.
+	ErrorHandler *ListenerConfig `mapstructure:"errorHandler" validate:"-"`
 }
 
 /// [config-docs]

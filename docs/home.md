@@ -18,7 +18,7 @@ curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-T
 
 ## Templates
 
-Commands can be customized using go templates syntax:
+Commands, args, environment variables and temporary files can be customized using go templates syntax:
 
 ```yaml
 # Command to run, and list of arguments
@@ -27,9 +27,15 @@ args:
   - -c
   - |
     echo "Hello {{ .name | upper }}"
+env:
+  hello: { { .name } }
+files:
+  dump: |
+    {{ dump . }}
 ```
 
-You can use all functions from the [sprig](https://github.com/Masterminds/sprig) library in the templates, and some [additional](/template-functions.md) functions.
+You can use all functions from the [sprig](https://github.com/Masterminds/sprig) library in the templates, and
+some [additional](/template-functions.md) functions.
 
 You can find some advanced use cases in our [examples](/examples) page.
 
@@ -37,7 +43,8 @@ Templates are populated with all parameters from:
 
 * The path: when listening on `/hello/:myParam`, it is possible to use `{{ .myParam }}`.
 * The query: `?name=Anderson"` will let you use `{{ .name }}`.
-* The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json` header.
+* The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json`
+  header.
 
 ## Run
 
@@ -51,7 +58,8 @@ go run ./cmd --config examples/config.simple.yaml
 gotoexec --config examples/config.simple.yaml
 ```
 
-Alternatively, the docker image `cmaster11/go-to-exec` is served on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
+Alternatively, the docker image `cmaster11/go-to-exec` is served
+on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
 
 To run the docker image on e.g. a local Windows machine:
 
@@ -59,36 +67,44 @@ To run the docker image on e.g. a local Windows machine:
 docker run -i -t -v "C:/path/to/config.yaml:/mnt/config.yaml" --rm cmaster11/go-to-exec --config /mnt/config.yaml 
 ```
 
-## Configuration struct
+## Configuration
+
+You can configure:
+
+* A default configuration for all listeners (using the root `defaults` configuration key).
+* A configuration for each listener, which will overwrite the relative entries of the default one.
+
+Here are all available configuration entries:
 
 [filename](../pkg/config.go ':include :type=code :fragment=config-docs')
 
 ## Temporary files
 
-You can also define temporary files to be written and used at runtime by creating entries in the `Files` list.
+You can also define temporary files to be written and used at runtime by creating entries in the `files` list.
 
 Example:
 
 ```yaml
 files:
-  
-    tmp1:
-        Hello {{ .name }}
-    
-    /opt/tmp2:
-        This is a file in an absolute route!
+
+  tmp1: Hello {{ .name }}
+
+  /opt/tmp2: This is a file in an absolute route!
 ```
 
-If the key is a relative route, it will be relative to an always-changing temporary location provided by the system (e.g. `/tmp/gte-1234`).
+If the key is a relative route, it will be relative to an always-changing temporary location provided by the system (
+e.g. `/tmp/gte-1234`).
 
-All temporary files' paths will be accessible also as environment variables (with the `GTE_FILES_` prefix) and template vars (under the `(gte).files` map).
+All temporary files' paths will be accessible also as environment variables (with the `GTE_FILES_` prefix) and template
+vars (under the `(gte).files` map).
 
 ```
 /tmp/key1 -> GTE_FILES_tmp_key1, {{ (gte).files.tmp_key1 }}
 key2 -> GTE_FILES_key2, {{ (gte).files.tmp_key2 }}
 ```
 
-NOTE: in environment variables and in the templates map's keys, all `\W` characters (NOT `a-z`, `A-Z`, `0-9`, `_`) will be replaced with `_`.
+NOTE: in environment variables and in the templates map's keys, all `\W` characters (NOT `a-z`, `A-Z`, `0-9`, `_`) will
+be replaced with `_`.
 
 ### Example
 
@@ -103,7 +119,8 @@ To see a real-case example, you can look at the following Slack webhook configur
 * HTTP basic auth
 * Api key as query parameter
 
-Every listener can be configured to accept one or more api keys, so that requests made to that listener will ONLY work if the api key is in the list.
+Every listener can be configured to accept one or more api keys, so that requests made to that listener will ONLY work
+if the api key is in the list.
 
 Let's take the following listener configuration:
 
@@ -112,8 +129,8 @@ listeners:
   /myListener:
     command: echo
     apiKeys:
-    - hello
-    - world
+      - hello
+      - world
 ```
 
 The following requests will successfully authenticate:
@@ -144,3 +161,23 @@ E.g.
 ```
 curl "http://localhost:7055/myListener?__gteApiKey=hello"
 ```
+
+## Error handling
+
+In the `defaults` configuration, or for each listener, you can define a `errorHandler` configuration.
+
+The error handler behaves the same way as a listener, but it is triggered only when the relative listener encounters an
+execution error (or, when ANY listener encounters an issue, in case the error handler has been defined in the `defaults` key).
+
+Each error handler will be provided the following arguments on execution:
+
+|Argument|Description|
+|-|-|
+| `route` | The failed listener route |
+| `error` | A textual description of the error |
+| `output` | The output of the failed command, if any exists |
+| `args` | The original arguments map passed to the failed listener |
+
+You can see how to configure such a handler in the following example, where it will be triggered on every call to `/hello`:
+
+[filename](../examples/config.onerror.yaml ':include :type=code')

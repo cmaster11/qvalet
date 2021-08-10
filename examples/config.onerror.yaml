@@ -1,0 +1,37 @@
+debug: true
+port: 7055
+
+defaults:
+  logOutput: true
+  logArgs: true
+  logCommand: true
+  returnOutput: true
+
+  # The error handler will be triggered whenever a listener
+  # fails to be executed.
+  #
+  # This error handler just prints the arguments it receives.
+  # A custom errorHandler can also be set for every listener.
+  errorHandler:
+    files:
+      dump: |
+        {{ dump . }}
+    command: bash
+    args:
+      - -c
+      - |
+        cat $GTE_FILES_dump
+
+listeners:
+
+  # Listener with path parameter, which is accessible
+  # via .param1
+  /hello:
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Oh no!"
+        exit 1
