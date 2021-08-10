@@ -3,9 +3,11 @@ package pkg
 import (
 	"net/http"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const keyAuthApiKeyQuery = "__gteApiKey"
@@ -22,17 +24,32 @@ func NewGoToExec(config *Config) *GoToExec {
 
 func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 	for route, listenerConfig := range gte.config.Listeners {
-		listener := gte.compileListener(listenerConfig, route)
+		log := logrus.WithField("listener", route)
+
+		mergedConfig, err := mergeListenerConfig(&gte.config.Defaults, listenerConfig)
+		if err != nil {
+			log.WithError(err).Fatal("failed to merge listener config")
+		}
+
+		if err := validate.Struct(mergedConfig); err != nil {
+			log.WithError(err).Fatal("failed to validate listener config")
+		}
+
+		listener := gte.compileListener(mergedConfig, route)
 		handler := gte.getGinListenerHandler(listener)
 
-		if len(listenerConfig.Methods) == 0 {
+		if len(mergedConfig.Methods) == 0 {
 			engine.GET(route, handler)
 			engine.POST(route, handler)
 		} else {
-			for _, method := range listenerConfig.Methods {
+			for _, method := range mergedConfig.Methods {
 				engine.Handle(method, route, handler)
 			}
 		}
+
+		log.WithFields(logrus.Fields{
+			"config": spew.Sdump(mergedConfig),
+		}).Debug("added listener")
 	}
 }
 

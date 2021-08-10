@@ -7,6 +7,7 @@ import (
 
 	"gotoexec/pkg"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -18,10 +19,16 @@ var (
 func main() {
 	flag.Parse()
 
+	// Remove unnecessary logging
+	spew.Config.DisablePointerAddresses = true
+	spew.Config.DisableCapacities = true
+
 	config := pkg.MustLoadConfig(*flagConfigFilename)
 
 	if config.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.Default()

@@ -30,3 +30,20 @@ func SanitizeInterfaceToMapString(intf interface{}) interface{} {
 
 	return intf
 }
+
+func boolVal(value *bool) bool {
+	if value != nil {
+		return *value
+	}
+	return false
+}
+
+func firstBoolPtr(values ...*bool) *bool {
+	for _, value := range values {
+		if value != nil {
+			return value
+		}
+	}
+
+	return nil
+}

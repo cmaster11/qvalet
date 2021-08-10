@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"github.com/go-playground/validator"
+	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -9,7 +11,6 @@ import (
 // @formatter:off
 /// [config-docs]
 type Config struct {
-
 	// If true, enable debug logs
 	Debug bool `mapstructure:"debug"`
 
@@ -17,7 +18,11 @@ type Config struct {
 	Port int `mapstructure:"port" validate:"required,min=1,max=65535"`
 
 	// Map of route -> listener
-	Listeners map[string]*ListenerConfig `mapstructure:"listeners"`
+	Listeners map[string]*ListenerConfig `mapstructure:"listeners" validate:"-"`
+
+	// Holds default configs valid for all listeners.
+	// Values defined in each listener will overwrite these ones.
+	Defaults ListenerConfig `mapstructure:"defaults" validate:"-"`
 
 	// If specified, defines the HTTP username for all listeners' basic auth.
 	// Defaults to "gte".
@@ -25,7 +30,6 @@ type Config struct {
 }
 
 type ListenerConfig struct {
-
 	// Command to run
 	Command string `mapstructure:"command" validate:"required"`
 
@@ -34,18 +38,6 @@ type ListenerConfig struct {
 
 	// Environment variables to pass to the command
 	Env map[string]string `mapstructure:"env"`
-
-	// If true, logs output of Command
-	LogOutput bool `mapstructure:"logOutput"`
-
-	// If true, logs args passed in the request
-	LogArgs bool `mapstructure:"logArgs"`
-
-	// If true, logs the executed command with args
-	LogCommand bool `mapstructure:"logCommand"`
-
-	// If true, returns Command execution output in the response
-	ReturnOutput bool `mapstructure:"returnOutput"`
 
 	// Which methods to enable for this listener. Defaults to GET, POST
 	// MUST be UPPERCASE!
@@ -57,12 +49,36 @@ type ListenerConfig struct {
 	// If populated, only requests with the right auth credentials will be
 	// accepted for this listener.
 	ApiKeys []string `mapstructure:"apiKeys"`
+
+	// If true, logs output of Command
+	LogOutput *bool `mapstructure:"logOutput"`
+
+	// If true, logs args passed in the request
+	LogArgs *bool `mapstructure:"logArgs"`
+
+	// If true, logs the executed command with args
+	LogCommand *bool `mapstructure:"logCommand"`
+
+	// If true, returns Command execution output in the response
+	ReturnOutput *bool `mapstructure:"returnOutput"`
 }
 
 /// [config-docs]
 // @formatter:on
 
 var validate = validator.New()
+
+func mergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
+	// Merge with the defaults
+	mergedConfig := &ListenerConfig{}
+	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+		return nil, errors.WithMessage(err, "failed to merge defaults config")
+	}
+	if err := mergo.Merge(mergedConfig, listenerConfig, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+		return nil, errors.WithMessage(err, "failed to merge overriding listener config")
+	}
+	return mergedConfig, nil
+}
 
 func MustLoadConfig(filename string) *Config {
 	// TODO: once Viper supports casing, replace

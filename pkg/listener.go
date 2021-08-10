@@ -162,7 +162,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 
 	log := l.log
 
-	if l.config.LogArgs {
+	if boolVal(l.config.LogArgs) {
 		log = log.WithField("args", args)
 	}
 
@@ -210,7 +210,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
 	}
 
-	if l.config.LogCommand {
+	if boolVal(l.config.LogCommand) {
 		log = log.WithFields(logrus.Fields{
 			"command":     cmdStr,
 			"commandArgs": cmdArgs,
@@ -229,14 +229,14 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 	if err != nil {
 		msg := "failed to execute command"
 
-		if l.config.ReturnOutput {
+		if boolVal(l.config.ReturnOutput) {
 			msg += ": " + string(out)
 		}
 
 		err := errors.WithMessage(err, msg)
 
 		log := log
-		if l.config.LogOutput {
+		if boolVal(l.config.LogOutput) {
 			log = log.WithField("output", string(out))
 		}
 
@@ -244,13 +244,13 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		return "", err
 	}
 
-	if l.config.LogOutput {
+	if boolVal(l.config.LogOutput) {
 		log = log.WithField("output", string(out))
 	}
 
 	log.Info("command executed")
 
-	if l.config.ReturnOutput {
+	if boolVal(l.config.ReturnOutput) {
 		return string(out), nil
 	}
 
