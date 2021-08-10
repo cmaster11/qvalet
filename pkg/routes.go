@@ -39,9 +39,13 @@ func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 			}
 		}
 
-		log.WithFields(logrus.Fields{
-			"config": spew.Sdump(listener.config),
-		}).Debug("added listener")
+		if gte.config.Debug {
+			log.WithFields(logrus.Fields{
+				"config": spew.Sdump(listener.config),
+			}).Debug("added listener")
+		} else {
+			log.Info("added listener")
+		}
 	}
 }
 

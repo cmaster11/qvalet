@@ -1,0 +1,24 @@
+port: 7055
+
+defaults:
+  logOutput: true
+  logCommand: true
+  returnOutput: true
+
+  # Uncomment to enable a default trigger
+  # trigger: eq .name "Carl"
+
+listeners:
+
+  # This listener will only be triggered if the payload
+  # matches the specified trigger condition.
+  # Test with:
+  # curl "http://localhost:7055/trigger?name=Poinki"
+  # curl "http://localhost:7055/trigger?name=Arthur"
+  /trigger:
+
+    trigger: eq .name "Poinki"
+
+    command: echo
+    args:
+      - Hello Poinki!

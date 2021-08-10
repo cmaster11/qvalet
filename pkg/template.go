@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -28,7 +29,22 @@ func GetTPLFuncsMap() template.FuncMap {
 	tplFuncs["yamlToJson"] = tplYAMLToJson
 	tplFuncs["cleanNewLines"] = tplCleanNewLines
 
+	tplFuncs["eq"] = tplEq
+	tplFuncs["ne"] = tplNE
+	tplFuncs["lt"] = tplLT
+	tplFuncs["le"] = tplLE
+	tplFuncs["gt"] = tplGT
+	tplFuncs["ge"] = tplGE
+
 	return tplFuncs
+}
+
+func ExecuteTemplate(tpl *template.Template, args interface{}) (string, error) {
+	var buf bytes.Buffer
+	if err := tpl.Execute(&buf, args); err != nil {
+		return "", errors.WithMessage(err, "failed to execute template")
+	}
+	return buf.String(), nil
 }
 
 func tplYAMLDecode(value string) (interface{}, error) {

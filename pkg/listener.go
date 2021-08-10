@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -183,6 +182,21 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		log = log.WithField("args", args)
 	}
 
+	if listener.config.Trigger != nil {
+		// The listener has a trigger condition, so evaluate it
+		isTrue, err := listener.config.Trigger.IsTrue(args)
+		if err != nil {
+			err := errors.WithMessage(err, "failed to evaluate listener trigger condition")
+			log.WithError(err).Error("error")
+			return "", err
+		}
+
+		if !isTrue {
+			// All good, do nothing
+			return "not triggered", nil
+		}
+	}
+
 	if err := l.processTemporaryFiles(args); err != nil {
 		err := errors.WithMessage(err, "failed to process temporary files")
 		log.WithError(err).Error("error")
@@ -190,37 +204,37 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 	}
 	defer l.cleanTemporaryFiles()
 
-	var tplCmdOutput bytes.Buffer
-	if err := l.tplCmd.Execute(&tplCmdOutput, args); err != nil {
-		err := errors.WithMessage(err, "failed to execute command template")
-		log.WithError(err).Error("error")
-		return "", err
+	var cmdStr string
+	{
+		out, err := ExecuteTemplate(l.tplCmd, args)
+		if err != nil {
+			err := errors.WithMessage(err, "failed to execute command template")
+			log.WithError(err).Error("error")
+			return "", err
+		}
+		cmdStr = out
 	}
-
-	cmdStr := tplCmdOutput.String()
 
 	var cmdArgs []string
 	for _, tpl := range l.tplArgs {
-		var tplArgOutput bytes.Buffer
-		if err := tpl.Execute(&tplArgOutput, args); err != nil {
+		out, err := ExecuteTemplate(tpl, args)
+		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
 			log.WithError(err).Error("error")
 			return "", err
 		}
-		arg := tplArgOutput.String()
-		cmdArgs = append(cmdArgs, arg)
+		cmdArgs = append(cmdArgs, out)
 	}
 
 	var cmdEnv []string
 	for key, tpl := range l.tplEnv {
-		var tplEnvOutput bytes.Buffer
-		if err := tpl.Execute(&tplEnvOutput, args); err != nil {
+		out, err := ExecuteTemplate(tpl, args)
+		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
 			log.WithError(err).Error("error")
 			return "", err
 		}
-		env := tplEnvOutput.String()
-		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, env))
+		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, out))
 	}
 
 	for cleanPath, realPath := range l.tplTmpFileNames {
@@ -306,14 +320,14 @@ func (listener *CompiledListener) processTemporaryFiles(args map[string]interfac
 		cleanFileName := regexReplaceTemporaryFileName.ReplaceAllString(key, "_")
 		tplTmpFileNames[cleanFileName] = filePath
 
-		var tplFileOutput bytes.Buffer
-		if err := tpl.Execute(&tplFileOutput, args); err != nil {
+		out, err := ExecuteTemplate(tpl, args)
+		if err != nil {
 			err := errors.WithMessage(err, "failed to execute file template")
 			log.WithError(err).Error("error")
 			return err
 		}
 
-		if err := os.WriteFile(filePath, tplFileOutput.Bytes(), 0777); err != nil {
+		if err := os.WriteFile(filePath, []byte(out), 0777); err != nil {
 			err := errors.WithMessage(err, "failed to write file template")
 			log.WithError(err).Error("error")
 			return err

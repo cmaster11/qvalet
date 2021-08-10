@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -41,6 +42,9 @@ type ListenerConfig struct {
 
 	// Define which temporary files you want to create
 	Files map[string]string `mapstructure:"files"`
+
+	// If defined, the hook will be triggered only if this condition is met
+	Trigger *IfTemplate `mapstructure:"trigger"`
 
 	// List of allowed authentication methods
 	Auth []*AuthConfig `mapstructure:"auth"`
@@ -110,6 +114,15 @@ func mergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfi
 	return mergedConfig, nil
 }
 
+var defaultDecodeHook = mapstructure.ComposeDecodeHookFunc(
+	// Default
+	mapstructure.StringToTimeDurationHookFunc(),
+	mapstructure.StringToSliceHookFunc(","),
+
+	// Custom
+	StringToPointerIfTemplateHookFunc(),
+)
+
 func MustLoadConfig(filename string) *Config {
 	// TODO: once Viper supports casing, replace
 	// Ref: https://github.com/spf13/viper/pull/860
@@ -138,7 +151,10 @@ func MustLoadConfig(filename string) *Config {
 
 	config := new(Config)
 
-	if err := myViper.Unmarshal(config); err != nil {
+	if err := myViper.Unmarshal(config,
+		// Lets us decode custom configuration types
+		viper.DecodeHook(defaultDecodeHook),
+	); err != nil {
 		logrus.WithError(err).Fatalf("failed to unmarshal config")
 	}
 
