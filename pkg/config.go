@@ -23,10 +23,6 @@ type Config struct {
 	// Holds default configs valid for all listeners.
 	// Values defined in each listener will overwrite these ones.
 	Defaults ListenerConfig `mapstructure:"defaults" validate:"-"`
-
-	// If specified, defines the HTTP username for all listeners' basic auth.
-	// Defaults to "gte".
-	HTTPAuthUsername string `mapstructure:"httpAuthUsername"`
 }
 
 type ListenerConfig struct {
@@ -46,9 +42,8 @@ type ListenerConfig struct {
 	// Define which temporary files you want to create
 	Files map[string]string `mapstructure:"files"`
 
-	// If populated, only requests with the right auth credentials will be
-	// accepted for this listener.
-	ApiKeys []string `mapstructure:"apiKeys"`
+	// List of allowed authentication methods
+	Auth []*AuthConfig `mapstructure:"auth"`
 
 	// If true, logs output of Command
 	LogOutput *bool `mapstructure:"logOutput"`
@@ -68,6 +63,37 @@ type ListenerConfig struct {
 }
 
 /// [config-docs]
+/// [auth-docs]
+
+type AuthConfig struct {
+	// Api keys for this auth type
+	ApiKeys []string `mapstructure:"apiKeys" validate:"required"`
+
+	// If true, allows basic HTTP authentication
+	BasicAuth bool `mapstructure:"basicAuth"`
+
+	// If true, url query authentication will be allowed
+	QueryAuth bool `mapstructure:"queryAuth"`
+
+	// The key to check for in the url query.
+	// Defaults to __gteApiKey if none is provided
+	QueryAuthKey string `mapstructure:"queryAuthKey"`
+
+	// The basic auth HTTP username.
+	// Defaults to `gte` if none is provided
+	BasicAuthUser string `mapstructure:"basicAuthUser"`
+
+	// If provided, apiKeys will be searched for in these headers
+	// E.g. GitLab hooks can authenticate via X-Gitlab-Token
+	AuthHeaders []*AuthHeader `mapstructure:"authHeaders"`
+}
+
+type AuthHeader struct {
+	// Header name, case-insensitive
+	Header string `mapstructure:"header"`
+}
+
+/// [auth-docs]
 // @formatter:on
 
 var validate = validator.New()
@@ -114,10 +140,6 @@ func MustLoadConfig(filename string) *Config {
 
 	if err := myViper.Unmarshal(config); err != nil {
 		logrus.WithError(err).Fatalf("failed to unmarshal config")
-	}
-
-	if config.HTTPAuthUsername == "" {
-		config.HTTPAuthUsername = "gte"
 	}
 
 	if err := validate.Struct(config); err != nil {

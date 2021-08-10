@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const keyAuthDefaultHTTPBasicUser = "gte"
 const keyAuthApiKeyQuery = "__gteApiKey"
 
 type GoToExec struct {
@@ -131,37 +132,65 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 }
 
 func (gte *GoToExec) verifyAuth(c *gin.Context, listener *CompiledListener) error {
-	if len(listener.config.ApiKeys) == 0 {
+	if len(listener.config.Auth) == 0 {
 		return nil
 	}
 
 	// Auth check
 	found := false
 
-	// Check if there is any basic auth
-	if username, password, ok := c.Request.BasicAuth(); ok {
-		if username != gte.config.HTTPAuthUsername {
-			return errors.New("bad auth")
+	for _, auth := range listener.config.Auth {
+
+		// Basic HTTP authentication
+		if auth.BasicAuth {
+			authUser := auth.BasicAuthUser
+			if authUser == "" {
+				// Default user for basic auth
+				authUser = keyAuthDefaultHTTPBasicUser
+			}
+			// Check if there is any basic auth
+			if username, password, ok := c.Request.BasicAuth(); ok {
+				if username == authUser {
+					for _, apiKey := range auth.ApiKeys {
+						if password == apiKey {
+							found = true
+							goto afterAuth
+						}
+					}
+				}
+			}
 		}
 
-		for _, apiKey := range listener.config.ApiKeys {
-			if password == apiKey {
-				found = true
-				break
+		// Url query authentication
+		if auth.QueryAuth {
+			queryKey := auth.QueryAuthKey
+			if queryKey == "" {
+				queryKey = keyAuthApiKeyQuery
+			}
+			apiKeyQuery := c.Query(queryKey)
+			for _, apiKey := range auth.ApiKeys {
+				if apiKeyQuery == apiKey {
+					found = true
+					goto afterAuth
+				}
+			}
+		}
+
+		// Header authentication
+		if len(auth.AuthHeaders) > 0 {
+			for _, authHeader := range auth.AuthHeaders {
+				headerValue := c.GetHeader(authHeader.Header)
+				for _, apiKey := range auth.ApiKeys {
+					if headerValue == apiKey {
+						found = true
+						goto afterAuth
+					}
+				}
 			}
 		}
 	}
 
-	if !found {
-		// Check for other auth methods
-		apiKeyQuery := c.Query(keyAuthApiKeyQuery)
-		for _, apiKey := range listener.config.ApiKeys {
-			if apiKeyQuery == apiKey {
-				found = true
-				break
-			}
-		}
-	}
+afterAuth:
 
 	if !found {
 		return errors.New("bad auth")

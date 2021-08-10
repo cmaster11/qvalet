@@ -118,66 +118,52 @@ To see a real-case example, you can look at the following Slack webhook configur
 
 * HTTP basic auth
 * Api key as query parameter
+* Api key as header
 
 Every listener can be configured to accept one or more api keys, so that requests made to that listener will ONLY work
 if the api key is in the list.
 
-Let's take the following listener configuration:
+Here are all available auth configuration entries:
 
-```yaml
-listeners:
-  /myListener:
-    command: echo
-    apiKeys:
-      - hello
-      - world
-```
-
-The following requests will successfully authenticate:
-
-```
-curl "http://localhost:7055/myListener" -u gte:hello
-curl "http://localhost:7055/myListener" -u gte:world
-curl "http://localhost:7055/myListener?__gteApiKey=hello"
-curl "http://localhost:7055/myListener?__gteApiKey=world"
-```
+[filename](../pkg/config.go ':include :type=code :fragment=auth-docs')
 
 ### Basic auth
 
 The username is configurable via the `httpAuthUsername` config key, and will default to `gte` if none is provided.
 
-E.g.
-
-```
-curl "http://localhost:7055/myListener" -u gte:hello
-```
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-basic-auth')
 
 ### Api key in query string
 
 You can authenticate requests also by passing the api key in the url parameter `__gteApiKey`.
 
-E.g.
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-query-auth')
 
-```
-curl "http://localhost:7055/myListener?__gteApiKey=hello"
-```
+### Api key in header
+
+Certain services send webhooks and let you authenticate these webhooks by passing a pre-defined token in a specific HTTP
+header (e.g. [GitLab Webhooks](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html)).
+
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth')
 
 ## Error handling
 
 In the `defaults` configuration, or for each listener, you can define a `errorHandler` configuration.
 
 The error handler behaves the same way as a listener, but it is triggered only when the relative listener encounters an
-execution error (or, when ANY listener encounters an issue, in case the error handler has been defined in the `defaults` key).
+execution error (or, when ANY listener encounters an issue, in case the error handler has been defined in the `defaults`
+key).
 
 Each error handler will be provided the following arguments on execution:
 
-|Argument|Description|
-|-|-|
-| `route` | The failed listener route |
-| `error` | A textual description of the error |
-| `output` | The output of the failed command, if any exists |
-| `args` | The original arguments map passed to the failed listener |
+Argument | Description
+---|---
+`route` | The failed listener route
+`error` | A textual description of the error
+`output` | The output of the failed command, if any exists
+`args` | The original arguments map passed to the failed listener
 
-You can see how to configure such a handler in the following example, where it will be triggered on every call to `/hello`:
+You can see how to configure such a handler in the following example, where it will be triggered on every call
+to `/hello`:
 
 [filename](../examples/config.onerror.yaml ':include :type=code')

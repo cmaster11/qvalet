@@ -1,0 +1,85 @@
+debug: true
+port: 7055
+
+defaults:
+  logOutput: true
+  logCommand: true
+  returnOutput: true
+
+  # Example for how to set a global auth
+  auth:
+    - apiKeys:
+        - defaultSecret
+      basicAuth: true
+
+listeners:
+
+  ### [docs-basic-auth]
+  # Tests basic HTTP authentication
+  # Test with:
+  # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
+  # curl "http://localhost:7055/auth/basic" -u myUser:helloBasicWrong
+  /auth/basic:
+
+    auth:
+      - apiKeys:
+          - helloBasic
+        basicAuth: true
+        # If not provided, defaults to `gte`
+        basicAuthUser: myUser
+
+    command: bash
+    args:
+      - -c
+      - echo "Hello basic!"
+  ### [docs-basic-auth]
+
+  ### [docs-query-auth]
+  # Tests url query authentication
+  # Test with:
+  # curl "http://localhost:7055/auth/query?myAuthKey=helloQuery"
+  # curl "http://localhost:7055/auth/query?myAuthKey=helloQueryWrong"
+  /auth/query:
+
+    auth:
+      - apiKeys:
+          - helloQuery
+        queryAuth: true
+        # If not provided, defaults to `__gteApiKey`
+        queryAuthKey: myAuthKey
+
+    command: bash
+    args:
+      - -c
+      - echo "Hello query!"
+  ### [docs-query-auth]
+
+  ### [docs-header-auth]
+  # Tests header authentication
+  # Test with:
+  # curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeader'
+  # curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeaderWrong'
+  /auth/header:
+
+    auth:
+      - apiKeys:
+          - helloHeader
+        authHeaders:
+          - header: x-my-auth
+
+    command: bash
+    args:
+      - -c
+      - echo "Hello header!"
+  ### [docs-header-auth]
+
+  # Use the default authentication
+  # Test with:
+  # curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'
+  # curl "http://localhost:7055/auth/default" -u 'gte:defaultSecretWrong'
+  /auth/default:
+
+    command: bash
+    args:
+      - -c
+      - echo "Hello global auth!"
