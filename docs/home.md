@@ -86,9 +86,7 @@ Example:
 
 ```yaml
 files:
-
   tmp1: Hello {{ .name }}
-
   /opt/tmp2: This is a file in an absolute route!
 ```
 
