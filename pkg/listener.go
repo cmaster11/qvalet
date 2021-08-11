@@ -83,7 +83,7 @@ func (listener *CompiledListener) clone() *CompiledListener {
 	return newListener
 }
 
-func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route string, skipErrorHandler bool) *CompiledListener {
+func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route string, isErrorHandler bool) *CompiledListener {
 	log := logrus.WithField("listener", route)
 
 	listenerConfig, err := mergeListenerConfig(&gte.config.Defaults, listenerConfig)
@@ -95,13 +95,20 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 		log.WithError(err).Fatal("failed to validate listener config")
 	}
 
+	if isErrorHandler {
+		// Error handlers do NOT need certain features, so disable them
+		listenerConfig.Auth = nil
+		listenerConfig.ErrorHandler = nil
+		listenerConfig.Trigger = nil
+	}
+
 	listener := &CompiledListener{
 		config: listenerConfig,
 		log:    log,
 		route:  route,
 	}
 
-	if !skipErrorHandler && listenerConfig.ErrorHandler != nil {
+	if listenerConfig.ErrorHandler != nil {
 		listener.errorHandler = gte.compileListener(listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
 	}
 
