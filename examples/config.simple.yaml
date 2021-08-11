@@ -13,5 +13,6 @@ listeners:
     command: bash
     args:
       - -c
+      # Expects a `name` field to be passed by query or body (JSON/Form)
       - |
         echo "Hello {{ .name | upper }}, with param {{ .param1 }}"
