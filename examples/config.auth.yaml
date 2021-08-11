@@ -72,6 +72,28 @@ listeners:
       - echo "Hello header!"
   ### [docs-header-auth]
 
+  ### [docs-header-auth-hmac-sha256]
+  # Tests header authentication with HMAC-SHA256
+  # Test with:
+  # curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
+  # curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
+  /auth/header-hmac-sha256:
+
+    auth:
+      - apiKeys:
+          # This is the HMAC-SHA256 secret key
+          - uG75Jmv4eTrfjUvi9RPU9kXtmKtJW6OE
+        authHeaders:
+          - header: X-Verify
+            method: hmac-sha256
+
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello header with HMAC-SHA256 method: {{ .name }}!"
+  ### [docs-header-auth-hmac-sha256]
+
   # Use the default authentication
   # Test with:
   # curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'

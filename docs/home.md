@@ -144,6 +144,12 @@ header (e.g. [GitLab Webhooks](https://docs.gitlab.com/ee/user/project/integrati
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth')
 
+#### HMAC-SHA256
+
+You can use HMAC-SHA256 header validation, which lets you verify the authenticity of the payload (e.g. used by [doorbell.io](https://doorbell.io/)).
+
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth-hmac-sha256')
+
 ## Error handling
 
 In the `defaults` configuration, or for each listener, you can define a `errorHandler` configuration.

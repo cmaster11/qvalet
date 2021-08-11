@@ -47,7 +47,7 @@ type ListenerConfig struct {
 	Trigger *IfTemplate `mapstructure:"trigger"`
 
 	// List of allowed authentication methods
-	Auth []*AuthConfig `mapstructure:"auth"`
+	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
 
 	// If true, logs output of Command
 	LogOutput *bool `mapstructure:"logOutput"`
@@ -89,18 +89,56 @@ type AuthConfig struct {
 
 	// If provided, apiKeys will be searched for in these headers
 	// E.g. GitLab hooks can authenticate via X-Gitlab-Token
-	AuthHeaders []*AuthHeader `mapstructure:"authHeaders"`
+	AuthHeaders []*AuthHeader `mapstructure:"authHeaders" validate:"dive"`
 }
+
+// TODO (8/11/2021 - cmaster11):
+// TODO (8/11/2021 - cmaster11):
+// TODO (8/11/2021 - cmaster11):
+// TODO (8/11/2021 - cmaster11): check why validation is not working!
+// TODO (8/11/2021 - cmaster11):
+// TODO (8/11/2021 - cmaster11):
+// TODO (8/11/2021 - cmaster11):
 
 type AuthHeader struct {
 	// Header name, case-insensitive
 	Header string `mapstructure:"header"`
+
+	// If provided, the header content will be compared using this method
+	Method AuthHeaderMethod `mapstructure:"method" validate:"authHeaderMethod"`
 }
+
+type AuthHeaderMethod string
+
+const (
+	// Simply compares the value of the header with every api key
+	AuthHeaderMethodNone AuthHeaderMethod = ""
+
+	// Calculates the payload HMAC-SHA256 hash for each api key,
+	// and compares the hash with the value provided in the header.
+	AuthHeaderMethodHMACSHA256 AuthHeaderMethod = "hmac-sha256"
+)
 
 /// [auth-docs]
 // @formatter:on
 
 var validate = validator.New()
+
+func init() {
+	if err := validate.RegisterValidation("authHeaderMethod", func(fl validator.FieldLevel) bool {
+		method := AuthHeaderMethod(fl.Field().String())
+		switch method {
+		case AuthHeaderMethodNone:
+			return true
+		case AuthHeaderMethodHMACSHA256:
+			return true
+		default:
+			return false
+		}
+	}); err != nil {
+		logrus.Fatal("failed to register authHeaderMethod validator")
+	}
+}
 
 func mergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
 	// Merge with the defaults
