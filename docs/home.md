@@ -28,7 +28,7 @@ args:
   - |
     echo "Hello {{ .name | upper }}"
 env:
-  hello: { { .name } }
+  hello: '{{ .name }}'
 files:
   dump: |
     {{ dump . }}
