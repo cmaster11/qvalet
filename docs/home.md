@@ -45,6 +45,12 @@ Templates are populated with all parameters from:
 * The query: `?name=Anderson"` will let you use `{{ .name }}`.
 * The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json`
   header.
+* The headers: all request headers will be copied into the `__gteHeaders` map, with their keys lower-cased:
+  
+
+```
+{{ .__gteHeaders.x-my-token }}
+```
 
 ## Run
 
