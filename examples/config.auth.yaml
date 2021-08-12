@@ -103,9 +103,11 @@ listeners:
 
     auth:
       - apiKeys:
-          - helloHeader
+          # This is the HMAC-SHA256 secret key
+          - uG75Jmv4eTrfjUvi9RPU9kXtmKtJW6OE
         authHeaders:
-          - header: x-my-auth
+          - header: X-Verify
+            method: hmac-sha256
             # Example of transform, to strip a initial `sha256=` value provided
             # in the header value for comparison with the apiKeys array
             # sha256=value -> value

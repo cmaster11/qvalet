@@ -48,6 +48,8 @@ func TestExamples(t *testing.T) {
 		toTest = strings.Split(toTestStr, ",")
 	}
 
+	// parallel := os.Getenv("TEST_SERIAL") != "true"
+
 	/*
 		Read every example, and execute the provided tests.
 	*/
@@ -77,44 +79,52 @@ func TestExamples(t *testing.T) {
 			testCases := regexTestCase.FindAllString(content, -1)
 			for _, testCase := range testCases {
 				wg.Add(1)
-				go t.Run(fmt.Sprintf("case-%s", testCase), func(t *testing.T) {
-					defer wg.Done()
-					match := regexTestCase.FindStringSubmatch(testCase)
+				fn := func() {
+					t.Run(fmt.Sprintf("case-%s", testCase), func(t *testing.T) {
+						defer wg.Done()
+						match := regexTestCase.FindStringSubmatch(testCase)
 
-					statusCode := match[1]
-					shouldHaveErr := match[2] == "ERR"
-					path := match[3]
-					args := match[4]
+						statusCode := match[1]
+						shouldHaveErr := match[2] == "ERR"
+						path := match[3]
+						args := match[4]
 
-					t.Logf("executing test case %s", testCase)
+						t.Logf("executing test case %s", testCase)
 
-					command := fmt.Sprintf(`curl "http://%s/%s" %s`, addr, path, args)
+						command := fmt.Sprintf(`curl "http://%s/%s" %s`, addr, path, args)
 
-					var tmpFile string
-					if shouldHaveErr {
-						tmpFile = fmt.Sprintf("%s/test-%d-err.txt", testTempDir, time.Now().UnixNano())
-						command = fmt.Sprintf(`%s -H "X-ERR-FILE: %s"`, command, tmpFile)
-						defer os.Remove(tmpFile)
-					}
+						var tmpFile string
+						if shouldHaveErr {
+							tmpFile = fmt.Sprintf("%s/test-%d-err.txt", testTempDir, time.Now().UnixNano())
+							command = fmt.Sprintf(`%s -H "X-ERR-FILE: %s"`, command, tmpFile)
+							defer os.Remove(tmpFile)
+						}
 
-					// Generate and run the test go script for the current test case
-					code, err := getCurlToGoCode(command)
-					require.NoErrorf(t, err, "curl to go code: %s", code)
+						// Generate and run the test go script for the current test case
+						code, err := getCurlToGoCode(command)
+						require.NoErrorf(t, err, "curl to go code: %s", code)
 
-					t.Logf("executing go code:\n%s", code)
+						t.Logf("executing go code:\n%s", code)
 
-					result, err := execGoTest(t, code, statusCode)
-					require.NoErrorf(t, err, "go execution: %s", result)
+						result, err := execGoTest(t, code, statusCode)
+						require.NoErrorf(t, err, "go execution: %s", result)
 
-					if shouldHaveErr {
-						// Check that there is content in the tmp file
-						c, err := os.ReadFile(tmpFile)
-						require.NoError(t, err)
-						require.NotEmpty(t, c)
-					}
+						if shouldHaveErr {
+							// Check that there is content in the tmp file
+							c, err := os.ReadFile(tmpFile)
+							require.NoError(t, err)
+							require.NotEmpty(t, c)
+						}
 
-					t.Logf("executed go code: %s", result)
-				})
+						t.Logf("executed go code: %s", result)
+					})
+				}
+
+				// if parallel {
+				// go fn()
+				// } else {
+				fn()
+				// }
 			}
 			wg.Wait()
 
@@ -184,7 +194,7 @@ func loadGTE(configPath string) (*GoToExec, *gin.Engine) {
 }
 
 var visitRegex = regexp.MustCompile(`^config.(.+).yaml$`)
-var visitRegexIgnore = regexp.MustCompile(`^config.(.+).ignore.yaml$`)
+var visitRegexIgnore = regexp.MustCompile(`^config(.*).ignore.yaml$`)
 
 func visit(files *[]string, toTest []string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
