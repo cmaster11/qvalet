@@ -2,15 +2,27 @@
 # Slack docs: https://slack.com/intl/en-fi/help/articles/115005265063-Incoming-webhooks-for-Slack
 # Test with:
 #
-# curl -v "http://localhost:7055/slack/world"
+# curl "http://localhost:7055/slack/world"
 #
 
 port: 7055
+
+defaults:
+  logOutput: true
+  logArgs: true
+  logCommand: true
+  returnOutput: true
 
 listeners:
 
   # The route
   /slack/:name:
+
+    env:
+      # If the program is run with the SLACK_HOOK environment
+      # variable set, it will use that one, otherwise use the provided
+      # string.
+      SLACK_HOOK: '{{ coalesce (env "SLACK_HOOK") "https://hooks.slack.com/services/XXXXXXXX" }}'
 
     # For cleanliness and readability, save the Slack payload in a tmp YAML file,
     # which will be converted to JSON later.
@@ -25,11 +37,13 @@ listeners:
     command: bash
     args:
       - -c
+        # When executing bash commands, we need to set -e to propagate any errors.
+      - -e
       - |
-        # Replace with your hook
-        HOOK="https://hooks.slack.com/services/XXXXXXXX"
-
-        # Send the request, converting the YAML file into a JSON one on the fly
-        curl -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        # Send the request, converting the YAML file into a JSON one on the fly, and
+        # expect HTTP 200 code
+        [ $(curl -s -o /dev/stderr --write-out "%{http_code}" \
+          -X POST -H "Content-Type: application/json" "$SLACK_HOOK" --data-binary @- << EOF
         {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
         EOF
+        ) -eq 200 ]

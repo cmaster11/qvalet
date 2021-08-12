@@ -7,7 +7,7 @@
 #
 # Test with:
 #
-# curl -v "http://localhost:7055/telegram/world"
+# curl "http://localhost:7055/telegram/hello/world"
 #
 
 port: 7055
@@ -21,10 +21,12 @@ defaults:
 
   # These environment variables will be common to all listeners.
   env: &env
-    # Replace with your bot token
-    TELEGRAM_BOT_TOKEN: "123123123:xxxxxxxxxxxxxxxxxxxxx"
+    # If the program is run with the TELEGRAM_BOT_TOKEN environment
+    # variable set, it will use that one, otherwise use the provided
+    # string.
+    TELEGRAM_BOT_TOKEN: '{{ coalesce (env "TELEGRAM_BOT_TOKEN") "123123123:xxxxxxxxxxxxxxxxxxxxx" }}'
     # Replace with your chat id
-    TELEGRAM_CHAT_ID: "123123123"
+    TELEGRAM_CHAT_ID: '{{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}'
 
   files: &files
     # We save any common values of the `sendMessage` payload in a file,
@@ -60,7 +62,10 @@ defaults:
 
       # Add the "chat_id" payload field, extracting it from environment variables
       payload=$(echo "$payload" | jq --arg chat_id "$TELEGRAM_CHAT_ID" '. + {chat_id: $chat_id}')
-      curl --fail -X POST -H "Content-Type: application/json" "$HOOK" --data "$payload"
+
+      # Send the request, and expect HTTP 200 code
+      [ $(curl -s -o /dev/stderr --write-out "%{http_code}" \
+        -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- <<< "$payload") -eq 200 ]
 
   # This is a generic catch-all handler, in case a listener fails to execute
   errorHandler:

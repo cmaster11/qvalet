@@ -31,10 +31,6 @@ func MustParseIfTemplate(templateKey string, ifTemplate string) *IfTemplate {
 func ParseIfTemplate(templateKey string, ifTemplate string) (*IfTemplate, error) {
 	originalText := ifTemplate
 
-	// Support multiline for readability
-	ifTemplate = strings.Replace(ifTemplate, "\r", "", -1)
-	ifTemplate = strings.Replace(ifTemplate, "\n", " ", -1)
-
 	// Simple validation to prevent hacks
 	if strings.Contains(ifTemplate, "}}") {
 		return nil, errors.New("if-template cannot contain `}}`")
@@ -60,7 +56,7 @@ false
 }
 
 func (ift *IfTemplate) IsTrue(args interface{}) (bool, error) {
-	result, err := ExecuteTemplate(ift.tpl, args)
+	result, err := ExecuteTextTemplate(ift.tpl, args)
 	if err != nil {
 		return false, errors.WithMessage(err, "failed to execute if-template")
 	}

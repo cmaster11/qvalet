@@ -143,7 +143,7 @@ func TestComparison(t *testing.T) {
 			t.Fatalf("%q: %s", test.expr, err)
 		}
 
-		output, err := ExecuteTemplate(tmpl, &cmpStruct)
+		output, err := ExecuteTextTemplate(tmpl, &cmpStruct)
 		if test.ok && err != nil {
 			t.Errorf("%s errored incorrectly: %s", test.expr, err)
 			continue
@@ -247,7 +247,7 @@ func TestComparisonComplex(t *testing.T) {
 			t.Fatalf("[%d] %q: %s", idx, test.expr, err)
 		}
 
-		output, err := ExecuteTemplate(tmpl, test.payload)
+		output, err := ExecuteTextTemplate(tmpl, test.payload)
 		if test.ok && err != nil {
 			t.Errorf("[%d] %s errored incorrectly: %s", idx, test.expr, err)
 			continue
@@ -258,58 +258,6 @@ func TestComparisonComplex(t *testing.T) {
 		}
 		if output != test.truth {
 			t.Errorf("[%d] %s: want %s; got %s", idx, test.expr, test.truth, output)
-		}
-	}
-}
-
-var existsTests = []cmpTest{
-	{".hello", "false", true},
-	{"exists .hello", "false", true},
-	{"exists .three", "true", true},
-	{"exists nil", "false", true},
-	{"existsAndEq .three nil", "false", true},
-	{"existsAndEq nil nil", "false", true},
-	{"existsAndEq nil .three", "false", true},
-	{"existsAndNE .bla .four", "false", true},
-	{"existsAndLT .bla .four", "false", true},
-	{"existsAndLE .bla .four", "false", true},
-	{"existsAndGT .bla .three", "false", true},
-	{"existsAndGE .bla .four", "false", true},
-
-	{"existsAndEq .three 3", "true", true},
-	{"existsAndNE .three .four", "true", true},
-	{"existsAndLT .three .four", "true", true},
-	{"existsAndLE .three .four", "true", true},
-	{"existsAndLE .three .three", "true", true},
-	{"existsAndGT .four .three", "true", true},
-	{"existsAndGE .four .four", "true", true},
-	{"existsAndGE .four .three", "true", true},
-}
-
-func TestExists(t *testing.T) {
-
-	var cmpMap = map[string]interface{}{
-		"three": 3,
-		"four":  4,
-	}
-	for _, test := range existsTests {
-		text := fmt.Sprintf("{{if %s}}true{{else}}false{{end}}", test.expr)
-		tmpl, err := template.New("test").Funcs(GetTPLFuncsMap()).Parse(text)
-		if err != nil {
-			t.Fatalf("%q: %s", test.expr, err)
-		}
-
-		output, err := ExecuteTemplate(tmpl, &cmpMap)
-		if test.ok && err != nil {
-			t.Errorf("%s errored incorrectly: %s", test.expr, err)
-			continue
-		}
-		if !test.ok && err == nil {
-			t.Errorf("%s did not error", test.expr)
-			continue
-		}
-		if output != test.truth {
-			t.Errorf("%s: want %s; got %s", test.expr, test.truth, output)
 		}
 	}
 }

@@ -4,6 +4,14 @@ listeners:
 
   # Listener with path parameter, which is accessible
   # via .param1
+  # Test with:
+  # [200] curl "http://localhost:7055/hello/world?name=Mr.%20Anderson"
+  # [200] curl "http://localhost:7055/hello/world" -d 'name=Mr. Anderson'
+  # [200] curl "http://localhost:7055/hello/world" -d '{"name": "Mr. Anderson"}' -H 'Content-Type: application/json'
+  #
+  # To make it crash, pass e.g. a number instead of a string, which
+  # is not supported by the `upper` function:
+  # [500] curl "http://localhost:7055/hello/world" -d '{"name": 3}' -H 'Content-Type: application/json'
   /hello/:param1:
 
     # Returns the output of the command in the response

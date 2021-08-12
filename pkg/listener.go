@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -19,10 +20,10 @@ type CompiledListener struct {
 
 	route string
 
-	tplCmd   *template.Template
-	tplArgs  []*template.Template
-	tplEnv   map[string]*template.Template
-	tplFiles map[string]*template.Template
+	tplCmd   *Template
+	tplArgs  []*Template
+	tplEnv   map[string]*Template
+	tplFiles map[string]*Template
 
 	errorHandler *CompiledListener
 
@@ -34,18 +35,18 @@ const funcMapKeyGTE = "gte"
 
 func (listener *CompiledListener) clone() *CompiledListener {
 	tplCmdClone, _ := listener.tplCmd.Clone()
-	var tplArgsClones []*template.Template
+	var tplArgsClones []*Template
 	for _, tpl := range listener.tplArgs {
 		clone, _ := tpl.Clone()
 		tplArgsClones = append(tplArgsClones, clone)
 	}
-	tplEnvClones := make(map[string]*template.Template)
+	tplEnvClones := make(map[string]*Template)
 	for key, tpl := range listener.tplEnv {
 		clone, _ := tpl.Clone()
 		tplEnvClones[key] = clone
 	}
 
-	tplFilesClones := make(map[string]*template.Template)
+	tplFilesClones := make(map[string]*Template)
 	for key, tpl := range listener.tplFiles {
 		clone, _ := tpl.Clone()
 		tplFilesClones[key] = clone
@@ -112,18 +113,18 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 		listener.errorHandler = gte.compileListener(listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
 	}
 
-	tplFuncs := GetTPLFuncsMap()
-
-	// Added here to make tpls parse, but will be overwritten on clone
-	tplFuncs[funcMapKeyGTE] = listener.tplGTE
+	tplFuncs := template.FuncMap{
+		// Added here to make tpls parse, but will be overwritten on clone
+		funcMapKeyGTE: listener.tplGTE,
+	}
 
 	// Creates a unique tmp directory where to store the files
 	{
-		tplFiles := make(map[string]*template.Template)
+		tplFiles := make(map[string]*Template)
 		for key, content := range listener.config.Files {
 			filePath := key
 
-			tpl, err := template.New(fmt.Sprintf("files-%s", key)).Funcs(tplFuncs).Parse(content)
+			tpl, err := ParseTemplate(fmt.Sprintf("files-%s", key), content, tplFuncs)
 			if err != nil {
 				log.WithError(err).WithField("file", key).WithField("template", tpl).Fatal("failed to parse listener file template")
 			}
@@ -133,7 +134,7 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 	}
 
 	{
-		tplCmd, err := template.New(route).Funcs(tplFuncs).Parse(listenerConfig.Command)
+		tplCmd, err := ParseTemplate(route, listenerConfig.Command, tplFuncs)
 		if err != nil {
 			log.WithError(err).WithField("template", listenerConfig.Command).Fatal("failed to parse listener command template")
 		}
@@ -141,9 +142,9 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 	}
 
 	{
-		var tplArgs []*template.Template
+		var tplArgs []*Template
 		for idx, str := range listenerConfig.Args {
-			tpl, err := template.New(fmt.Sprintf("%s-%d", route, idx)).Funcs(tplFuncs).Parse(str)
+			tpl, err := ParseTemplate(fmt.Sprintf("%s-%d", route, idx), str, tplFuncs)
 			if err != nil {
 				log.WithError(err).WithField("template", tpl).Fatal("failed to parse listener args template")
 			}
@@ -153,9 +154,9 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 	}
 
 	{
-		tplEnv := make(map[string]*template.Template)
+		tplEnv := make(map[string]*Template)
 		for key, content := range listener.config.Env {
-			tpl, err := template.New(fmt.Sprintf("env-%s", key)).Funcs(tplFuncs).Parse(content)
+			tpl, err := ParseTemplate(fmt.Sprintf("env-%s", key), content, tplFuncs)
 			if err != nil {
 				log.WithError(err).WithField("file", key).WithField("template", tpl).Fatal("failed to parse listener env template")
 			}
@@ -213,7 +214,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 
 	var cmdStr string
 	{
-		out, err := ExecuteTemplate(l.tplCmd, args)
+		out, err := l.tplCmd.Execute(args)
 		if err != nil {
 			err := errors.WithMessage(err, "failed to execute command template")
 			log.WithError(err).Error("error")
@@ -224,7 +225,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 
 	var cmdArgs []string
 	for _, tpl := range l.tplArgs {
-		out, err := ExecuteTemplate(tpl, args)
+		out, err := tpl.Execute(args)
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
 			log.WithError(err).Error("error")
@@ -235,12 +236,14 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 
 	var cmdEnv []string
 	for key, tpl := range l.tplEnv {
-		out, err := ExecuteTemplate(tpl, args)
+		out, err := tpl.Execute(args)
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
 			log.WithError(err).Error("error")
 			return "", err
 		}
+		// For env vars, we need to remove any new lines
+		out = strings.ReplaceAll(out, "\n", "")
 		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, out))
 	}
 
@@ -266,11 +269,6 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := "failed to execute command"
-
-		if boolVal(l.config.ReturnOutput) {
-			msg += ": " + string(out)
-		}
-
 		err := errors.WithMessage(err, msg)
 
 		log := log
@@ -327,7 +325,7 @@ func (listener *CompiledListener) processTemporaryFiles(args map[string]interfac
 		cleanFileName := regexReplaceTemporaryFileName.ReplaceAllString(key, "_")
 		tplTmpFileNames[cleanFileName] = filePath
 
-		out, err := ExecuteTemplate(tpl, args)
+		out, err := tpl.Execute(args)
 		if err != nil {
 			err := errors.WithMessage(err, "failed to execute file template")
 			log.WithError(err).Error("error")

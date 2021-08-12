@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,7 @@ import (
 
 const keyAuthDefaultHTTPBasicUser = "gte"
 const keyAuthApiKeyQuery = "__gteApiKey"
+const keyArgsHeadersKey = "__gteHeaders"
 
 type GoToExec struct {
 	config *Config
@@ -61,6 +63,15 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 		// Use route params, if any
 		for _, param := range c.Params {
 			args[param.Key] = param.Value
+		}
+
+		// Add headers to args
+		{
+			headerMap := make(map[string]interface{})
+			for k, _ := range c.Request.Header {
+				headerMap[strings.ToLower(k)] = c.GetHeader(k)
+			}
+			args[keyArgsHeadersKey] = headerMap
 		}
 
 		if c.Request.Method != http.MethodGet {
@@ -125,7 +136,11 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 				}
 			}
 
-			c.AbortWithError(http.StatusInternalServerError, errors.WithMessagef(err, "failed to execute listener %s", listener.route))
+			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
+			c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"output": out,
+				"error":  err.Error(),
+			})
 			return
 		}
 

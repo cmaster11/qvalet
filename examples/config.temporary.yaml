@@ -1,12 +1,16 @@
 port: 7055
 
+defaults:
+  logOutput: true
+  logCommand: true
+  returnOutput: true
+
 listeners:
 
   # Tests the ability to create temporary files
+  # Test with
+  # curl "http://localhost:7055/testTemp"
   /testTemp:
-
-    logOutput: true
-    logCommand: true
 
     # Here we define our temporary files
     files:

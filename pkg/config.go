@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/mitchellh/mapstructure"
@@ -92,20 +93,18 @@ type AuthConfig struct {
 	AuthHeaders []*AuthHeader `mapstructure:"authHeaders" validate:"dive"`
 }
 
-// TODO (8/11/2021 - cmaster11):
-// TODO (8/11/2021 - cmaster11):
-// TODO (8/11/2021 - cmaster11):
-// TODO (8/11/2021 - cmaster11): check why validation is not working!
-// TODO (8/11/2021 - cmaster11):
-// TODO (8/11/2021 - cmaster11):
-// TODO (8/11/2021 - cmaster11):
-
 type AuthHeader struct {
 	// Header name, case-insensitive
 	Header string `mapstructure:"header"`
 
 	// If provided, the header content will be compared using this method
 	Method AuthHeaderMethod `mapstructure:"method" validate:"authHeaderMethod"`
+
+	// If provided, this is used to alter the incoming header value, where
+	// the header value is the current context `.`
+	// E.g. for GitHub webhooks, `{{ replace "sha256=" "" . }}` would strip out the
+	// initial sha256= prefix GitHub passes to all webhooks
+	Transform *Template `mapstructure:"transform"`
 }
 
 type AuthHeaderMethod string
@@ -159,7 +158,14 @@ var defaultDecodeHook = mapstructure.ComposeDecodeHookFunc(
 
 	// Custom
 	StringToPointerIfTemplateHookFunc(),
+	StringToPointerTemplateHookFunc(),
 )
+
+func init() {
+	// Remove unnecessary logging
+	spew.Config.DisablePointerAddresses = true
+	spew.Config.DisableCapacities = true
+}
 
 func MustLoadConfig(filename string) *Config {
 	// TODO: once Viper supports casing, replace

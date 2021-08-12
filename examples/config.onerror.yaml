@@ -9,21 +9,25 @@ defaults:
   # The error handler will be triggered whenever a listener
   # fails to be executed.
   #
-  # This error handler just prints the arguments it receives.
-  # A custom errorHandler can also be set for every listener.
+  # This error handler creates a file, which contains an error
+  # message.
   errorHandler:
-    files:
-      dump: |
-        {{ dump . }}
-    command: cat
+    command: bash
     args:
-      - '{{ (gte).files.dump }}'
+      - -c
+      - |
+        set -e
+        # If a file name has been passed in the original headers, use it to stor
+        # an error message, otherwise use a default path.
+        fileName="{{ coalesce (get .args.__gteHeaders "x-err-file") "/tmp/errorHandlerLog" }}"
+        echo "There has been an error!" > "$fileName"
 
 listeners:
 
-  # Listener with path parameter, which is accessible
-  # via .param1
-  /hello:
+  # This listener will cause an error because of a bad exit code
+  # Test with:
+  # [500,ERR] curl "http://localhost:7055/crash"
+  /crash:
 
     # Command to run, and list of arguments
     command: bash

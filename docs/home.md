@@ -150,6 +150,18 @@ You can use HMAC-SHA256 header validation, which lets you verify the authenticit
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth-hmac-sha256')
 
+#### `transform`
+
+Certain services (e.g. [GitHub](https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks)) will send authentication headers with additional content, like:
+
+```
+X-Hub-Signature-256: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394
+```
+
+`go-to-exec` generates a plain hash, without prefixes. To be able to match the two, you can use the `transform` field:
+
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth-hmac-sha256-transform')
+
 ## Error handling
 
 In the `defaults` configuration, or for each listener, you can define a `errorHandler` configuration.

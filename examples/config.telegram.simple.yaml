@@ -2,22 +2,34 @@
 # Telegram docs: https://core.telegram.org/bots/api#sendmessage
 # Test with:
 #
-# curl -v "http://localhost:7055/telegram/world"
+# curl "http://localhost:7055/telegram/world"
 #
 
 port: 7055
+
+defaults:
+  logOutput: true
+  logArgs: true
+  logCommand: true
+  returnOutput: true
 
 listeners:
 
   # The route
   /telegram/:name:
 
+    env:
+      # If the program is run with the TELEGRAM_BOT_TOKEN environment
+      # variable set, it will use that one, otherwise use the provided
+      # string.
+      TELEGRAM_BOT_TOKEN: '{{ coalesce (env "TELEGRAM_BOT_TOKEN") "123123123:xxxxxxxxxxxxxxxxxxxxx" }}'
+
     # For cleanliness and readability, save the Telegram payload in a tmp YAML file,
     # which will be converted to JSON later.
     files:
       payload.yaml: |
         # Replace with your chat id
-        chat_id: XXXXXXX
+        chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
         # Allow formatting
         parse_mode: Markdown
         text: |
@@ -28,11 +40,12 @@ listeners:
     args:
       - -c
       - |
-        # Replace with your bot token
-        TELEGRAM_BOT_TOKEN="abcdefg123123123123123"
         HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
-        # Send the request, converting the YAML file into a JSON one on the fly
-        curl -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        # Send the request, converting the YAML file into a JSON one on the fly, and
+        # expect HTTP 200 code
+        [ $(curl -s -o /dev/stderr --write-out "%{http_code}" \
+          -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
         {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
         EOF
+        ) -eq 200 ]

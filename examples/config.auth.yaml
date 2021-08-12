@@ -16,8 +16,8 @@ listeners:
   ### [docs-basic-auth]
   # Tests basic HTTP authentication
   # Test with:
-  # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
-  # curl "http://localhost:7055/auth/basic" -u myUser:helloBasicWrong
+  # [200] curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
+  # [401] curl "http://localhost:7055/auth/basic" -u myUser:helloBasicWrong
   /auth/basic:
 
     auth:
@@ -36,8 +36,8 @@ listeners:
   ### [docs-query-auth]
   # Tests url query authentication
   # Test with:
-  # curl "http://localhost:7055/auth/query?myAuthKey=helloQuery"
-  # curl "http://localhost:7055/auth/query?myAuthKey=helloQueryWrong"
+  # [200] curl "http://localhost:7055/auth/query?myAuthKey=helloQuery"
+  # [401] curl "http://localhost:7055/auth/query?myAuthKey=helloQueryWrong"
   /auth/query:
 
     auth:
@@ -56,8 +56,8 @@ listeners:
   ### [docs-header-auth]
   # Tests header authentication
   # Test with:
-  # curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeader'
-  # curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeaderWrong'
+  # [200] curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeader'
+  # [401] curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeaderWrong'
   /auth/header:
 
     auth:
@@ -75,8 +75,8 @@ listeners:
   ### [docs-header-auth-hmac-sha256]
   # Tests header authentication with HMAC-SHA256
   # Test with:
-  # curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
-  # curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
+  # [200] curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
+  # [401] curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
   /auth/header-hmac-sha256:
 
     auth:
@@ -94,10 +94,34 @@ listeners:
         echo "Hello header with HMAC-SHA256 method: {{ .name }}!"
   ### [docs-header-auth-hmac-sha256]
 
+  ### [docs-header-auth-hmac-sha256-transform]
+  # Tests header authentication using the `transform` field
+  # Test with:
+  # [200] curl "http://localhost:7055/auth/header-hmac-sha256-transform" -H 'X-Verify: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
+  # [401] curl "http://localhost:7055/auth/header-hmac-sha256-transform" -H 'X-Verify: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
+  /auth/header-hmac-sha256-transform:
+
+    auth:
+      - apiKeys:
+          - helloHeader
+        authHeaders:
+          - header: x-my-auth
+            # Example of transform, to strip a initial `sha256=` value provided
+            # in the header value for comparison with the apiKeys array
+            # sha256=value -> value
+            transform: '{{ replace "sha256=" "" . }}'
+
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello header with HMAC-SHA256 method and transform: {{ .name }}!"
+  ### [docs-header-auth-hmac-sha256-transform]
+
   # Use the default authentication
   # Test with:
-  # curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'
-  # curl "http://localhost:7055/auth/default" -u 'gte:defaultSecretWrong'
+  # [200] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'
+  # [401] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecretWrong'
   /auth/default:
 
     command: bash

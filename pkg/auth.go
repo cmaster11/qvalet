@@ -66,6 +66,14 @@ func (gte *GoToExec) verifyAuth(c *gin.Context, listener *CompiledListener) erro
 				for _, apiKey := range auth.ApiKeys {
 					isValid := false
 
+					if authHeader.Transform != nil {
+						_headerValue, err := authHeader.Transform.Execute(headerValue)
+						if err != nil {
+							return errors.New("failed to execute header template")
+						}
+						headerValue = _headerValue
+					}
+
 					switch authHeader.Method {
 					case AuthHeaderMethodNone:
 						isValid = headerValue == apiKey
