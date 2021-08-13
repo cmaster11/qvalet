@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 
 	"gotoexec/pkg"
 
@@ -17,6 +18,10 @@ var (
 
 func main() {
 	flag.Parse()
+
+	if os.Getenv("GTE_DEBUG") == "true" {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	config := pkg.MustLoadConfig(*flagConfigFilename)
 

@@ -1,6 +1,9 @@
 package pkg
 
 import (
+	"bufio"
+	"os"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
@@ -168,6 +171,32 @@ func init() {
 }
 
 func MustLoadConfig(filename string) *Config {
+	// If we got a stdin config, store it in a tmp file and then use
+	// the tmp file as source
+	if filename == "-" {
+		tmp, err := os.CreateTemp("", "gte-config-*.yaml")
+		if err != nil {
+			logrus.WithError(err).Fatalf("failed to create temporary file")
+		}
+
+		content, err := readStdin()
+		if err != nil {
+			logrus.WithError(err).Fatalf("failed to read stdin for config")
+		}
+
+		if err := os.WriteFile(tmp.Name(), []byte(content), 0444); err != nil {
+			logrus.WithError(err).Fatalf("failed to store stdin config to temporary file")
+		}
+
+		if logrus.IsLevelEnabled(logrus.DebugLevel) {
+			logrus.WithField("content", content).Debug("using config from stdin")
+		} else {
+			logrus.Info("using config from stdin")
+		}
+
+		filename = tmp.Name()
+	}
+
 	// TODO: once Viper supports casing, replace
 	// Ref: https://github.com/spf13/viper/pull/860
 	myViper := viper.NewWithOptions(
@@ -207,4 +236,16 @@ func MustLoadConfig(filename string) *Config {
 	}
 
 	return config
+}
+
+func readStdin() (string, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+	txt := ""
+	for scanner.Scan() {
+		txt += scanner.Text() + "\n"
+	}
+	if err := scanner.Err(); err != nil {
+		return "", errors.WithMessage(err, "failed to read stdin")
+	}
+	return txt, nil
 }
