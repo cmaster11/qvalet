@@ -8,7 +8,7 @@ To get a very simple listener running on any linux/Mac device, you can use:
 
 ```
 # https://raw.githubusercontent.com/cmaster11/go-to-exec/main/hack/run.sh
-$(wget -O - "https://git.io/JRNmT" | bash /dev/stdin -t) -c - << EOF
+$(wget -qO - "https://git.io/JRNmT" | bash /dev/stdin -t) -c - << EOF
 debug: true
 listeners:
   /hello:
