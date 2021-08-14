@@ -68,9 +68,10 @@ func TestExamples(t *testing.T) {
 	require.NoError(t, err)
 	for _, examplePath := range examplesFiles {
 		t.Run(fmt.Sprintf("example-%s", examplePath), func(t *testing.T) {
-			_, router := loadGTE(examplePath)
-
 			listener, _ := net.Listen("tcp", ":0")
+
+			_, router := loadGTE(examplePath, listener)
+
 			addr := listener.Addr().String()
 			go http.Serve(listener, router)
 			defer listener.Close()
@@ -260,7 +261,9 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 	return string(out), result, nil
 }
 
-func loadGTE(configPath string) (*GoToExec, *gin.Engine) {
+func loadGTE(configPath string, listener net.Listener) (*GoToExec, *gin.Engine) {
+	os.Setenv("GTE_TEST_URL", listener.Addr().String())
+
 	config := MustLoadConfig(configPath)
 	// We rely on outputs to check if tests are successful
 	config.Defaults.ReturnOutput = boolPtr(true)

@@ -1,0 +1,80 @@
+# This example shows how you can send a Telegram message using Telegram Bot API, and
+# generate a button to trigger another listener when clicked.
+# Telegram docs: https://core.telegram.org/bots/api#sendmessage
+#
+# Test with:
+#
+# - Generate the message:
+# curl "http://localhost:7055/telegram"
+#
+# - The button will trigger the action
+# curl "http://localhost:7055/action?__gteApiKey=abcd123123123"
+#
+# and then press the "Press me!" button under the Telegram message
+#
+
+# All logging enabled
+debug: true
+listeners:
+
+  # The route
+  /telegram:
+
+    env:
+      # If the program is run with the TELEGRAM_BOT_TOKEN environment
+      # variable set, it will use that one, otherwise use the provided
+      # string.
+      TELEGRAM_BOT_TOKEN: '{{ coalesce (env "TELEGRAM_BOT_TOKEN") "123123123:xxxxxxxxxxxxxxxxxxxxx" }}'
+
+    # For cleanliness and readability, save the Telegram payload in a tmp YAML file,
+    # which will be converted to JSON later.
+    files:
+      payload.yaml: |
+        # Replace with your chat id
+        chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
+        # Allow formatting
+        parse_mode: Markdown
+        reply_markup:
+          inline_keyboard: [
+            - text: Press me!
+              # This will generate a "Press me!" button, and if clicked, a browser
+              # window will be opened, pointing to this address. This way, we can trigger
+              # another listener!
+              # NOTE: Telegram will NOT accept a "localhost" domain, so you cannot test these
+              # actions on a local machine!
+              # Replace with your deployment URL.
+              url: "{{ coalesce (env "GTE_DEPLOYMENT_URL") "https://mydeployment.com" }}/action?__gteApiKey=abcd123123123"
+            ]
+        text: |
+          Hello, here comes an action!
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      # When executing bash commands, we need to set -e to propagate any errors.
+      - -e
+      - |
+        HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+        # Send the request, converting the YAML file into a JSON one on the fly, and
+        # expect HTTP 200 code
+        [ $(curl -s -o /dev/stderr --write-out "%{http_code}" \
+          -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        EOF
+        ) -eq 200 ]
+
+  # This is the action we want to execute when clicking on the "Press me!" button.
+  # It is very important to have authentication enabled for such an endpoint!
+  /action:
+    auth:
+      apiKeys:
+        - abcd123123123
+      queryAuth: true
+
+    returnOutput: true
+
+    command: echo
+    args:
+      - Action triggered!

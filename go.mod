@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12
+	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2

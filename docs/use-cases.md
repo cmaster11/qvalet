@@ -14,6 +14,10 @@ Here are some potential use cases for `go-to-exec`!
 
 [filename](../examples/config.telegram.common-vars.yaml ':include :type=code')
 
+## Telegram message (action button)
+
+[filename](../examples/config.telegram.action.yaml ':include :type=code')
+
 ## Kubernetes restart helper
 
 Blog post: [Restart Kubernetes deployments using HTTP requests](https://cmaster11.medium.com/restart-kubernetes-deployments-using-http-requests-9db21a928c82)

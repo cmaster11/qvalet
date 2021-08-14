@@ -1,0 +1,64 @@
+# Tips and tricks
+
+Being given examples is a nice thing, but there also practical tips that can be followed when creating new listeners.
+
+## The payload
+
+If you are unsure about what the webhook payload contains, you can use a website
+like [webhook.site](https://webhook.site): by using this kind of service, you can get a temporary URL, which you can use
+as a destination for your webhook.
+
+Once you have set this temporary URL as a destination for the webhook, trigger the webhook in one way or another, and
+inspect the payload/headers/etc…
+
+After the inspection, you will know which fields are going to be available, and you can build your templates. You can
+then repoint the webhook to your `go-to-exec` instance.
+
+## Catch errors
+
+It is possible that you may have missed a field's behavior in the payload (e.g. in certain cases a field becomes null,
+instead of being a string), and your templates may fail to execute.
+
+If templates fail to execute, you will see it from the logs, but before you are able to notice an error, you will most
+likely miss some events. For this purpose, you should use [error handlers](/#error-handling), and e.g. have an error
+handler send a message to a Telegram channel, to let you know that there has been an issue.
+
+You can use the `dump` function to dump the whole content of the event:
+
+```yaml
+errorHandler:
+  files:
+    payload.yaml: |
+      chat_id: "123123"
+      parse_mode: Markdown
+      text: |
+        *Error handler*
+
+        {{ dump . }}
+
+  command: bash
+  args:
+    - -c
+    - |
+      set -e
+      HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+      [ $(curl -s -o /dev/stderr --write-out "%{http_code}" \
+        -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+      {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+      EOF
+        ) -eq 200 ]
+```
+
+## Actions
+
+You can use some services' features to generate actions. For example, Telegram lets you create buttons, which you can
+click on, and they will open a web page at a specific URL.
+
+You can use this feature to generate notifications, and have action buttons to execute other commands (imagine, receive
+a notification when a build is complete, and have a button that lets you **Deploy** it).
+
+Taking again Telegram as an example, each message can contain
+some [`inline keyboard`](https://core.telegram.org/bots/api#inlinekeyboardbutton) buttons, and every button can point to
+a specific URL. This means we can use this button to trigger another listener of our `go-to-exec` deployment!
+
+You can check out a full example of this flow in our [use cases](/use-cases#telegram-message-action-button) area.

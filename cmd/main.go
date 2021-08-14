@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,25 +8,34 @@ import (
 	"gotoexec/pkg"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jessevdk/go-flags"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	flagConfigFilename string
-)
+var opts struct {
+	ConfigFilename string `short:"c" long:"config" description:"Configuration file path"`
+	DotEnvFilename string `short:"e" long:"dotenv" description:"dotenv file path"`
+}
 
 func main() {
-	flag.StringVar(&flagConfigFilename, "config", "", "Configuration file name")
-	flag.StringVar(&flagConfigFilename, "c", "", "Configuration file name (shorthand)")
+	_, err := flags.Parse(&opts)
+	if err != nil {
+		logrus.WithError(err).Fatalf("failed to parse flags")
+	}
 
-	flag.Parse()
+	if opts.DotEnvFilename != "" {
+		if err := godotenv.Load(opts.DotEnvFilename); err != nil {
+			logrus.WithField("file", opts.DotEnvFilename).WithError(err).Fatal("failed to load .env file")
+		}
+	}
 
 	// Internal debug logging
 	if os.Getenv("GTE_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	config := pkg.MustLoadConfig(flagConfigFilename)
+	config := pkg.MustLoadConfig(opts.ConfigFilename)
 
 	// Unless there is a particular reason, gin should always be in release mode
 	if os.Getenv(gin.EnvGinMode) != gin.DebugMode {
