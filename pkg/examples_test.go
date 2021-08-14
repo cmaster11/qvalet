@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -9,13 +10,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -25,8 +29,13 @@ const examplesDir = "../examples"
 const curlToGoInit = "curlToGoInit.js"
 const testTempDir = "../.test"
 
+const expectPrefixError = "error"
+const expectPrefixErrorContains = "error contains"
+
 // # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
-var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)(?:,(ERR))?] )?curl "http://localhost:7055/([^"]+)"(.*)$`)
+var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)(?:,(ERR))?] )?curl "http://localhost:7055/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
+var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixError + `|` + expectPrefixErrorContains + `)) (".+)$`)
+var regexExpectOutput = regexp.MustCompile(`^# Expect (.+)$`)
 var regexStatus = regexp.MustCompile(`(?m)^STATUS:(\d+)$`)
 
 func TestExamples(t *testing.T) {
@@ -77,17 +86,45 @@ func TestExamples(t *testing.T) {
 
 			wg := sync.WaitGroup{}
 			testCases := regexTestCase.FindAllString(content, -1)
-			for _, testCase := range testCases {
+			for idx, testCase := range testCases {
 				wg.Add(1)
 				fn := func() {
-					t.Run(fmt.Sprintf("case-%s", testCase), func(t *testing.T) {
+					t.Run(fmt.Sprintf("case-%d", idx), func(t *testing.T) {
 						defer wg.Done()
 						match := regexTestCase.FindStringSubmatch(testCase)
 
-						statusCode := match[1]
+						statusCodeStr := match[1]
 						shouldHaveErr := match[2] == "ERR"
 						path := match[3]
 						args := match[4]
+						expectString := match[5]
+
+						var expectPrefix = ""
+						var expect = ""
+						if expectString != "" {
+							if match := regexExpectError.FindStringSubmatch(expectString); match != nil {
+								expectPrefix = match[1]
+								expect = match[2]
+							} else if match := regexExpectOutput.FindStringSubmatch(expectString); match != nil {
+								expect = match[1]
+							} else {
+								t.Fatalf("invalid expect string %s for test %s", expectString, testCase)
+							}
+						}
+
+						if statusCodeStr == "" {
+							statusCodeStr = "200"
+						}
+						statusCode, err := strconv.ParseInt(statusCodeStr, 10, 32)
+						require.NoError(t, err)
+
+						if expect != "" {
+							// Internally de-JSONize expect
+							// Usually written as "Hello\nWorld"
+							var expectStr string
+							require.NoError(t, json.Unmarshal([]byte(expect), &expectStr))
+							expect = expectStr
+						}
 
 						t.Logf("executing test case %s", testCase)
 
@@ -106,8 +143,8 @@ func TestExamples(t *testing.T) {
 
 						t.Logf("executing go code:\n%s", code)
 
-						result, err := execGoTest(t, code, statusCode)
-						require.NoErrorf(t, err, "go execution: %s", result)
+						rawOutput, result, err := execGoTest(t, code, int(statusCode))
+						require.NoErrorf(t, err, "go execution: %v", rawOutput)
 
 						if shouldHaveErr {
 							// Check that there is content in the tmp file
@@ -116,7 +153,25 @@ func TestExamples(t *testing.T) {
 							require.NotEmpty(t, c)
 						}
 
-						t.Logf("executed go code: %s", result)
+						t.Log(spew.Sprint("executed go code: %v", result))
+
+						if expect != "" {
+							// If we're expecting a specific output, check!
+							var errStr string
+							if result.Response.Error != nil {
+								errStr = *result.Response.Error
+							}
+							switch expectPrefix {
+							case expectPrefixError:
+								require.EqualValues(t, expect, strings.TrimSpace(errStr))
+							case expectPrefixErrorContains:
+								require.Contains(t, strings.TrimSpace(errStr), expect)
+							case "":
+								require.EqualValues(t, expect, strings.TrimSpace(result.Response.Output))
+							default:
+								t.Fatalf("invalid expect prefix %s in test %s", expectPrefix, testCase)
+							}
+						}
 					})
 				}
 
@@ -151,11 +206,21 @@ func getCurlToGoCode(curl string) (string, error) {
 	return string(out), nil
 }
 
-func execGoTest(t *testing.T, code string, expectedStatus string) (string, error) {
+type execGoTestResultRaw struct {
+	Output string `json:"output"`
+	Status int    `json:"status"`
+}
+
+type execGoTestResult struct {
+	Response ListenerResponse
+	Status   int
+}
+
+func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoTestResult, error) {
 	// Save the test to a temporary file, and execute
 	fileName := fmt.Sprintf("%s/test-%d.go", testTempDir, time.Now().UnixNano())
 	if err := ioutil.WriteFile(fileName, []byte(code), 0777); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	defer os.Remove(fileName)
 
@@ -163,27 +228,39 @@ func execGoTest(t *testing.T, code string, expectedStatus string) (string, error
 
 	out, err := exec.Command("goimports", "-w", fileName).CombinedOutput()
 	if err != nil {
-		return string(out), err
+		return string(out), nil, err
 	}
 
 	cmd := exec.Command("go", "run", fileName)
 	out, err = cmd.CombinedOutput()
+
+	resultRaw := &execGoTestResultRaw{}
+	_ = json.Unmarshal(out, resultRaw)
+
+	result := &execGoTestResult{
+		Status: resultRaw.Status,
+	}
+
+	_ = json.Unmarshal([]byte(resultRaw.Output), &result.Response)
+
 	if err != nil {
-		outCode := regexStatus.FindStringSubmatch(string(out))
-		if outCode != nil && outCode[1] == expectedStatus {
-			return string(out), nil
+		if result.Status == expectedStatus {
+			return string(out), result, nil
 		}
 
-		return string(out), err
+		return string(out), result, err
 	}
-	return string(out), nil
+
+	if result.Status != expectedStatus {
+		return string(out), result, errors.New(fmt.Sprintf("bad status code %d", result.Status))
+	}
+
+	return string(out), result, nil
 }
 
 func loadGTE(configPath string) (*GoToExec, *gin.Engine) {
 	config := MustLoadConfig(configPath)
-	config.Defaults.LogArgs = boolPtr(true)
-	config.Defaults.LogCommand = boolPtr(true)
-	config.Defaults.LogOutput = boolPtr(true)
+	// We rely on outputs to check if tests are successful
 	config.Defaults.ReturnOutput = boolPtr(true)
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()

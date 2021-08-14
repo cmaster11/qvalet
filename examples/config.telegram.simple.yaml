@@ -1,16 +1,13 @@
 # This example shows how you can send a Telegram message using Telegram Bot API.
 # Telegram docs: https://core.telegram.org/bots/api#sendmessage
+#
 # Test with:
 #
 # curl "http://localhost:7055/telegram/world"
 #
 
-defaults:
-  logOutput: true
-  logArgs: true
-  logCommand: true
-  returnOutput: true
-
+# All logging enabled
+debug: true
 listeners:
 
   # The route

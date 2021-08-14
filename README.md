@@ -9,4 +9,4 @@ View docs at [https://cmaster11.github.io/go-to-exec/](https://cmaster11.github.
 Links:
 
 * [Docker image](https://hub.docker.com/r/cmaster11/go-to-exec/tags?page=1&ordering=last_updated)
-* [Usage examples](https://cmaster11.github.io/go-to-exec/#/./examples)
+* [Some use cases](https://cmaster11.github.io/go-to-exec/#/./use-cases)

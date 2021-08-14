@@ -2,6 +2,34 @@
 
 `gotoexec` listens for HTTP requests and executes commands on demand.
 
+## Getting started
+
+To get a very simple listener running on any linux/Mac device, you can use:
+
+```
+# https://raw.githubusercontent.com/cmaster11/go-to-exec/main/hack/run.sh
+$(wget -O - "https://git.io/JRNmT" | bash /dev/stdin -t) -c - << EOF
+debug: true
+listeners:
+  /hello:
+    command: echo
+    args:
+      - Hello {{ .name }}
+EOF
+```
+
+And, on a separate terminal, run:
+``
+```
+curl "http://localhost:7055/hello" -d name=Rose
+```
+
+Or, if you already have a config file you want to use:
+
+```
+$(wget -O - "https://git.io/JRNmT" | bash /dev/stdin -t) -c "$CONFIG_FILE"
+```
+
 ## Configuration example
 
 [filename](../examples/config.simple.yaml ':include :type=code')
@@ -37,7 +65,7 @@ files:
 You can use all functions from the [sprig](https://github.com/Masterminds/sprig) library in the templates, and
 some [additional](/template-functions.md) functions.
 
-You can find some advanced use cases in our [examples](/examples) page.
+You can find some advanced use cases in our [examples](/use-cases) page.
 
 Templates are populated with all parameters from:
 

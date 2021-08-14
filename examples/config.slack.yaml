@@ -1,16 +1,13 @@
 # This example shows how you can send a Slack message using Slack webhooks.
 # Slack docs: https://slack.com/intl/en-fi/help/articles/115005265063-Incoming-webhooks-for-Slack
+#
 # Test with:
 #
 # curl "http://localhost:7055/slack/world"
 #
 
-defaults:
-  logOutput: true
-  logArgs: true
-  logCommand: true
-  returnOutput: true
-
+# All logging enabled
+debug: true
 listeners:
 
   # The route

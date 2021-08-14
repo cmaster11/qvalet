@@ -1,6 +1,6 @@
-# Examples
+# Use cases
 
-Here are some usage examples!
+Here are some potential use cases for `go-to-exec`!
 
 ## Slack message
 

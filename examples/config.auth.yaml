@@ -1,8 +1,6 @@
+# All logging enabled
+debug: true
 defaults:
-  logOutput: true
-  logCommand: true
-  returnOutput: true
-
   # Example for how to set a global auth
   auth:
     - apiKeys:
@@ -13,9 +11,12 @@ listeners:
 
   ### [docs-basic-auth]
   # Tests basic HTTP authentication
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
+  # Expect "Hello basic!"
   # [401] curl "http://localhost:7055/auth/basic" -u myUser:helloBasicWrong
+  # Expect error "bad auth"
   /auth/basic:
 
     auth:
@@ -33,6 +34,7 @@ listeners:
 
   ### [docs-query-auth]
   # Tests url query authentication
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/query?myAuthKey=helloQuery"
   # [401] curl "http://localhost:7055/auth/query?myAuthKey=helloQueryWrong"
@@ -53,6 +55,7 @@ listeners:
 
   ### [docs-header-auth]
   # Tests header authentication
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeader'
   # [401] curl "http://localhost:7055/auth/header" -H 'x-my-auth: helloHeaderWrong'
@@ -72,6 +75,7 @@ listeners:
 
   ### [docs-header-auth-hmac-sha256]
   # Tests header authentication with HMAC-SHA256
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
   # [401] curl "http://localhost:7055/auth/header-hmac-sha256" -H 'X-Verify: 53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
@@ -94,6 +98,7 @@ listeners:
 
   ### [docs-header-auth-hmac-sha256-transform]
   # Tests header authentication using the `transform` field
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/header-hmac-sha256-transform" -H 'X-Verify: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"Quake"}' -H 'Content-Type: application/json'
   # [401] curl "http://localhost:7055/auth/header-hmac-sha256-transform" -H 'X-Verify: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394' -d '{"name":"QuakeWrong"}' -H 'Content-Type: application/json'
@@ -119,6 +124,7 @@ listeners:
   ### [docs-header-auth-hmac-sha256-transform]
 
   # Use the default authentication
+  #
   # Test with:
   # [200] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'
   # [401] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecretWrong'

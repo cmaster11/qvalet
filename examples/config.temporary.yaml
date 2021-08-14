@@ -1,26 +1,27 @@
-defaults:
-  logOutput: true
-  logCommand: true
-  returnOutput: true
-
+# All logging enabled
+debug: true
 listeners:
 
   # Tests the ability to create temporary files
+  #
   # Test with
-  # curl "http://localhost:7055/testTemp"
-  /testTemp:
+  #
+  # [200] curl "http://localhost:7055/temp?name=Kitti"
+  # Expect "Hello Kitti!\nHello Kitti!"
+  #
+  /temp:
 
     # Here we define our temporary files
     files:
       tmp1: |
-        Just a temporary {{ .name }}!
+        Hello {{ .name }}!
 
     # Command to run, and list of arguments
     command: bash
     args:
       - -c
       - |
-        set -ex
+        set -e
 
         # Retrieve the temporary file path in different ways
         cat $GTE_FILES_tmp1

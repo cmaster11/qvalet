@@ -16,7 +16,7 @@ import (
 // @formatter:off
 /// [config-docs]
 type Config struct {
-	// If true, enable debug logs
+	// If true, enable all logging by default
 	Debug bool `mapstructure:"debug"`
 
 	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055
@@ -229,6 +229,24 @@ func MustLoadConfig(filename string) *Config {
 		viper.DecodeHook(defaultDecodeHook),
 	); err != nil {
 		logrus.WithError(err).Fatalf("failed to unmarshal config")
+	}
+
+	// Apply defaults
+	if config.Port == 0 {
+		config.Port = 7055
+	}
+
+	if config.Debug {
+		newDefaults, err := mergeListenerConfig(&ListenerConfig{
+			LogOutput:    boolPtr(true),
+			LogCommand:   boolPtr(true),
+			LogArgs:      boolPtr(true),
+			ReturnOutput: boolPtr(true),
+		}, &config.Defaults)
+		if err != nil {
+			logrus.WithError(err).Fatal("failed to merge debug config with listener config")
+		}
+		config.Defaults = *newDefaults
 	}
 
 	if err := validate.Struct(config); err != nil {

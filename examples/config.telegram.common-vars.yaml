@@ -10,12 +10,9 @@
 # curl "http://localhost:7055/telegram/hello/world"
 #
 
+# All logging enabled
+debug: true
 defaults:
-  # All logging enabled, to make testing easier
-  logOutput: true
-  logArgs: true
-  logCommand: true
-  returnOutput: true
 
   # These environment variables will be common to all listeners.
   env: &env

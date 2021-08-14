@@ -22,19 +22,15 @@ func main() {
 
 	flag.Parse()
 
-	if os.Getenv("GTE_DEBUG") == "true" {
+	// Internal debug logging
+	if os.Getenv("GTE_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
 	config := pkg.MustLoadConfig(flagConfigFilename)
 
-	if config.Port == 0 {
-		config.Port = 7055
-	}
-
-	if config.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
-	} else {
+	// Unless there is a particular reason, gin should always be in release mode
+	if os.Getenv(gin.EnvGinMode) != gin.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

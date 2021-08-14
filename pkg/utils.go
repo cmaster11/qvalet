@@ -42,6 +42,10 @@ func boolPtr(value bool) *bool {
 	return &value
 }
 
+func stringPtr(value string) *string {
+	return &value
+}
+
 func firstBoolPtr(values ...*bool) *bool {
 	for _, value := range values {
 		if value != nil {

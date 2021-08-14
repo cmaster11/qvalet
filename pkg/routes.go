@@ -41,7 +41,7 @@ func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 			}
 		}
 
-		if gte.config.Debug {
+		if logrus.IsLevelEnabled(logrus.DebugLevel) {
 			log.WithFields(logrus.Fields{
 				"config": spew.Sdump(listener.config),
 			}).Debug("added listener")
@@ -49,6 +49,11 @@ func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
 			log.Info("added listener")
 		}
 	}
+}
+
+type ListenerResponse struct {
+	Output string  `json:"output"`
+	Error  *string `json:"error"`
 }
 
 func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
@@ -137,15 +142,15 @@ func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.Handl
 			}
 
 			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
-			c.JSON(http.StatusInternalServerError, map[string]interface{}{
-				"output": out,
-				"error":  err.Error(),
+			c.JSON(http.StatusInternalServerError, &ListenerResponse{
+				Output: out,
+				Error:  stringPtr(err.Error()),
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"output": out,
+		c.JSON(http.StatusOK, &ListenerResponse{
+			Output: out,
 		})
 	}
 }

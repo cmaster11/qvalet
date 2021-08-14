@@ -1,8 +1,7 @@
-defaults:
-  logOutput: true
-  logCommand: true
-  returnOutput: true
+# All logging enabled
+debug: true
 
+defaults:
   # Uncomment to enable a default trigger
   # trigger: eq .name "Carl"
 
@@ -10,9 +9,15 @@ listeners:
 
   # This listener will only be triggered if the payload
   # matches the specified trigger condition.
+  #
   # Test with:
+  #
   # curl "http://localhost:7055/trigger?name=Poinki"
+  # Expect "Hello Poinki!"
+  #
   # curl "http://localhost:7055/trigger?name=Arthur"
+  # Expect "not triggered"
+  #
   /trigger:
 
     trigger: eq .name "Poinki"
