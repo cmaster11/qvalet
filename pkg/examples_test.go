@@ -141,7 +141,9 @@ func TestExamples(t *testing.T) {
 						code, err := getCurlToGoCode(command)
 						require.NoErrorf(t, err, "curl to go code: %s", code)
 
-						t.Logf("executing go code:\n%s", code)
+						if os.Getenv("LOG_GO_CODE") == "true" {
+							t.Logf("executing go code:\n%s", code)
+						}
 
 						rawOutput, result, err := execGoTest(t, code, int(statusCode))
 						require.NoErrorf(t, err, "go execution: %v", rawOutput)

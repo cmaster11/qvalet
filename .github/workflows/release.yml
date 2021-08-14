@@ -25,6 +25,14 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Run tests
+        uses: ./.github/actions/test
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+
       - name: Generate build files
         uses: thatisuday/go-cross-build@v1.0.2
         env:

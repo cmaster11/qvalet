@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+GTE_DEBUG=false go test -v ./...
