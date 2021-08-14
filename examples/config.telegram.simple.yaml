@@ -34,6 +34,8 @@ listeners:
     command: bash
     args:
       - -c
+      # When executing bash commands, we need to set -e to propagate any errors.
+      - -e
       - |
         HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 

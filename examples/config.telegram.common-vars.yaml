@@ -35,7 +35,7 @@ defaults:
   args:
     - -c
     - |
-      set -Eeuxmo pipefail
+      set -Eeumo pipefail
       HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
       # Join the payload header, and add the "text" field, which will point to
