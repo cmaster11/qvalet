@@ -1,5 +1,3 @@
-port: 7055
-
 defaults:
   logOutput: true
   logCommand: true

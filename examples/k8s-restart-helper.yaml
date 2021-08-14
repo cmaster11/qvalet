@@ -85,8 +85,6 @@ spec:
 
               # Defines the configuration for go-to-exec
               cat << EOF > /config.yaml
-              port: 7055
-
               listeners:
 
                 "/restart/:type/:name":

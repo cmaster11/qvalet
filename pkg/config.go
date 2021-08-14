@@ -19,8 +19,8 @@ type Config struct {
 	// If true, enable debug logs
 	Debug bool `mapstructure:"debug"`
 
-	// HTTP port used by go-to-exec to listen for incoming requests
-	Port int `mapstructure:"port" validate:"required,min=1,max=65535"`
+	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055
+	Port int `mapstructure:"port" validate:"min=0,max=65535"`
 
 	// Map of route -> listener
 	Listeners map[string]*ListenerConfig `mapstructure:"listeners" validate:"-"`

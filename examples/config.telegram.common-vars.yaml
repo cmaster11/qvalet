@@ -10,8 +10,6 @@
 # curl "http://localhost:7055/telegram/hello/world"
 #
 
-port: 7055
-
 defaults:
   # All logging enabled, to make testing easier
   logOutput: true

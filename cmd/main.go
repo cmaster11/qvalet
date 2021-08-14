@@ -13,17 +13,24 @@ import (
 )
 
 var (
-	flagConfigFilename = flag.String("config", "", "Configuration file name")
+	flagConfigFilename string
 )
 
 func main() {
+	flag.StringVar(&flagConfigFilename, "config", "", "Configuration file name")
+	flag.StringVar(&flagConfigFilename, "c", "", "Configuration file name (shorthand)")
+
 	flag.Parse()
 
 	if os.Getenv("GTE_DEBUG") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	config := pkg.MustLoadConfig(*flagConfigFilename)
+	config := pkg.MustLoadConfig(flagConfigFilename)
+
+	if config.Port == 0 {
+		config.Port = 7055
+	}
 
 	if config.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -41,6 +48,7 @@ func main() {
 	gte := pkg.NewGoToExec(config)
 	gte.MountRoutes(router)
 
+	logrus.WithField("port", config.Port).Info("server listening")
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), router); err != nil {
 		logrus.WithError(err).Fatalf("failed to start server")
 	}

@@ -1,5 +1,3 @@
-port: 7055
-
 listeners:
 
   # Listener with path parameter, which is accessible

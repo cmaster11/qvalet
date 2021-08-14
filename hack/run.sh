@@ -1,7 +1,25 @@
 #!/usr/bin/env bash
 set -Eeumo pipefail
 
-REPO=cmaster11/go-to-exec
+MODE=default
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -t|--temporary)
+      MODE="temporary"
+      shift
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # https://gist.github.com/lukechilds/a83e1d7127b78fef38c2914c4ececc3c
 get_latest_release() {
@@ -10,8 +28,10 @@ get_latest_release() {
     sed -E 's/.*"([^"]+)".*/\1/'
 }
 
+REPO=cmaster11/go-to-exec
 RELEASE=$(get_latest_release)
 
+# Detect OS/ARCH
 OS=linux
 ARCH=amd64
 if [ "$(uname)" == "Darwin" ]; then
@@ -30,6 +50,11 @@ URL="https://github.com/$REPO/releases/download/$RELEASE/gotoexec-$OS-$ARCH"
 GTE=$(mktemp)
 wget -q -O "$GTE" "$URL"
 chmod +x "$GTE"
+
+if [[ "$MODE" == "temporary" ]]; then
+  echo "$GTE"
+  exit
+fi
 
 # Run go-to-exec
 exec "$GTE" --config -

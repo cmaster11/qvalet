@@ -5,8 +5,6 @@
 # curl "http://localhost:7055/telegram/world"
 #
 
-port: 7055
-
 defaults:
   logOutput: true
   logArgs: true
