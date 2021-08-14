@@ -1,0 +1,5 @@
+name: Test go-to-exec
+description: Runs tests in go-to-exec
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
