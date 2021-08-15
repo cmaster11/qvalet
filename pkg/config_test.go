@@ -37,7 +37,7 @@ func TestMergeListenerConfig(t *testing.T) {
 	}
 
 	for idx, test := range tests {
-		merged, err := mergeListenerConfig(&test.def, &test.ove)
+		merged, err := MergeListenerConfig(&test.def, &test.ove)
 		require.NoError(t, err)
 		require.EqualValuesf(t, test.exp, *merged, "test %d", idx)
 	}

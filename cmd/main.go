@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 
 	"gotoexec/pkg"
 
@@ -14,8 +15,10 @@ import (
 )
 
 var opts struct {
-	ConfigFilename string `short:"c" long:"config" description:"Configuration file path"`
-	DotEnvFilename string `short:"e" long:"dotenv" description:"dotenv file path"`
+	ConfigFilenames  []string `short:"c" long:"config" description:"Configuration file path"`
+	DotEnvFilenames  []string `short:"e" long:"dotenv" description:"dotenv file path"`
+	DefaultsFilename string   `short:"f" long:"defaults" description:"Defaults configuration file path"`
+	Debug            bool     `short:"d" long:"debug" description:"Enable the debug flag on all configs by default"`
 }
 
 func main() {
@@ -24,9 +27,9 @@ func main() {
 		logrus.WithError(err).Fatalf("failed to parse flags")
 	}
 
-	if opts.DotEnvFilename != "" {
-		if err := godotenv.Load(opts.DotEnvFilename); err != nil {
-			logrus.WithField("file", opts.DotEnvFilename).WithError(err).Fatal("failed to load .env file")
+	for _, filename := range opts.DotEnvFilenames {
+		if err := godotenv.Load(filename); err != nil {
+			logrus.WithField("file", opts.DotEnvFilenames).WithError(err).Fatal("failed to load .env file")
 		}
 	}
 
@@ -35,25 +38,60 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	config := pkg.MustLoadConfig(opts.ConfigFilename)
+	var defaults *pkg.ListenerConfig
+	if opts.DefaultsFilename != "" {
+		_defaults, err := pkg.LoadDefaults(opts.DefaultsFilename)
+		if err != nil {
+			logrus.WithField("file", opts.DefaultsFilename).WithError(err).Fatal("failed to load defaults from file")
+		}
+		defaults = _defaults
+	}
+
+	configsByPort := pkg.MustLoadConfigs(opts.ConfigFilenames...)
 
 	// Unless there is a particular reason, gin should always be in release mode
 	if os.Getenv(gin.EnvGinMode) != gin.DebugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
-	router.Use(gin.ErrorLogger())
+	wg := sync.WaitGroup{}
+	for port, configs := range configsByPort {
+		port := port
 
-	router.GET("/healthz", func(context *gin.Context) {
-		context.AbortWithStatus(http.StatusOK)
-	})
+		router := gin.Default()
+		router.Use(gin.ErrorLogger())
 
-	gte := pkg.NewGoToExec(config)
-	gte.MountRoutes(router)
+		router.GET("/healthz", func(context *gin.Context) {
+			context.AbortWithStatus(http.StatusOK)
+		})
 
-	logrus.WithField("port", config.Port).Info("server listening")
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), router); err != nil {
-		logrus.WithError(err).Fatalf("failed to start server")
+		for _, config := range configs {
+			if opts.Debug {
+				config.Debug = true
+			}
+
+			if defaults != nil {
+				newDefaults, err := pkg.MergeListenerConfig(defaults, &config.Defaults)
+				if err != nil {
+					logrus.WithError(err).Fatalf("failed to merge defaults config")
+				}
+				config.Defaults = *newDefaults
+			}
+
+			if err := pkg.Validate.Struct(config); err != nil {
+				logrus.WithError(err).Fatalf("failed to validate config")
+			}
+			pkg.MountRoutes(router, config)
+		}
+
+		logrus.WithField("port", port).Info("server listening")
+		wg.Add(1)
+		go func() {
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", port), router); err != nil {
+				logrus.WithError(err).Fatalf("failed to start server")
+			}
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 }

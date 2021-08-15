@@ -1,0 +1,10 @@
+# This example is part of the `config.echo.yaml` config.
+#
+# gotoexec -c config.echo.yaml -c config.echo.part2.yaml -f defaults.echo.yaml
+#
+
+debug: true
+listeners:
+  /cat:
+    args:
+      - Meow!

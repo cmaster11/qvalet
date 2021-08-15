@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (gte *GoToExec) verifyAuth(c *gin.Context, listener *CompiledListener) error {
+func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 	if len(listener.config.Auth) == 0 {
 		return nil
 	}

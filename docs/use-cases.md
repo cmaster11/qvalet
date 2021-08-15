@@ -31,3 +31,17 @@ curl "http://restart-helper:7055/restart/deployment/a-deployment-name"
 ```
 
 [filename](../examples/k8s-restart-helper.yaml ':include :type=code')
+
+## Multi-part configuration
+
+Defaults:
+
+[filename](../examples/defaults.echo.yaml ':include :type=code')
+
+Part 1:
+
+[filename](../examples/config.echo.yaml ':include :type=code')
+
+Part 2:
+
+[filename](../examples/config.echo.part2.notest.yaml ':include :type=code')

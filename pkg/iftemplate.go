@@ -64,7 +64,7 @@ func (ift *IfTemplate) IsTrue(args interface{}) (bool, error) {
 }
 
 func init() {
-	if err := validate.RegisterValidation("ifTemplate", func(fl validator.FieldLevel) bool {
+	if err := Validate.RegisterValidation("ifTemplate", func(fl validator.FieldLevel) bool {
 		value := fl.Field().String()
 		_, err := ParseIfTemplate("validate-template", value)
 		return err == nil

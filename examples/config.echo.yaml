@@ -1,0 +1,24 @@
+# This example requires the defaults config `defaults.echo.yaml` and the second config part `config.echo.part2.notest.yaml` to be loaded via:
+#
+# gotoexec -c config.echo.yaml -c config.echo.part2.notest.yaml -f defaults.echo.yaml
+#
+# [DEFAULTS=defaults.echo.yaml]
+# [PART=config.echo.part2.notest.yaml]
+
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # curl "http://localhost:7055/cow"
+  # Expect "Moo!"
+  #
+  /cow:
+    args:
+      - Moo!
+
+  # We expect also the part2 to be loaded, so you can test:
+  #
+  # curl "http://localhost:7055/cat"
+  # Expect "Meow!"
+  #

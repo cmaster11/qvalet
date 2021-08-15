@@ -2,7 +2,7 @@
 
 Being given examples is a nice thing, but there also practical tips that can be followed when creating new listeners.
 
-## The payload
+## Understanding the payload
 
 If you are unsure about what the webhook payload contains, you can use a website
 like [webhook.site](https://webhook.site): by using this kind of service, you can get a temporary URL, which you can use
@@ -62,3 +62,17 @@ some [`inline keyboard`](https://core.telegram.org/bots/api#inlinekeyboardbutton
 a specific URL. This means we can use this button to trigger another listener of our `go-to-exec` deployment!
 
 You can check out a full example of this flow in our [use cases](/use-cases#telegram-message-action-button) area.
+
+## Many listeners
+
+If you find yourself in the situation of having many listeners, which are creating a lot of chaos in your configuration
+file, you can improve the configuration following some approaches:
+
+* Try to group as much functionality as possible in the `defaults` config section, so that the amount of repeated code
+  is low. You can see an example [here](/use-cases#telegram-message-common-vars).
+* Split your configuration in multiple parts. You can use multiple instances of the `--config` flag when
+  starting `go-to-exec`, which means you can specify any amount of configuration files to load. In addition, if **all**
+  your listeners, even when split in multiple files, can share the same default, then you can create an
+  external `defaults` file, which you can load with the `--defaults` flag. You can see an
+  example [here](/use-cases#multi-part-configuration).
+

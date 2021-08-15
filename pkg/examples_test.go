@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -70,7 +71,7 @@ func TestExamples(t *testing.T) {
 		t.Run(fmt.Sprintf("example-%s", examplePath), func(t *testing.T) {
 			listener, _ := net.Listen("tcp", ":0")
 
-			_, router := loadGTE(examplePath, listener)
+			router := loadGTE(t, examplePath, listener)
 
 			addr := listener.Addr().String()
 			go http.Serve(listener, router)
@@ -261,22 +262,85 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 	return string(out), result, nil
 }
 
-func loadGTE(configPath string, listener net.Listener) (*GoToExec, *gin.Engine) {
+var regexDefaults = regexp.MustCompile(`\[DEFAULTS=([^]]+)]`)
+var regexPart = regexp.MustCompile(`\[PART=([^]]+)]`)
+
+func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine {
 	os.Setenv("GTE_TEST_URL", listener.Addr().String())
 
-	config := MustLoadConfig(configPath)
-	// We rely on outputs to check if tests are successful
-	config.Defaults.ReturnOutput = boolPtr(true)
+	// We need to pre-read the config file, to find out if we need to
+	// e.g. use a defaults file too
+	content, err := ioutil.ReadFile(configPath)
+	require.NoError(t, err)
+	var defaults *ListenerConfig
+	{
+
+		// Find the FIRST defaults
+		if match := regexDefaults.FindStringSubmatch(string(content)); match != nil {
+			filename := match[1]
+			if !path.IsAbs(filename) {
+				// Take the file name relative to the config
+				filename = filepath.Join(filepath.Dir(configPath), filename)
+			}
+			t.Logf("using defaults %s", filename)
+			_defaults, err := LoadDefaults(filename)
+			require.NoError(t, err)
+			defaults = _defaults
+		}
+	}
+
+	var configs []*Config
+
+	{
+		config, err := LoadConfig(configPath)
+		require.NoError(t, err)
+		configs = append(configs, config)
+	}
+
+	// Also, check for additional configs to load
+	{
+		if lines := regexPart.FindAllStringSubmatch(string(content), -1); lines != nil {
+			for _, match := range lines {
+				filename := match[1]
+				if !path.IsAbs(filename) {
+					// Take the file name relative to the config
+					filename = filepath.Join(filepath.Dir(configPath), filename)
+				}
+
+				t.Logf("using additional config %s", filename)
+				config, err := LoadConfig(filename)
+				require.NoError(t, err)
+				configs = append(configs, config)
+			}
+		}
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(gin.ErrorLogger())
-	gte := NewGoToExec(config)
-	gte.MountRoutes(router)
-	return gte, router
+
+	for _, config := range configs {
+		config.Debug = true
+
+		if defaults != nil {
+			newDefaults, err := MergeListenerConfig(defaults, &config.Defaults)
+			require.NoError(t, err)
+			config.Defaults = *newDefaults
+		}
+
+		// NOTE: This is needed for tests to succeed!
+		config.Defaults.ReturnOutput = boolPtr(true)
+
+		require.NoError(t, Validate.Struct(config))
+		MountRoutes(router, config)
+	}
+
+	return router
 }
 
 var visitRegex = regexp.MustCompile(`^config.(.+).yaml$`)
 var visitRegexIgnore = regexp.MustCompile(`^config(.*).ignore.yaml$`)
+var visitRegexNoTest = regexp.MustCompile(`^config(.*).notest.yaml$`)
 
 func visit(files *[]string, toTest []string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
@@ -286,6 +350,9 @@ func visit(files *[]string, toTest []string) filepath.WalkFunc {
 
 		name := info.Name()
 		if visitRegexIgnore.MatchString(name) {
+			return nil
+		}
+		if visitRegexNoTest.MatchString(name) {
 			return nil
 		}
 

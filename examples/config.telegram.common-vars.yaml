@@ -71,7 +71,7 @@ defaults:
 
         {{ dump . }}
 
-# Out listeners just need to declare which content they want to send to Telegram
+# Our listeners just need to declare which content they want to send to Telegram
 # as content in the temporary file "content".
 listeners:
 

@@ -53,7 +53,7 @@ func (tpl *Template) Execute(args interface{}) (string, error) {
 }
 
 func init() {
-	if err := validate.RegisterValidation("template", func(fl validator.FieldLevel) bool {
+	if err := Validate.RegisterValidation("template", func(fl validator.FieldLevel) bool {
 		value := fl.Field().String()
 		_, err := ParseTemplate("validate-template", value)
 		return err == nil

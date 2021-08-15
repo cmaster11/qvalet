@@ -84,15 +84,15 @@ func (listener *CompiledListener) clone() *CompiledListener {
 	return newListener
 }
 
-func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route string, isErrorHandler bool) *CompiledListener {
+func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, route string, isErrorHandler bool) *CompiledListener {
 	log := logrus.WithField("listener", route)
 
-	listenerConfig, err := mergeListenerConfig(&gte.config.Defaults, listenerConfig)
+	listenerConfig, err := MergeListenerConfig(defaults, listenerConfig)
 	if err != nil {
 		log.WithError(err).Fatal("failed to merge listener config")
 	}
 
-	if err := validate.Struct(listenerConfig); err != nil {
+	if err := Validate.Struct(listenerConfig); err != nil {
 		log.WithError(err).Fatal("failed to validate listener config")
 	}
 
@@ -110,7 +110,7 @@ func (gte *GoToExec) compileListener(listenerConfig *ListenerConfig, route strin
 	}
 
 	if listenerConfig.ErrorHandler != nil {
-		listener.errorHandler = gte.compileListener(listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
+		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
 	}
 
 	tplFuncs := template.FuncMap{

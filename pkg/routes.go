@@ -15,22 +15,12 @@ const keyAuthDefaultHTTPBasicUser = "gte"
 const keyAuthApiKeyQuery = "__gteApiKey"
 const keyArgsHeadersKey = "__gteHeaders"
 
-type GoToExec struct {
-	config *Config
-}
-
-func NewGoToExec(config *Config) *GoToExec {
-	return &GoToExec{
-		config: config,
-	}
-}
-
-func (gte *GoToExec) MountRoutes(engine *gin.Engine) {
-	for route, listenerConfig := range gte.config.Listeners {
+func MountRoutes(engine *gin.Engine, config *Config) {
+	for route, listenerConfig := range config.Listeners {
 		log := logrus.WithField("listener", route)
 
-		listener := gte.compileListener(listenerConfig, route, false)
-		handler := gte.getGinListenerHandler(listener)
+		listener := compileListener(&config.Defaults, listenerConfig, route, false)
+		handler := getGinListenerHandler(listener)
 
 		if len(listener.config.Methods) == 0 {
 			engine.GET(route, handler)
@@ -56,9 +46,9 @@ type ListenerResponse struct {
 	Error  *string `json:"error"`
 }
 
-func (gte *GoToExec) getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
+func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := gte.verifyAuth(c, listener); err != nil {
+		if err := verifyAuth(c, listener); err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}

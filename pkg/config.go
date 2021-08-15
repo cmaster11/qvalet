@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
@@ -25,7 +26,7 @@ type Config struct {
 	// Map of route -> listener
 	Listeners map[string]*ListenerConfig `mapstructure:"listeners" validate:"-"`
 
-	// Holds default configs valid for all listeners.
+	// Holds default configs valid for all listeners in this config.
 	// Values defined in each listener will overwrite these ones.
 	Defaults ListenerConfig `mapstructure:"defaults" validate:"-"`
 }
@@ -124,10 +125,10 @@ const (
 /// [auth-docs]
 // @formatter:on
 
-var validate = validator.New()
+var Validate = validator.New()
 
 func init() {
-	if err := validate.RegisterValidation("authHeaderMethod", func(fl validator.FieldLevel) bool {
+	if err := Validate.RegisterValidation("authHeaderMethod", func(fl validator.FieldLevel) bool {
 		method := AuthHeaderMethod(fl.Field().String())
 		switch method {
 		case AuthHeaderMethodNone:
@@ -142,7 +143,7 @@ func init() {
 	}
 }
 
-func mergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
+func MergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
 	// Merge with the defaults
 	mergedConfig := &ListenerConfig{}
 	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
@@ -170,11 +171,89 @@ func init() {
 	spew.Config.DisableCapacities = true
 }
 
-func MustLoadConfig(filename string) *Config {
+func MustLoadConfigs(filenames ...string) map[int][]*Config {
+	var toMerge []*Config
+
+	for _, filename := range filenames {
+		subConfig, err := LoadConfig(filename)
+		if err != nil {
+			logrus.WithError(err).Fatalf("failed to load sub config")
+		}
+		toMerge = append(toMerge, subConfig)
+	}
+
+	configsByPort, err := groupConfigsByPort(toMerge...)
+	if err != nil {
+		logrus.WithError(err).Fatalf("failed to merge configs")
+	}
+
+	return configsByPort
+}
+
+func groupConfigsByPort(configs ...*Config) (map[int][]*Config, error) {
+	ret := make(map[int][]*Config)
+
+	// We want to merge configs by port
+	for _, config := range configs {
+		ret[config.Port] = append(ret[config.Port], config)
+	}
+
+	return ret, nil
+}
+
+func LoadConfig(filename string) (*Config, error) {
+	myViper := readConfigToViper(filename, "config")
+
+	config := new(Config)
+
+	if err := myViper.Unmarshal(config,
+		// Lets us decode custom configuration types
+		viper.DecodeHook(defaultDecodeHook),
+	); err != nil {
+		return nil, errors.WithMessage(err, "failed to unmarshal config")
+	}
+
+	// Apply defaults
+	if config.Port == 0 {
+		config.Port = 7055
+	}
+
+	if config.Debug {
+		newDefaults, err := MergeListenerConfig(&ListenerConfig{
+			LogOutput:    boolPtr(true),
+			LogCommand:   boolPtr(true),
+			LogArgs:      boolPtr(true),
+			ReturnOutput: boolPtr(true),
+		}, &config.Defaults)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to merge debug config with listener config")
+		}
+		config.Defaults = *newDefaults
+	}
+
+	return config, nil
+}
+
+func LoadDefaults(filename string) (*ListenerConfig, error) {
+	myViper := readConfigToViper(filename, "defaults")
+
+	config := new(ListenerConfig)
+
+	if err := myViper.Unmarshal(config,
+		// Lets us decode custom configuration types
+		viper.DecodeHook(defaultDecodeHook),
+	); err != nil {
+		return nil, errors.WithMessage(err, "failed to unmarshal defaults config")
+	}
+
+	return config, nil
+}
+
+func readConfigToViper(filename string, defaultFilename string) *viper.Viper {
 	// If we got a stdin config, store it in a tmp file and then use
 	// the tmp file as source
 	if filename == "-" {
-		tmp, err := os.CreateTemp("", "gte-config-*.yaml")
+		tmp, err := os.CreateTemp("", fmt.Sprintf("gte-%s-*.yaml", defaultFilename))
 		if err != nil {
 			logrus.WithError(err).Fatalf("failed to create temporary file")
 		}
@@ -197,6 +276,16 @@ func MustLoadConfig(filename string) *Config {
 		filename = tmp.Name()
 	}
 
+	myViper := getViper(filename, defaultFilename)
+
+	err := myViper.ReadInConfig()
+	if err != nil {
+		logrus.WithError(err).Fatalf("failed to load config")
+	}
+	return myViper
+}
+
+func getViper(filename string, defaultName string) *viper.Viper {
 	// TODO: once Viper supports casing, replace
 	// Ref: https://github.com/spf13/viper/pull/860
 	myViper := viper.NewWithOptions(
@@ -211,49 +300,12 @@ func MustLoadConfig(filename string) *Config {
 	if filename != "" {
 		myViper.SetConfigFile(filename)
 	} else {
-		myViper.SetConfigName("config")
+		myViper.SetConfigName(defaultName)
 		myViper.SetConfigType("yaml")
 		myViper.AddConfigPath(".")
 		myViper.AddConfigPath("./config")
 	}
-
-	err := myViper.ReadInConfig()
-	if err != nil {
-		logrus.WithError(err).Fatalf("failed to load config")
-	}
-
-	config := new(Config)
-
-	if err := myViper.Unmarshal(config,
-		// Lets us decode custom configuration types
-		viper.DecodeHook(defaultDecodeHook),
-	); err != nil {
-		logrus.WithError(err).Fatalf("failed to unmarshal config")
-	}
-
-	// Apply defaults
-	if config.Port == 0 {
-		config.Port = 7055
-	}
-
-	if config.Debug {
-		newDefaults, err := mergeListenerConfig(&ListenerConfig{
-			LogOutput:    boolPtr(true),
-			LogCommand:   boolPtr(true),
-			LogArgs:      boolPtr(true),
-			ReturnOutput: boolPtr(true),
-		}, &config.Defaults)
-		if err != nil {
-			logrus.WithError(err).Fatal("failed to merge debug config with listener config")
-		}
-		config.Defaults = *newDefaults
-	}
-
-	if err := validate.Struct(config); err != nil {
-		logrus.WithError(err).Fatalf("failed to validate config")
-	}
-
-	return config
+	return myViper
 }
 
 func readStdin() (string, error) {
