@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,7 +10,10 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/Masterminds/goutils"
+	"github.com/beyondstorage/go-storage/v4/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +28,8 @@ type CompiledListener struct {
 	tplArgs  []*Template
 	tplEnv   map[string]*Template
 	tplFiles map[string]*Template
+
+	storager types.Storager
 
 	errorHandler *CompiledListener
 
@@ -60,6 +66,7 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		tplArgsClones,
 		tplEnvClones,
 		tplFilesClones,
+		listener.storager,
 		listener.errorHandler,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
@@ -165,6 +172,42 @@ func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, r
 		listener.tplEnv = tplEnv
 	}
 
+	// If storage is defined, we need to initialize the storager
+	if listenerConfig.Storage != nil && (listenerConfig.Storage.StoreArgs || listenerConfig.Storage.StoreCommand || listenerConfig.Storage.StoreOutput) {
+		storager, err := GetStoragerFromString(listenerConfig.Storage.Conn)
+		if err != nil {
+			log := log.WithError(err)
+			if logrus.IsLevelEnabled(logrus.DebugLevel) {
+				log = log.WithField("conn", listenerConfig.Storage.Conn)
+			}
+			log.Fatal("failed to initialize storage")
+		}
+
+		// Check that we can write there
+		{
+			route := regexListenerRouteCleaner.ReplaceAllString(listener.route, "_")
+			nowNano := time.Now().UnixNano()
+			rand, _ := goutils.RandomAlphaNumeric(8)
+			p := fmt.Sprintf("%s-testwrite-%d-%s", route, nowNano, rand)
+
+			b := []byte(fmt.Sprintf("%d", nowNano))
+			_, err = storager.Write(p, bytes.NewBuffer(b), int64(len(b)))
+			if err != nil {
+				listener.log.WithError(err).Fatal("failed to check if storage is writable")
+			}
+
+			listener.log.WithField("path", p).Debug("written check writable file")
+
+			// Clean up if possible
+			if err := storager.Delete(p); err != nil {
+				listener.log.WithError(err).Debug("failed to remove check writable storage file")
+			}
+
+		}
+
+		listener.storager = storager
+	}
+
 	return listener
 }
 
@@ -174,7 +217,7 @@ func (listener *CompiledListener) tplGTE() map[string]interface{} {
 	}
 }
 
-func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (string, error) {
+func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toStore map[string]interface{}) (string, error) {
 	/*
 		Create a new instance of the listener, to handle temporary files.
 
@@ -266,33 +309,51 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}) (stri
 		cmd.Env = append(cmd.Env, env)
 	}
 
+	if listener.storager != nil && listener.config.Storage.StoreCommand {
+		toStore["command"] = map[string]interface{}{
+			"command": cmdStr,
+			"args":    cmdArgs,
+			"env":     cmd.Env,
+		}
+	}
+
 	out, err := cmd.CombinedOutput()
+	outStr := string(out)
+
+	if listener.storager != nil && listener.config.Storage.StoreOutput {
+		toStore["output"] = outStr
+	}
+
 	if err != nil {
+		if listener.storager != nil && listener.config.Storage.StoreOutput {
+			toStore["error"] = err.Error()
+		}
+
 		msg := "failed to execute command"
 		err := errors.WithMessage(err, msg)
 
 		log := log
 		if boolVal(l.config.LogOutput) {
-			log = log.WithField("output", string(out))
+			log = log.WithField("output", outStr)
 		}
 
 		log.WithError(err).Error("error")
 
 		if boolVal(l.config.ReturnOutput) {
-			return string(out), err
+			return outStr, err
 		}
 
 		return "", err
 	}
 
 	if boolVal(l.config.LogOutput) {
-		log = log.WithField("output", string(out))
+		log = log.WithField("output", outStr)
 	}
 
 	log.Info("command executed")
 
 	if boolVal(l.config.ReturnOutput) {
-		return string(out), nil
+		return outStr, nil
 	}
 
 	return "success", nil

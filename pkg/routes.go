@@ -1,9 +1,15 @@
 package pkg
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
+	"time"
 
+	"github.com/Masterminds/goutils"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -46,12 +52,17 @@ type ListenerResponse struct {
 	Error  *string `json:"error"`
 }
 
+var regexListenerRouteCleaner = regexp.MustCompile(`[\W]`)
+
 func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := verifyAuth(c, listener); err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
+
+		// Keep track of what to store
+		toStore := make(map[string]interface{})
 
 		args := make(map[string]interface{})
 
@@ -112,10 +123,17 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			}
 		}
 
-		out, err := listener.ExecCommand(args)
+		if listener.storager != nil && listener.config.Storage.StoreArgs {
+			toStore["args"] = args
+		}
+
+		out, err := listener.ExecCommand(args, toStore)
 		if err != nil {
 			if listener.errorHandler != nil {
 				handler := listener.errorHandler
+
+				toStoreOnError := make(map[string]interface{})
+
 				// Trigger a command on error
 				onErrorArgs := map[string]interface{}{
 					"route":  listener.route,
@@ -123,12 +141,22 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 					"output": out,
 					"args":   args,
 				}
-				_, err := handler.ExecCommand(onErrorArgs)
+
+				if listener.storager != nil && listener.config.Storage.StoreArgs {
+					toStoreOnError["args"] = args
+				}
+
+				_, err := handler.ExecCommand(onErrorArgs, toStoreOnError)
 				if err != nil {
 					handler.log.WithError(err).Error("failed to execute error listener")
 				} else {
 					handler.log.Info("executed error listener")
 				}
+
+				if listener.storager != nil && len(toStoreOnError) > 0 {
+					storePayload(listener, toStoreOnError)
+				}
+
 			}
 
 			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
@@ -139,8 +167,33 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			return
 		}
 
+		if listener.storager != nil && len(toStore) > 0 {
+			storePayload(listener, toStore)
+		}
+
 		c.JSON(http.StatusOK, &ListenerResponse{
 			Output: out,
 		})
 	}
+}
+
+func storePayload(listener *CompiledListener, toStore map[string]interface{}) {
+	route := regexListenerRouteCleaner.ReplaceAllString(listener.route, "_")
+	nowNano := time.Now().UnixNano()
+	rand, _ := goutils.RandomAlphaNumeric(8)
+	path := fmt.Sprintf("%s-%d-%s.json", route, nowNano, rand)
+
+	b, err := json.Marshal(toStore)
+	if err != nil {
+		listener.log.WithError(err).Error("failed to marshal payload for storage")
+	}
+
+	size := int64(len(b))
+	_, err = listener.storager.Write(path, bytes.NewBuffer(b), size)
+	if err != nil {
+		listener.log.WithError(err).Error("failed to store payload")
+		return
+	}
+
+	listener.log.WithField("path", path).WithField("size", size).Info("stored payload")
 }

@@ -20,6 +20,7 @@ EOF
 
 And, on a separate terminal, run:
 ``
+
 ```
 curl "http://localhost:7055/hello" -d name=Rose
 ```
@@ -28,20 +29,6 @@ Or, if you already have a config file you want to use:
 
 ```
 $(wget -O - "https://git.io/JRNmT" | bash /dev/stdin -t) -c "$CONFIG_FILE"
-```
-
-## Configuration example
-
-[filename](../examples/config.simple.yaml ':include :type=code')
-
-Test with:
-
-```bash
-# A simple GET request 
-curl "http://localhost:7055/hello/id_123?name=Anderson"
-
-# A JSON POST request
-curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-Type: application/json'
 ```
 
 ## Templates
@@ -74,7 +61,6 @@ Templates are populated with all parameters from:
 * The request body: all JSON objects are automatically interpreted, given a correct `Content-Type: application/json`
   header.
 * The headers: all request headers will be copied into the `__gteHeaders` map, with their keys lower-cased:
-  
 
 ```
 {{ .__gteHeaders.x-my-token }}
@@ -110,7 +96,44 @@ You can configure:
 
 Here are all available configuration entries:
 
-[filename](../pkg/config.go ':include :type=code :fragment=config-docs')
+[filename](../pkg/config.go ':include :type=code :fragment=config-docs'
+
+### Configuration example
+
+[filename](../examples/config.simple.yaml ':include :type=code')
+
+Test with:
+
+```bash
+# A simple GET request 
+curl "http://localhost:7055/hello/id_123?name=Anderson"
+
+# A JSON POST request
+curl "http://localhost:7055/hello/id_123" -d '{"name":"Anderson"}' -H 'Content-Type: application/json'
+```
+
+### Config via environment variables
+
+Also, all configuration entries can be re-mapped via environment variables. For example:
+
+```yaml
+listeners:
+  /hello:
+    command: cat
+```
+
+can be remapped with `GTE_LISTENERS__HELLO_COMMAND=echo`.
+
+Notes:
+
+* All environment variables need to be prefixed by `GTE_`.
+* Dynamic entries (where you can define any kind of keys), like the `listeners` map, **need to be
+  defined in the initial config**, before they can be re-mapped using environment variables.
+* The environment variable name for a config entry is created by:
+    1. Join all the keys' chain with `_`: `listeners_/hello_command`
+    2. Replace all non `a-z`, `A-Z`, `0-9`, `_` characters with `_`: `listeners__hello_command`
+    3. Turn the whole text to upper-case: `LISTENERS__HELLO_COMMAND`
+    4. Prefix with `GTE_`: `GTE_LISTENERS__HELLO_COMMAND`
 
 ## Temporary files
 
@@ -143,6 +166,19 @@ be replaced with `_`.
 To see a real-case example, you can look at the following Slack webhook configuration:
 
 [filename](../examples/config.slack.yaml ':include :type=code')
+
+## Payload storage
+
+Every listener can be configured to persist the payloads they receive to different services (S3, GCP, azblob, etc…).
+
+`go-to-exec` uses the amazing [`go-storage`](https://github.com/beyondstorage/go-storage) library,
+which [supports](https://beyondstorage.io/docs/go-storage/services/index) a broad variety of storage
+destinations. `go-to-exec` tries to support all the storage options in the "Stable" category. If you notice there is a
+missing library, please open an [issue](https://github.com/cmaster11/go-to-exec/issues)!
+
+Here is an example, which uses GCS as a storage backend:
+
+[filename](../examples/config.storage.yaml ':include :type=code')
 
 ## Authentication
 
@@ -180,13 +216,16 @@ header (e.g. [GitLab Webhooks](https://docs.gitlab.com/ee/user/project/integrati
 
 #### HMAC-SHA256
 
-You can use HMAC-SHA256 header validation, which lets you verify the authenticity of the payload (e.g. used by [doorbell.io](https://doorbell.io/)).
+You can use HMAC-SHA256 header validation, which lets you verify the authenticity of the payload (e.g. used
+by [doorbell.io](https://doorbell.io/)).
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth-hmac-sha256')
 
 #### `transform`
 
-Certain services (e.g. [GitHub](https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks)) will send authentication headers with additional content, like:
+Certain services (
+e.g. [GitHub](https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks)) will send
+authentication headers with additional content, like:
 
 ```
 X-Hub-Signature-256: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394
@@ -223,7 +262,7 @@ to `/hello`:
 You can configure a specific `trigger` condition for every listener. This means that the listener will be invoked only
 if the trigger condition is met.
 
-The syntax of the `trigger` field is the same as inside an `if` block of a Go template. All that matters is that the 
+The syntax of the `trigger` field is the same as inside an `if` block of a Go template. All that matters is that the
 `trigger` if-template returns a `true`/`false` result.
 
 ```

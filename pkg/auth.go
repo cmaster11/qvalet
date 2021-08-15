@@ -5,10 +5,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 func verifyAuth(c *gin.Context, listener *CompiledListener) error {
@@ -69,7 +69,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 					if authHeader.Transform != nil {
 						_headerValue, err := authHeader.Transform.Execute(headerValue)
 						if err != nil {
-							return errors.New("failed to execute header template")
+							return errors.WithMessage(err, "failed to execute header template")
 						}
 						headerValue = _headerValue
 					}
@@ -81,7 +81,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 						if bodyData == nil {
 							data, err := c.GetRawData()
 							if err != nil {
-								return errors.New("failed to read body data")
+								return errors.WithMessage(err, "failed to read body data")
 							}
 							bodyData = data
 							// Put the data back for later usage

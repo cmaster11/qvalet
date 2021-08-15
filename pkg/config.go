@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
@@ -69,9 +70,28 @@ type ListenerConfig struct {
 	// If defined, triggers a command whenever an error is raised in
 	// the execution of the current listener.
 	ErrorHandler *ListenerConfig `mapstructure:"errorHandler" validate:"-"`
+
+	// Storage configuration
+	Storage *StorageConfig `mapstructure:"storage"`
+}
+
+type StorageConfig struct {
+	// Connection string for the storage service where payloads will be stored.
+	// Ref: https://beyondstorage.io/docs/go-storage/services/index
+	Conn string `mapstructure:"conn" validate:"required"`
+
+	// If true, persist every request's args
+	StoreArgs bool `mapstructure:"storeArgs"`
+
+	// If true, persist every request's executed command, its args and env vars
+	StoreCommand bool `mapstructure:"storeCommand"`
+
+	// If true, persist every request's executed command result
+	StoreOutput bool `mapstructure:"storeOutput"`
 }
 
 /// [config-docs]
+
 /// [auth-docs]
 
 type AuthConfig struct {
@@ -289,12 +309,13 @@ func getViper(filename string, defaultName string) *viper.Viper {
 	// TODO: once Viper supports casing, replace
 	// Ref: https://github.com/spf13/viper/pull/860
 	myViper := viper.NewWithOptions(
-		viper.KeyPreserveCase(),
+		// viper.KeyPreserveCase(),
 		// Lets us use . as file names in temporary files
 		viper.KeyDelimiter("::"),
 	)
 
 	myViper.SetEnvPrefix("GTE")
+	myViper.SetEnvKeyReplacer(strings.NewReplacer("::", "_", "/", "_"))
 	myViper.AutomaticEnv()
 
 	if filename != "" {
