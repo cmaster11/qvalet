@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -94,7 +95,13 @@ func (listener *CompiledListener) clone() *CompiledListener {
 
 var regexClearPath = regexp.MustCompile(`/+`)
 
-func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, route string, isErrorHandler bool) *CompiledListener {
+func compileListener(
+	defaults *ListenerConfig,
+	listenerConfig *ListenerConfig,
+	route string,
+	isErrorHandler bool,
+	storageCache *sync.Map,
+) *CompiledListener {
 	log := logrus.WithField("listener", route)
 
 	listenerConfig, err := MergeListenerConfig(defaults, listenerConfig)
@@ -120,7 +127,7 @@ func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, r
 	}
 
 	if listenerConfig.ErrorHandler != nil {
-		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true)
+		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true, storageCache)
 	}
 
 	tplFuncs := template.FuncMap{
@@ -177,6 +184,14 @@ func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, r
 
 	// If storage is defined, we need to initialize the storager
 	if listenerConfig.Storage != nil && len(listenerConfig.Storage.Store) > 0 {
+		// Re-use already-found instances
+		if storageCache != nil {
+			if storager, found := storageCache.Load(listenerConfig.Storage.Conn); found {
+				listener.storager = storager.(types.Storager)
+				goto afterStorage
+			}
+		}
+
 		storager, err := GetStoragerFromString(listenerConfig.Storage.Conn)
 		if err != nil {
 			log := log.WithError(err)
@@ -208,8 +223,13 @@ func compileListener(defaults *ListenerConfig, listenerConfig *ListenerConfig, r
 
 		}
 
+		if storageCache != nil {
+			storageCache.Store(listenerConfig.Storage.Conn, storager)
+		}
+
 		listener.storager = storager
 	}
+afterStorage:
 
 	return listener
 }
@@ -315,9 +335,11 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		if l.config.LogEnv() {
 			logCommandFields["env"] = cmdEnv
 		}
-		log = log.WithFields(logrus.Fields{
-			"command": logCommandFields,
-		})
+		if len(logCommandFields) > 0 {
+			log = log.WithFields(logrus.Fields{
+				"command": logCommandFields,
+			})
+		}
 	}
 
 	toReturn := &ExecCommandResult{}
@@ -347,7 +369,9 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 			storeCommandFields["env"] = cmdEnv
 		}
 
-		toStore["command"] = storeCommandFields
+		if len(storeCommandFields) > 0 {
+			toStore["command"] = storeCommandFields
+		}
 	}
 
 	out, err := cmd.CombinedOutput()

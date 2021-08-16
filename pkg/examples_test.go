@@ -266,13 +266,16 @@ var regexPart = regexp.MustCompile(`\[PART=([^]]+)]`)
 func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine {
 	os.Setenv("GTE_TEST_URL", listener.Addr().String())
 
+	if os.Getenv("GTE_VERBOSE") == "true" {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	// We need to pre-read the config file, to find out if we need to
 	// e.g. use a defaults file too
 	content, err := ioutil.ReadFile(configPath)
 	require.NoError(t, err)
 	var defaults *ListenerConfig
 	{
-
 		// Find the FIRST defaults
 		if match := regexDefaults.FindStringSubmatch(string(content)); match != nil {
 			filename := match[1]

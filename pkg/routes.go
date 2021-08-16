@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
@@ -17,10 +18,12 @@ const keyAuthApiKeyQuery = "__gteApiKey"
 const keyArgsHeadersKey = "__gteHeaders"
 
 func MountRoutes(engine *gin.Engine, config *Config) {
+	storageCache := new(sync.Map)
+
 	for route, listenerConfig := range config.Listeners {
 		log := logrus.WithField("listener", route)
 
-		listener := compileListener(&config.Defaults, listenerConfig, route, false)
+		listener := compileListener(&config.Defaults, listenerConfig, route, false, storageCache)
 		handler := getGinListenerHandler(listener)
 
 		if len(listener.config.Methods) == 0 {
