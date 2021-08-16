@@ -38,6 +38,10 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		logrus.WithField("env", os.Environ()).Debug("env")
+	}
+
 	var defaults *pkg.ListenerConfig
 	if opts.DefaultsFilename != "" {
 		_defaults, err := pkg.LoadDefaults(opts.DefaultsFilename)

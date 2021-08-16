@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -42,9 +43,13 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 }
 
 type ListenerResponse struct {
-	Output string  `json:"output"`
-	Error  *string `json:"error"`
+	*ExecCommandResult
+	Storage            *StorageEntry     `json:"storage,omitempty"`
+	Error              *string           `json:"error,omitempty"`
+	ErrorHandlerResult *ListenerResponse `json:"errorHandlerResult,omitempty"`
 }
+
+var regexListenerRouteCleaner = regexp.MustCompile(`[\W]`)
 
 func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -52,6 +57,9 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
+
+		// Keep track of what to store
+		toStore := make(map[string]interface{})
 
 		args := make(map[string]interface{})
 
@@ -112,10 +120,26 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			}
 		}
 
-		out, err := listener.ExecCommand(args)
+		if listener.storager != nil && listener.config.Storage.StoreArgs() {
+			toStore["args"] = args
+		}
+
+		out, err := listener.ExecCommand(args, toStore)
 		if err != nil {
+			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
+			response := &ListenerResponse{
+				ExecCommandResult: out,
+				Error:             stringPtr(err.Error()),
+			}
+
+			var errorHandlerResult *ListenerResponse
 			if listener.errorHandler != nil {
-				handler := listener.errorHandler
+				errorHandler := listener.errorHandler
+
+				errorHandlerResult = &ListenerResponse{}
+
+				toStoreOnError := make(map[string]interface{})
+
 				// Trigger a command on error
 				onErrorArgs := map[string]interface{}{
 					"route":  listener.route,
@@ -123,24 +147,65 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 					"output": out,
 					"args":   args,
 				}
-				_, err := handler.ExecCommand(onErrorArgs)
-				if err != nil {
-					handler.log.WithError(err).Error("failed to execute error listener")
-				} else {
-					handler.log.Info("executed error listener")
+
+				if errorHandler.storager != nil && errorHandler.config.Storage.StoreArgs() {
+					toStoreOnError["args"] = args
 				}
+
+				errorHandlerExecCommandResult, err := errorHandler.ExecCommand(onErrorArgs, toStoreOnError)
+				errorHandlerResult.ExecCommandResult = errorHandlerExecCommandResult
+				if err != nil {
+					errorHandlerResult.Error = stringPtr(err.Error())
+					errorHandler.log.WithError(err).Error("failed to execute error listener")
+				} else {
+					errorHandler.log.Info("executed error listener")
+				}
+
+				if errorHandler.storager != nil && len(toStoreOnError) > 0 {
+					if entry := storePayload(
+						errorHandler,
+						toStoreOnError,
+					); entry != nil {
+						if errorHandler.config.ReturnStorage() {
+							errorHandlerResult.Storage = entry
+						}
+					}
+				}
+
+				toStore["errorHandler"] = toStoreOnError
+				if listener.storager != nil && len(toStore) > 0 {
+					if entry := storePayload(
+						listener,
+						toStore,
+					); entry != nil {
+						if listener.config.ReturnStorage() {
+							response.Storage = entry
+						}
+					}
+				}
+
+				response.ErrorHandlerResult = errorHandlerResult
 			}
 
-			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
-			c.JSON(http.StatusInternalServerError, &ListenerResponse{
-				Output: out,
-				Error:  stringPtr(err.Error()),
-			})
+			c.JSON(http.StatusInternalServerError, response)
 			return
 		}
 
-		c.JSON(http.StatusOK, &ListenerResponse{
-			Output: out,
-		})
+		response := &ListenerResponse{
+			ExecCommandResult: out,
+		}
+
+		if listener.storager != nil && len(toStore) > 0 {
+			if entry := storePayload(
+				listener,
+				toStore,
+			); entry != nil {
+				if listener.config.ReturnStorage() {
+					response.Storage = entry
+				}
+			}
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }

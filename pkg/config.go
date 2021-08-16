@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
@@ -54,76 +55,114 @@ type ListenerConfig struct {
 	// List of allowed authentication methods
 	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
 
-	// If true, logs output of Command
-	LogOutput *bool `mapstructure:"logOutput"`
+	// What to log? Can be a comma-separated mix of:
+	// - all: log everything
+	// - args: log every request's args
+	// - command: log every request's executed command details, its args and env vars
+	// - output: log every executed command result
+	// - storage: log every stored entry details
+	Log []LogKey `mapstructure:"log" validate:"dive,listenerLogKey"`
 
-	// If true, logs args passed in the request
-	LogArgs *bool `mapstructure:"logArgs"`
-
-	// If true, logs the executed command with args
-	LogCommand *bool `mapstructure:"logCommand"`
-
-	// If true, returns Command execution output in the response
-	ReturnOutput *bool `mapstructure:"returnOutput"`
+	// What to return in the HTTP response? Can be a comma-separated mix of:
+	// - all: return everything
+	// - args: return every request's args
+	// - command: return every request's executed command details, its args and env vars
+	// - output: return every executed command result
+	// - storage: return every stored entry details
+	Return []ReturnKey `mapstructure:"return" validate:"dive,listenerReturnKey"`
 
 	// If defined, triggers a command whenever an error is raised in
 	// the execution of the current listener.
 	ErrorHandler *ListenerConfig `mapstructure:"errorHandler" validate:"-"`
+
+	// Storage configuration
+	Storage *StorageConfig `mapstructure:"storage"`
 }
 
 /// [config-docs]
-/// [auth-docs]
+// @formatter:on
 
-type AuthConfig struct {
-	// Api keys for this auth type
-	ApiKeys []string `mapstructure:"apiKeys" validate:"required"`
-
-	// If true, allows basic HTTP authentication
-	BasicAuth bool `mapstructure:"basicAuth"`
-
-	// If true, url query authentication will be allowed
-	QueryAuth bool `mapstructure:"queryAuth"`
-
-	// The key to check for in the url query.
-	// Defaults to __gteApiKey if none is provided
-	QueryAuthKey string `mapstructure:"queryAuthKey"`
-
-	// The basic auth HTTP username.
-	// Defaults to `gte` if none is provided
-	BasicAuthUser string `mapstructure:"basicAuthUser"`
-
-	// If provided, apiKeys will be searched for in these headers
-	// E.g. GitLab hooks can authenticate via X-Gitlab-Token
-	AuthHeaders []*AuthHeader `mapstructure:"authHeaders" validate:"dive"`
-}
-
-type AuthHeader struct {
-	// Header name, case-insensitive
-	Header string `mapstructure:"header"`
-
-	// If provided, the header content will be compared using this method
-	Method AuthHeaderMethod `mapstructure:"method" validate:"authHeaderMethod"`
-
-	// If provided, this is used to alter the incoming header value, where
-	// the header value is the current context `.`
-	// E.g. for GitHub webhooks, `{{ replace "sha256=" "" . }}` would strip out the
-	// initial sha256= prefix GitHub passes to all webhooks
-	Transform *Template `mapstructure:"transform"`
-}
-
-type AuthHeaderMethod string
+type ReturnKey string
 
 const (
-	// Simply compares the value of the header with every api key
-	AuthHeaderMethodNone AuthHeaderMethod = ""
-
-	// Calculates the payload HMAC-SHA256 hash for each api key,
-	// and compares the hash with the value provided in the header.
-	AuthHeaderMethodHMACSHA256 AuthHeaderMethod = "hmac-sha256"
+	ReturnKeyAll     = "all"
+	ReturnKeyArgs    = "args"
+	ReturnKeyCommand = "command"
+	ReturnKeyOutput  = "output"
+	ReturnKeyStorage = "storage"
 )
 
-/// [auth-docs]
-// @formatter:on
+func returnKeyContains(values []ReturnKey, search ReturnKey) bool {
+	for _, val := range values {
+		if val == search {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *ListenerConfig) ReturnArgs() bool {
+	return returnKeyContains(c.Return, ReturnKeyArgs) || returnKeyContains(c.Return, ReturnKeyAll)
+}
+func (c *ListenerConfig) ReturnCommand() bool {
+	return returnKeyContains(c.Return, ReturnKeyCommand) || returnKeyContains(c.Return, ReturnKeyAll)
+}
+func (c *ListenerConfig) ReturnOutput() bool {
+	return returnKeyContains(c.Return, ReturnKeyOutput) || returnKeyContains(c.Return, ReturnKeyAll)
+}
+func (c *ListenerConfig) ReturnStorage() bool {
+	return returnKeyContains(c.Return, ReturnKeyStorage) || returnKeyContains(c.Return, ReturnKeyAll)
+}
+
+func init() {
+	if err := Validate.RegisterValidation("listenerReturnKey", func(fl validator.FieldLevel) bool {
+		key := fl.Field().String()
+		return key == ReturnKeyAll || key == ReturnKeyArgs || key == ReturnKeyCommand || key == ReturnKeyOutput || key == ReturnKeyStorage
+	}); err != nil {
+		logrus.Fatal("failed to register listenerReturnKey validator")
+	}
+}
+
+type LogKey string
+
+const (
+	LogKeyAll     = "all"
+	LogKeyArgs    = "args"
+	LogKeyCommand = "command"
+	LogKeyOutput  = "output"
+	LogKeyStorage = "storage"
+)
+
+func logKeyContains(values []LogKey, search LogKey) bool {
+	for _, val := range values {
+		if val == search {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *ListenerConfig) LogArgs() bool {
+	return logKeyContains(c.Log, LogKeyArgs) || logKeyContains(c.Log, LogKeyAll)
+}
+func (c *ListenerConfig) LogCommand() bool {
+	return logKeyContains(c.Log, LogKeyCommand) || logKeyContains(c.Log, LogKeyAll)
+}
+func (c *ListenerConfig) LogOutput() bool {
+	return logKeyContains(c.Log, LogKeyOutput) || logKeyContains(c.Log, LogKeyAll)
+}
+func (c *ListenerConfig) LogStorage() bool {
+	return logKeyContains(c.Log, LogKeyStorage) || logKeyContains(c.Log, LogKeyAll)
+}
+
+func init() {
+	if err := Validate.RegisterValidation("listenerLogKey", func(fl validator.FieldLevel) bool {
+		key := fl.Field().String()
+		return key == LogKeyAll || key == LogKeyArgs || key == LogKeyCommand || key == LogKeyOutput || key == LogKeyStorage
+	}); err != nil {
+		logrus.Fatal("failed to register listenerLogKey validator")
+	}
+}
 
 var Validate = validator.New()
 
@@ -220,10 +259,8 @@ func LoadConfig(filename string) (*Config, error) {
 
 	if config.Debug {
 		newDefaults, err := MergeListenerConfig(&ListenerConfig{
-			LogOutput:    boolPtr(true),
-			LogCommand:   boolPtr(true),
-			LogArgs:      boolPtr(true),
-			ReturnOutput: boolPtr(true),
+			Log:    []LogKey{LogKeyAll},
+			Return: []ReturnKey{ReturnKeyAll},
 		}, &config.Defaults)
 		if err != nil {
 			return nil, errors.WithMessage(err, "failed to merge debug config with listener config")
@@ -295,6 +332,7 @@ func getViper(filename string, defaultName string) *viper.Viper {
 	)
 
 	myViper.SetEnvPrefix("GTE")
+	myViper.SetEnvKeyReplacer(strings.NewReplacer("::", "_", "/", "_"))
 	myViper.AutomaticEnv()
 
 	if filename != "" {

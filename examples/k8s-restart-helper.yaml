@@ -89,9 +89,8 @@ spec:
 
                 "/restart/:type/:name":
 
-                  logOutput: true
-                  logArgs: true
-                  returnOutput: true
+                  log: all
+                  return: output
 
                   # Command to run, and list of arguments
                   command: "$KUBECTL"

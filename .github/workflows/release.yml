@@ -32,6 +32,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+          GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
 
       - name: Generate build files
         uses: thatisuday/go-cross-build@v1.0.2

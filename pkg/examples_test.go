@@ -32,12 +32,12 @@ const testTempDir = "../.test"
 
 const expectPrefixError = "error"
 const expectPrefixErrorContains = "error contains"
+const expectPrefixErrorHandlerResult = "error handler result"
 
 // # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
 var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)(?:,(ERR))?] )?curl "http://localhost:7055/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
-var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixError + `|` + expectPrefixErrorContains + `)) (".+)$`)
+var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
 var regexExpectOutput = regexp.MustCompile(`^# Expect (.+)$`)
-var regexStatus = regexp.MustCompile(`(?m)^STATUS:(\d+)$`)
 
 func TestExamples(t *testing.T) {
 	// If we defined any test env file, load it
@@ -132,13 +132,6 @@ func TestExamples(t *testing.T) {
 
 						command := fmt.Sprintf(`curl "http://%s/%s" %s`, addr, path, args)
 
-						var tmpFile string
-						if shouldHaveErr {
-							tmpFile = fmt.Sprintf("%s/test-%d-err.txt", testTempDir, time.Now().UnixNano())
-							command = fmt.Sprintf(`%s -H "X-ERR-FILE: %s"`, command, tmpFile)
-							defer os.Remove(tmpFile)
-						}
-
 						// Generate and run the test go script for the current test case
 						code, err := getCurlToGoCode(command)
 						require.NoErrorf(t, err, "curl to go code: %s", code)
@@ -151,10 +144,9 @@ func TestExamples(t *testing.T) {
 						require.NoErrorf(t, err, "go execution: %v", rawOutput)
 
 						if shouldHaveErr {
-							// Check that there is content in the tmp file
-							c, err := os.ReadFile(tmpFile)
-							require.NoError(t, err)
-							require.NotEmpty(t, c)
+							require.NotNil(t, result.Response.ErrorHandlerResult)
+							require.NotNil(t, result.Response.ErrorHandlerResult.Storage)
+							require.NotEmpty(t, result.Response.ErrorHandlerResult.Storage.Path)
 						}
 
 						t.Log(spew.Sprint("executed go code: %v", result))
@@ -165,11 +157,17 @@ func TestExamples(t *testing.T) {
 							if result.Response.Error != nil {
 								errStr = *result.Response.Error
 							}
+							var errHandlerResult string
+							if result.Response.ErrorHandlerResult != nil {
+								errHandlerResult = result.Response.ErrorHandlerResult.Output
+							}
 							switch expectPrefix {
 							case expectPrefixError:
 								require.EqualValues(t, expect, strings.TrimSpace(errStr))
 							case expectPrefixErrorContains:
 								require.Contains(t, strings.TrimSpace(errStr), expect)
+							case expectPrefixErrorHandlerResult:
+								require.EqualValues(t, expect, strings.TrimSpace(errHandlerResult))
 							case "":
 								require.EqualValues(t, expect, strings.TrimSpace(result.Response.Output))
 							default:
@@ -329,7 +327,7 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 		}
 
 		// NOTE: This is needed for tests to succeed!
-		config.Defaults.ReturnOutput = boolPtr(true)
+		config.Defaults.Return = []ReturnKey{ReturnKeyAll}
 
 		require.NoError(t, Validate.Struct(config))
 		MountRoutes(router, config)

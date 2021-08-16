@@ -73,7 +73,7 @@ listeners:
         - abcd123123123
       queryAuth: true
 
-    returnOutput: true
+    return: output
 
     command: echo
     args:

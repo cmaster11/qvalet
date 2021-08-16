@@ -1,0 +1,45 @@
+# This example shows how to persist all payloads to a storage service
+debug: true
+
+listeners:
+
+  # Store to GCS
+  # Ref: https://beyondstorage.io/docs/go-storage/services/gcs
+  # Test with:
+  #
+  # curl "http://localhost:7055/gcs?query1=hello" -d '{"name":"Mr. Anderson"}' -H 'Content-Type: application/json' -H 'X-Hello: 123'
+  #
+  # and check if the payload, command and output have been written in your bucket!
+  #
+  /gcs:
+    storage:
+      # Replace with your credentials and details
+      # NOTE: you can also replace this value using environment variables, e.g.
+      # GTE_LISTENERS__GCS_STORAGE_CONN=gcs://<bucket_name...
+      conn: 'gcs://<bucket_name>/<work_dir>?credential=file:<absolute_path_to_token_file>&project_id=<google_cloud_project_id>'
+
+      # Store args, command and output
+      store: args,command,output
+      # Also available as
+      # store: all
+
+    command: echo
+    args:
+      - '{{ dump . }}'
+
+  # Store to a local folder
+  # Ref: https://beyondstorage.io/docs/go-storage/services/fs
+  # Test with:
+  #
+  # curl "http://localhost:7055/fs?query1=hello" -d '{"name":"Mr. Anderson"}' -H 'Content-Type: application/json' -H 'X-Hello: 123'
+  #
+  # and check if the payload has been written in your folder!
+  #
+  /fs:
+    storage:
+      conn: 'fs:///tmp/gotoexec_test_dir' # fs:///<path_from_root>
+      store: args
+
+    command: echo
+    args:
+      - '{{ dump . }}'

@@ -21,7 +21,7 @@ listeners:
   /hello/:param1:
 
     # Returns the output of the command in the response
-    returnOutput: true
+    return: output
 
     # Command to run, and list of arguments
     command: bash
