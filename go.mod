@@ -25,6 +25,7 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1
+	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.8.1

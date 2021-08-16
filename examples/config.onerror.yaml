@@ -8,15 +8,16 @@ defaults:
   # This error handler creates a file, which contains an error
   # message.
   errorHandler:
+    storage:
+      conn: 'fs:///tmp/gotoexec-tests'
+      store: output
+      asYaml: true
+
     command: bash
     args:
       - -c
       - |
-        set -e
-        # If a file name has been passed in the original headers, use it to store
-        # an error message, otherwise use a default path.
-        fileName="{{ coalesce (get .args.__gteHeaders "x-err-file") "/tmp/errorHandlerLog" }}"
-        echo "There has been an error!" > "$fileName"
+        echo "There has been an error!"
 
 listeners:
 
@@ -24,6 +25,7 @@ listeners:
   #
   # Test with:
   # [500,ERR] curl "http://localhost:7055/crash"
+  # Expect error handler result "There has been an error!"
   /crash:
 
     # Command to run, and list of arguments

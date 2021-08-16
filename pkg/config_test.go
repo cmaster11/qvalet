@@ -7,11 +7,6 @@ import (
 )
 
 func TestMergeListenerConfig(t *testing.T) {
-	tr := true
-	fa := false
-	pTr := &tr
-	pFa := &fa
-
 	tests := []struct {
 		exp ListenerConfig
 		def ListenerConfig
@@ -29,11 +24,9 @@ func TestMergeListenerConfig(t *testing.T) {
 		{ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{}},
 		{ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}, ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}},
 		{ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}, ListenerConfig{}, ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}},
-		// Bool ptr overwrite
-		{ListenerConfig{LogCommand: pTr}, ListenerConfig{LogCommand: pTr}, ListenerConfig{}},
-		{ListenerConfig{LogCommand: pFa}, ListenerConfig{LogCommand: pTr}, ListenerConfig{LogCommand: pFa}},
-		{ListenerConfig{LogCommand: pTr}, ListenerConfig{}, ListenerConfig{LogCommand: pTr}},
-		{ListenerConfig{LogCommand: pFa}, ListenerConfig{}, ListenerConfig{LogCommand: pFa}},
+		// Log key overwrite
+		{ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{}},
+		{ListenerConfig{Log: []LogKey{LogKeyAll}}, ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{Log: []LogKey{LogKeyAll}}},
 	}
 
 	for idx, test := range tests {

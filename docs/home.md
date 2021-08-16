@@ -96,7 +96,7 @@ You can configure:
 
 Here are all available configuration entries:
 
-[filename](../pkg/config.go ':include :type=code :fragment=config-docs'
+[filename](../pkg/config.go ':include :type=code :fragment=config-docs')
 
 ### Configuration example
 
@@ -167,16 +167,22 @@ To see a real-case example, you can look at the following Slack webhook configur
 
 [filename](../examples/config.slack.yaml ':include :type=code')
 
-## Payload storage
+## Storage
 
-Every listener can be configured to persist the payloads they receive to different services (S3, GCP, azblob, etc…).
+Every listener can be configured to store to different services (S3, GCP, azblob, etc…):
+
+* The payloads they receive, which means the dump of the HTTP request (`args` key).
+* The executed command, its arguments and environment variables (`command` key).
+* The command output (`output` key).
 
 `go-to-exec` uses the amazing [`go-storage`](https://github.com/beyondstorage/go-storage) library,
 which [supports](https://beyondstorage.io/docs/go-storage/services/index) a broad variety of storage
 destinations. `go-to-exec` tries to support all the storage options in the "Stable" category. If you notice there is a
 missing library, please open an [issue](https://github.com/cmaster11/go-to-exec/issues)!
 
-Here is an example, which uses GCS as a storage backend:
+[filename](../pkg/storage.go ':include :type=code :fragment=storage-docs')
+
+Here is an example, which uses GCS and FS (file-system) as a storage backend:
 
 [filename](../examples/config.storage.yaml ':include :type=code')
 
@@ -193,7 +199,7 @@ if the api key is in the list.
 
 Here are all available auth configuration entries:
 
-[filename](../pkg/config.go ':include :type=code :fragment=auth-docs')
+[filename](../pkg/auth.go ':include :type=code :fragment=auth-docs')
 
 ### Basic auth
 

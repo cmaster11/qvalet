@@ -1,15 +1,10 @@
 package pkg
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
-	"github.com/Masterminds/goutils"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -48,8 +43,10 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 }
 
 type ListenerResponse struct {
-	Output string  `json:"output"`
-	Error  *string `json:"error"`
+	*ExecCommandResult
+	Storage            *StorageEntry     `json:"storage,omitempty"`
+	Error              *string           `json:"error,omitempty"`
+	ErrorHandlerResult *ListenerResponse `json:"errorHandlerResult,omitempty"`
 }
 
 var regexListenerRouteCleaner = regexp.MustCompile(`[\W]`)
@@ -123,14 +120,23 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			}
 		}
 
-		if listener.storager != nil && listener.config.Storage.StoreArgs {
+		if listener.storager != nil && listener.config.Storage.StoreArgs() {
 			toStore["args"] = args
 		}
 
 		out, err := listener.ExecCommand(args, toStore)
 		if err != nil {
+			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
+			response := &ListenerResponse{
+				ExecCommandResult: out,
+				Error:             stringPtr(err.Error()),
+			}
+
+			var errorHandlerResult *ListenerResponse
 			if listener.errorHandler != nil {
-				handler := listener.errorHandler
+				errorHandler := listener.errorHandler
+
+				errorHandlerResult = &ListenerResponse{}
 
 				toStoreOnError := make(map[string]interface{})
 
@@ -142,58 +148,64 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 					"args":   args,
 				}
 
-				if listener.storager != nil && listener.config.Storage.StoreArgs {
+				if errorHandler.storager != nil && errorHandler.config.Storage.StoreArgs() {
 					toStoreOnError["args"] = args
 				}
 
-				_, err := handler.ExecCommand(onErrorArgs, toStoreOnError)
+				errorHandlerExecCommandResult, err := errorHandler.ExecCommand(onErrorArgs, toStoreOnError)
+				errorHandlerResult.ExecCommandResult = errorHandlerExecCommandResult
 				if err != nil {
-					handler.log.WithError(err).Error("failed to execute error listener")
+					errorHandlerResult.Error = stringPtr(err.Error())
+					errorHandler.log.WithError(err).Error("failed to execute error listener")
 				} else {
-					handler.log.Info("executed error listener")
+					errorHandler.log.Info("executed error listener")
 				}
 
-				if listener.storager != nil && len(toStoreOnError) > 0 {
-					storePayload(listener, toStoreOnError)
+				if errorHandler.storager != nil && len(toStoreOnError) > 0 {
+					if entry := storePayload(
+						errorHandler,
+						toStoreOnError,
+					); entry != nil {
+						if errorHandler.config.ReturnStorage() {
+							errorHandlerResult.Storage = entry
+						}
+					}
 				}
 
+				toStore["errorHandler"] = toStoreOnError
+				if listener.storager != nil && len(toStore) > 0 {
+					if entry := storePayload(
+						listener,
+						toStore,
+					); entry != nil {
+						if listener.config.ReturnStorage() {
+							response.Storage = entry
+						}
+					}
+				}
+
+				response.ErrorHandlerResult = errorHandlerResult
 			}
 
-			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
-			c.JSON(http.StatusInternalServerError, &ListenerResponse{
-				Output: out,
-				Error:  stringPtr(err.Error()),
-			})
+			c.JSON(http.StatusInternalServerError, response)
 			return
 		}
 
-		if listener.storager != nil && len(toStore) > 0 {
-			storePayload(listener, toStore)
+		response := &ListenerResponse{
+			ExecCommandResult: out,
 		}
 
-		c.JSON(http.StatusOK, &ListenerResponse{
-			Output: out,
-		})
+		if listener.storager != nil && len(toStore) > 0 {
+			if entry := storePayload(
+				listener,
+				toStore,
+			); entry != nil {
+				if listener.config.ReturnStorage() {
+					response.Storage = entry
+				}
+			}
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
-}
-
-func storePayload(listener *CompiledListener, toStore map[string]interface{}) {
-	route := regexListenerRouteCleaner.ReplaceAllString(listener.route, "_")
-	nowNano := time.Now().UnixNano()
-	rand, _ := goutils.RandomAlphaNumeric(8)
-	path := fmt.Sprintf("%s-%d-%s.json", route, nowNano, rand)
-
-	b, err := json.Marshal(toStore)
-	if err != nil {
-		listener.log.WithError(err).Error("failed to marshal payload for storage")
-	}
-
-	size := int64(len(b))
-	_, err = listener.storager.Write(path, bytes.NewBuffer(b), size)
-	if err != nil {
-		listener.log.WithError(err).Error("failed to store payload")
-		return
-	}
-
-	listener.log.WithField("path", path).WithField("size", size).Info("stored payload")
 }
