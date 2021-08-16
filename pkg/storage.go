@@ -21,6 +21,7 @@ import (
 	_ "github.com/beyondstorage/go-service-dropbox/v2"
 	_ "github.com/beyondstorage/go-service-gcs/v2"
 	_ "github.com/beyondstorage/go-service-kodo/v2"
+	_ "github.com/beyondstorage/go-service-oss/v2"
 	_ "github.com/beyondstorage/go-service-qingstor/v3"
 	_ "github.com/beyondstorage/go-service-s3/v2"
 )
@@ -37,12 +38,13 @@ type StorageConfig struct {
 	// - all: store everything
 	// - args: store every request's args
 	// - command: store every request's executed command details, its args and env vars
+	// - env: store every request's executed command env vars
 	// - output: store every executed command result
 	Store []StoreKey `mapstructure:"store" validate:"required,dive,storageStoreKey"`
 
 	// If true, stores the payload as YAML instead of JSON, improving human readability
 	// of the contents
-	AsYAML bool `mapstructure:"asYaml"`
+	AsYAML bool `mapstructure:"asYAML"`
 }
 
 /// [storage-docs]
@@ -54,6 +56,7 @@ const (
 	StoreKeyAll     StoreKey = "all"
 	StoreKeyArgs    StoreKey = "args"
 	StoreKeyCommand StoreKey = "command"
+	StoreKeyEnv     StoreKey = "env"
 	StoreKeyOutput  StoreKey = "output"
 )
 
@@ -72,6 +75,9 @@ func (c *StorageConfig) StoreArgs() bool {
 func (c *StorageConfig) StoreCommand() bool {
 	return storeKeyContains(c.Store, StoreKeyCommand) || storeKeyContains(c.Store, StoreKeyAll)
 }
+func (c *StorageConfig) StoreEnv() bool {
+	return storeKeyContains(c.Store, StoreKeyEnv) || storeKeyContains(c.Store, StoreKeyAll)
+}
 func (c *StorageConfig) StoreOutput() bool {
 	return storeKeyContains(c.Store, StoreKeyOutput) || storeKeyContains(c.Store, StoreKeyAll)
 }
@@ -79,7 +85,7 @@ func (c *StorageConfig) StoreOutput() bool {
 func init() {
 	if err := Validate.RegisterValidation("storageStoreKey", func(fl validator.FieldLevel) bool {
 		key := StoreKey(fl.Field().String())
-		return key == StoreKeyAll || key == StoreKeyArgs || key == StoreKeyCommand || key == StoreKeyOutput
+		return key == StoreKeyAll || key == StoreKeyArgs || key == StoreKeyCommand || key == StoreKeyEnv || key == StoreKeyOutput
 	}); err != nil {
 		logrus.Fatal("failed to register authHeaderMethod validator")
 	}

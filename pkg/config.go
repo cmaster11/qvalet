@@ -58,7 +58,8 @@ type ListenerConfig struct {
 	// What to log? Can be a comma-separated mix of:
 	// - all: log everything
 	// - args: log every request's args
-	// - command: log every request's executed command details, its args and env vars
+	// - command: log every request's executed command details and its args
+	// - env: log every request's executed command env vars
 	// - output: log every executed command result
 	// - storage: log every stored entry details
 	Log []LogKey `mapstructure:"log" validate:"dive,listenerLogKey"`
@@ -66,7 +67,8 @@ type ListenerConfig struct {
 	// What to return in the HTTP response? Can be a comma-separated mix of:
 	// - all: return everything
 	// - args: return every request's args
-	// - command: return every request's executed command details, its args and env vars
+	// - command: return every request's executed command details and its args
+	// - env: return every request's executed command env vars
 	// - output: return every executed command result
 	// - storage: return every stored entry details
 	Return []ReturnKey `mapstructure:"return" validate:"dive,listenerReturnKey"`
@@ -88,6 +90,7 @@ const (
 	ReturnKeyAll     = "all"
 	ReturnKeyArgs    = "args"
 	ReturnKeyCommand = "command"
+	ReturnKeyEnv     = "env"
 	ReturnKeyOutput  = "output"
 	ReturnKeyStorage = "storage"
 )
@@ -107,6 +110,9 @@ func (c *ListenerConfig) ReturnArgs() bool {
 func (c *ListenerConfig) ReturnCommand() bool {
 	return returnKeyContains(c.Return, ReturnKeyCommand) || returnKeyContains(c.Return, ReturnKeyAll)
 }
+func (c *ListenerConfig) ReturnEnv() bool {
+	return returnKeyContains(c.Return, ReturnKeyEnv) || returnKeyContains(c.Return, ReturnKeyAll)
+}
 func (c *ListenerConfig) ReturnOutput() bool {
 	return returnKeyContains(c.Return, ReturnKeyOutput) || returnKeyContains(c.Return, ReturnKeyAll)
 }
@@ -117,7 +123,7 @@ func (c *ListenerConfig) ReturnStorage() bool {
 func init() {
 	if err := Validate.RegisterValidation("listenerReturnKey", func(fl validator.FieldLevel) bool {
 		key := fl.Field().String()
-		return key == ReturnKeyAll || key == ReturnKeyArgs || key == ReturnKeyCommand || key == ReturnKeyOutput || key == ReturnKeyStorage
+		return key == ReturnKeyAll || key == ReturnKeyArgs || key == ReturnKeyCommand || key == ReturnKeyEnv || key == ReturnKeyOutput || key == ReturnKeyStorage
 	}); err != nil {
 		logrus.Fatal("failed to register listenerReturnKey validator")
 	}
@@ -129,6 +135,7 @@ const (
 	LogKeyAll     = "all"
 	LogKeyArgs    = "args"
 	LogKeyCommand = "command"
+	LogKeyEnv     = "env"
 	LogKeyOutput  = "output"
 	LogKeyStorage = "storage"
 )
@@ -148,6 +155,9 @@ func (c *ListenerConfig) LogArgs() bool {
 func (c *ListenerConfig) LogCommand() bool {
 	return logKeyContains(c.Log, LogKeyCommand) || logKeyContains(c.Log, LogKeyAll)
 }
+func (c *ListenerConfig) LogEnv() bool {
+	return logKeyContains(c.Log, LogKeyEnv) || logKeyContains(c.Log, LogKeyAll)
+}
 func (c *ListenerConfig) LogOutput() bool {
 	return logKeyContains(c.Log, LogKeyOutput) || logKeyContains(c.Log, LogKeyAll)
 }
@@ -158,7 +168,7 @@ func (c *ListenerConfig) LogStorage() bool {
 func init() {
 	if err := Validate.RegisterValidation("listenerLogKey", func(fl validator.FieldLevel) bool {
 		key := fl.Field().String()
-		return key == LogKeyAll || key == LogKeyArgs || key == LogKeyCommand || key == LogKeyOutput || key == LogKeyStorage
+		return key == LogKeyAll || key == LogKeyArgs || key == LogKeyCommand || key == LogKeyEnv || key == LogKeyOutput || key == LogKeyStorage
 	}); err != nil {
 		logrus.Fatal("failed to register listenerLogKey validator")
 	}

@@ -38,7 +38,10 @@ listeners:
   /fs:
     storage:
       conn: 'fs:///tmp/gotoexec_test_dir' # fs:///<path_from_root>
-      store: args
+      store: all
+
+      # In this case, store the result in YAML format
+      asYAML: true
 
     command: echo
     args:

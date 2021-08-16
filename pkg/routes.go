@@ -71,7 +71,7 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 		// Add headers to args
 		{
 			headerMap := make(map[string]interface{})
-			for k, _ := range c.Request.Header {
+			for k := range c.Request.Header {
 				headerMap[strings.ToLower(k)] = c.GetHeader(k)
 			}
 			args[keyArgsHeadersKey] = headerMap

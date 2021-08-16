@@ -11,9 +11,10 @@ require (
 	github.com/beyondstorage/go-service-fs/v3 v3.3.0
 	github.com/beyondstorage/go-service-gcs/v2 v2.2.0
 	github.com/beyondstorage/go-service-kodo/v2 v2.2.0
+	github.com/beyondstorage/go-service-oss/v2 v2.3.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.2.0
 	github.com/beyondstorage/go-service-s3/v2 v2.3.0
-	github.com/beyondstorage/go-storage/v4 v4.4.0
+	github.com/beyondstorage/go-storage/v4 v4.4.1-0.20210730075750-6e541b87ea46
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.4.1
@@ -31,3 +32,5 @@ require (
 )
 
 replace github.com/spf13/viper v1.7.1 => github.com/kublr/viper v1.6.3-0.20200316132607-0caa8e000d5b
+
+replace github.com/beyondstorage/go-service-gcs/v2 v2.2.0 => github.com/cmaster11/go-service-gcs/v2 v2.2.1-0.20210816062650-f8d8c7d1c0e1

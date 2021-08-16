@@ -306,11 +306,17 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
 	}
 
-	if l.config.LogCommand() {
+	{
+		logCommandFields := map[string]interface{}{}
+		if l.config.LogCommand() {
+			logCommandFields["command"] = cmdStr
+			logCommandFields["args"] = cmdArgs
+		}
+		if l.config.LogEnv() {
+			logCommandFields["env"] = cmdEnv
+		}
 		log = log.WithFields(logrus.Fields{
-			"command":     cmdStr,
-			"commandArgs": cmdArgs,
-			"commandEnv":  cmdEnv,
+			"command": logCommandFields,
 		})
 	}
 
@@ -319,6 +325,8 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	if l.config.ReturnCommand() {
 		toReturn.Command = cmdStr
 		toReturn.Args = cmdArgs
+	}
+	if l.config.ReturnEnv() {
 		toReturn.Env = cmdEnv
 	}
 
@@ -329,12 +337,17 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		cmd.Env = append(cmd.Env, env)
 	}
 
-	if l.storager != nil && l.config.Storage.StoreCommand() {
-		toStore["command"] = map[string]interface{}{
-			"command": cmdStr,
-			"args":    cmdArgs,
-			"env":     cmd.Env,
+	if l.storager != nil {
+		storeCommandFields := map[string]interface{}{}
+		if l.config.Storage.StoreCommand() {
+			storeCommandFields["command"] = cmdStr
+			storeCommandFields["args"] = cmdArgs
 		}
+		if l.config.Storage.StoreEnv() {
+			storeCommandFields["env"] = cmdEnv
+		}
+
+		toStore["command"] = storeCommandFields
 	}
 
 	out, err := cmd.CombinedOutput()

@@ -49,7 +49,7 @@ func TestExamples(t *testing.T) {
 		}
 	}
 
-	t.Logf("current PATH: %s", os.Getenv("PATH"))
+	// t.Logf("current PATH: %s", os.Getenv("PATH"))
 
 	// Check if we have only a subset of tests to run
 	var toTest []string
