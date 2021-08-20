@@ -25,6 +25,11 @@ type CompiledListener struct {
 
 	route string
 
+	// If this is an error handler, this would be the original route
+	sourceRoute string
+
+	isErrorHandler bool
+
 	tplCmd   *Template
 	tplArgs  []*Template
 	tplEnv   map[string]*Template
@@ -63,6 +68,8 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		listener.config,
 		listener.log,
 		listener.route,
+		listener.sourceRoute,
+		listener.isErrorHandler,
 		tplCmdClone,
 		tplArgsClones,
 		tplEnvClones,
@@ -102,6 +109,11 @@ func compileListener(
 	isErrorHandler bool,
 	storageCache *sync.Map,
 ) *CompiledListener {
+	sourceRoute := route
+	if isErrorHandler {
+		route = fmt.Sprintf("%s-on-error", route)
+	}
+
 	log := logrus.WithField("listener", route)
 
 	listenerConfig, err := MergeListenerConfig(defaults, listenerConfig)
@@ -121,13 +133,15 @@ func compileListener(
 	}
 
 	listener := &CompiledListener{
-		config: listenerConfig,
-		log:    log,
-		route:  route,
+		config:         listenerConfig,
+		log:            log,
+		route:          route,
+		sourceRoute:    sourceRoute,
+		isErrorHandler: isErrorHandler,
 	}
 
 	if listenerConfig.ErrorHandler != nil {
-		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, fmt.Sprintf("%s-on-error", route), true, storageCache)
+		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
 	}
 
 	tplFuncs := template.FuncMap{

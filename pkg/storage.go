@@ -106,14 +106,21 @@ func storePayload(
 ) *StorageEntry {
 	log := listener.log
 
-	routePrefix := regexListenerRouteCleaner.ReplaceAllString(listener.route, "_")
+	refRoute := listener.route
+	suffix := ""
+	if listener.isErrorHandler {
+		refRoute = listener.sourceRoute
+		suffix = "-error"
+	}
+
+	routePrefix := regexListenerRouteCleaner.ReplaceAllString(refRoute, "_")
 	nowMs := time.Now().UnixNano() / int64(time.Millisecond)
 	rand, _ := goutils.RandomAlphaNumeric(8)
 	extension := "json"
 	if listener.config.Storage.AsYAML {
 		extension = "yaml"
 	}
-	path := fmt.Sprintf("%s-%d-%s.%s", routePrefix, nowMs, rand, extension)
+	path := fmt.Sprintf("%s-%d%s-%s.%s", routePrefix, nowMs, suffix, rand, extension)
 
 	var b []byte
 

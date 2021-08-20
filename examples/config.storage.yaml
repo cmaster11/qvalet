@@ -20,8 +20,7 @@ listeners:
 
       # Store args, command and output
       store: args,command,output
-      # Also available as
-      # store: all
+      # Also available: all,env
 
     command: echo
     args:
@@ -46,3 +45,27 @@ listeners:
     command: echo
     args:
       - '{{ dump . }}'
+
+  # Crashes the program and stores the error handler command execution result to a local folder
+  # Ref: https://beyondstorage.io/docs/go-storage/services/fs
+  # Test with:
+  #
+  # [500,ERR] curl "http://localhost:7055/crash?query1=hello"
+  #
+  # and check if in the folder there is now a file with `-error` in its name!
+  /crash:
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Oh no!"
+        exit 1
+
+    errorHandler:
+      command: echo
+      args:
+        - '{{ dump . }}'
+      storage:
+        conn: 'fs:///tmp/gotoexec_test_dir' # fs:///<path_from_root>
+        store: all
+        asYAML: true

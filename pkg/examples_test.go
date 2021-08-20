@@ -224,7 +224,6 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 	if err := ioutil.WriteFile(fileName, []byte(code), 0777); err != nil {
 		return "", nil, err
 	}
-	defer os.Remove(fileName)
 
 	t.Logf("written test go file %s", fileName)
 
@@ -256,6 +255,7 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 	if result.Status != expectedStatus {
 		return string(out), result, errors.New(fmt.Sprintf("bad status code %d", result.Status))
 	}
+	defer os.Remove(fileName)
 
 	return string(out), result, nil
 }
