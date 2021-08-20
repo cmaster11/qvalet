@@ -8,6 +8,7 @@ on:
     tags-ignore:
       - '**'
     paths-ignore:
+      - '.github/dependabot.yml'
       - 'docs/**'
       - 'README'
       - 'LICENSE'
