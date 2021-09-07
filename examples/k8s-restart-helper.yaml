@@ -71,7 +71,7 @@ spec:
             - |
               set -ex
 
-              GOTOEXEC_VERSION="v1.0.6"
+              GOTOEXEC_VERSION="v1.2.3"
 
               GOTOEXEC="/gotoexec"
               KUBECTL="/kubectl"
