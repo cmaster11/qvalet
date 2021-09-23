@@ -36,12 +36,12 @@ curl "http://restart-helper:7055/restart/deployment/a-deployment-name"
 
 Defaults:
 
-[filename](../examples/defaults.echo.yaml ':include :type=code')
+[filename](../examples/defaults.combined.echo.yaml ':include :type=code')
 
 Part 1:
 
-[filename](../examples/config.echo.yaml ':include :type=code')
+[filename](../examples/config.combined.echo.yaml ':include :type=code')
 
 Part 2:
 
-[filename](../examples/config.echo.part2.notest.yaml ':include :type=code')
+[filename](../examples/config.combined.echo.part2.notest.yaml ':include :type=code')

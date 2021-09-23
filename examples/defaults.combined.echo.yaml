@@ -1,0 +1,6 @@
+# This defaults file is to be used together with the `config.combined.echo.yaml` config via:
+#
+# gotoexec -c config.combined.echo.yaml -c config.combined.echo.part2.yaml -f defaults.combined.echo.yaml
+#
+
+command: echo

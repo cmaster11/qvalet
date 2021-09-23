@@ -11,7 +11,8 @@ listeners:
   #
   /temp:
 
-    # Here we define our temporary files
+    # Here we define our temporary file, which will be stored in a temporary path
+    # and deleted after each listener execution
     files:
       tmp1: |
         Hello {{ .name }}!

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"gotoexec/pkg"
+	"gotoexec/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jessevdk/go-flags"
@@ -82,7 +83,7 @@ func main() {
 				config.Defaults = *newDefaults
 			}
 
-			if err := pkg.Validate.Struct(config); err != nil {
+			if err := utils.Validate.Struct(config); err != nil {
 				logrus.WithError(err).Fatalf("failed to validate config")
 			}
 			pkg.MountRoutes(router, config)

@@ -1,0 +1,34 @@
+# All logging enabled
+debug: true
+listeners:
+
+  # Tests the ability to create persistent files
+  #
+  # Test with
+  #
+  # [200] curl "http://localhost:7055/persistent?name=Kitti"
+  # Expect "Hello Kitti!\nHello Kitti!"
+  #
+  # After the test execution, you will be able to see the content at /tmp/gte_listener_persistent_result
+  #
+  # NOTE: using persistent files (with absolute paths), can lead to concurrent writes errors, so
+  # use them ONLY if you know what you're doing!
+  #
+  /persistent:
+
+    # Here we define a persistent file, which you will be able to
+    # inspect after the test execution
+    files:
+      /tmp/gte_listener_persistent_result: |
+        Hello {{ .name }}!
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        set -e
+
+        # Retrieve the file path in different ways
+        cat $GTE_FILES__tmp_gte_listener_persistent_result
+        cat {{ (gte).files._tmp_gte_listener_persistent_result }}
