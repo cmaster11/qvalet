@@ -6,6 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"gotoexec/pkg/plugins"
+	"gotoexec/pkg/utils"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
@@ -79,6 +82,9 @@ type ListenerConfig struct {
 
 	// Storage configuration
 	Storage *StorageConfig `mapstructure:"storage"`
+
+	// List of plugins configurations
+	Plugins []*plugins.PluginEntryConfig `mapstructure:"plugins" validate:"uniquePlugins,dive,required"`
 }
 
 /// [config-docs]
@@ -121,7 +127,7 @@ func (c *ListenerConfig) ReturnStorage() bool {
 }
 
 func init() {
-	if err := Validate.RegisterValidation("listenerReturnKey", func(fl validator.FieldLevel) bool {
+	if err := utils.Validate.RegisterValidation("listenerReturnKey", func(fl validator.FieldLevel) bool {
 		key := fl.Field().String()
 		return key == ReturnKeyAll || key == ReturnKeyArgs || key == ReturnKeyCommand || key == ReturnKeyEnv || key == ReturnKeyOutput || key == ReturnKeyStorage
 	}); err != nil {
@@ -166,7 +172,7 @@ func (c *ListenerConfig) LogStorage() bool {
 }
 
 func init() {
-	if err := Validate.RegisterValidation("listenerLogKey", func(fl validator.FieldLevel) bool {
+	if err := utils.Validate.RegisterValidation("listenerLogKey", func(fl validator.FieldLevel) bool {
 		key := fl.Field().String()
 		return key == LogKeyAll || key == LogKeyArgs || key == LogKeyCommand || key == LogKeyEnv || key == LogKeyOutput || key == LogKeyStorage
 	}); err != nil {
@@ -174,10 +180,8 @@ func init() {
 	}
 }
 
-var Validate = validator.New()
-
 func init() {
-	if err := Validate.RegisterValidation("authHeaderMethod", func(fl validator.FieldLevel) bool {
+	if err := utils.Validate.RegisterValidation("authHeaderMethod", func(fl validator.FieldLevel) bool {
 		method := AuthHeaderMethod(fl.Field().String())
 		switch method {
 		case AuthHeaderMethodNone:

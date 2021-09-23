@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"gotoexec/pkg/utils"
+
 	"github.com/Masterminds/goutils"
 	"github.com/goccy/go-yaml"
 
@@ -83,7 +85,7 @@ func (c *StorageConfig) StoreOutput() bool {
 }
 
 func init() {
-	if err := Validate.RegisterValidation("storageStoreKey", func(fl validator.FieldLevel) bool {
+	if err := utils.Validate.RegisterValidation("storageStoreKey", func(fl validator.FieldLevel) bool {
 		key := StoreKey(fl.Field().String())
 		return key == StoreKeyAll || key == StoreKeyArgs || key == StoreKeyCommand || key == StoreKeyEnv || key == StoreKeyOutput
 	}); err != nil {

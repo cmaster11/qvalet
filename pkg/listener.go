@@ -13,6 +13,9 @@ import (
 	"text/template"
 	"time"
 
+	"gotoexec/pkg/plugins"
+	"gotoexec/pkg/utils"
+
 	"github.com/Masterminds/goutils"
 	"github.com/beyondstorage/go-storage/v4/types"
 	"github.com/pkg/errors"
@@ -41,7 +44,14 @@ type CompiledListener struct {
 	errorHandler *CompiledListener
 
 	// Maps fixed file names to execution-time file names
-	tplTmpFileNames map[string]interface{}
+	tplTmpFileNames              map[string]interface{}
+	tplTmpFileNamesOriginalPaths map[string]interface{}
+
+	plugins []plugins.Plugin
+}
+
+func (listener *CompiledListener) Route() string {
+	return listener.route
 }
 
 const funcMapKeyGTE = "gte"
@@ -79,6 +89,8 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		listener.errorHandler,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
+		map[string]interface{}{},
+		listener.plugins,
 	}
 
 	funcMap := template.FuncMap{
@@ -121,7 +133,7 @@ func compileListener(
 		log.WithError(err).Fatal("failed to merge listener config")
 	}
 
-	if err := Validate.Struct(listenerConfig); err != nil {
+	if err := utils.Validate.Struct(listenerConfig); err != nil {
 		log.WithError(err).Fatal("failed to validate listener config")
 	}
 
@@ -245,6 +257,18 @@ func compileListener(
 	}
 afterStorage:
 
+	// Group all plugins together
+	var listenerPlugins []plugins.Plugin
+	for _, pluginsEntry := range listenerConfig.Plugins {
+		list, err := pluginsEntry.ToPluginList()
+		if err != nil {
+			listener.log.WithError(err).Fatal("failed to initialize plugins list")
+		}
+
+		listenerPlugins = append(listenerPlugins, list...)
+	}
+	listener.plugins = listenerPlugins
+
 	return listener
 }
 
@@ -262,6 +286,19 @@ type ExecCommandResult struct {
 }
 
 func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toStore map[string]interface{}) (*ExecCommandResult, error) {
+	// Execute all pre-hooks
+	for _, plugin := range listener.plugins {
+		_args, err := plugin.HookPreExecute(args)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
+		}
+		args = _args
+	}
+
+	if listener.storager != nil && listener.config.Storage.StoreArgs() {
+		toStore["args"] = args
+	}
+
 	/*
 		Create a new instance of the listener, to handle temporary files.
 
@@ -294,7 +331,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		}
 	}
 
-	if err := l.processTemporaryFiles(args); err != nil {
+	if err := l.processFiles(args); err != nil {
 		err := errors.WithMessage(err, "failed to process temporary files")
 		log.WithError(err).Error("error")
 		return nil, err
@@ -430,19 +467,109 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	return toReturn, nil
 }
 
+func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (interface{}, error) {
+	// Keep track of what to store
+	toStore := make(map[string]interface{})
+
+	out, err := listener.ExecCommand(args, toStore)
+	if err != nil {
+		err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
+		response := &ListenerResponse{
+			ExecCommandResult: out,
+			Error:             stringPtr(err.Error()),
+		}
+
+		var errorHandlerResult *ListenerResponse
+		if listener.errorHandler != nil {
+			errorHandler := listener.errorHandler
+
+			errorHandlerResult = &ListenerResponse{}
+
+			toStoreOnError := make(map[string]interface{})
+
+			// Trigger a command on error
+			onErrorArgs := map[string]interface{}{
+				"route":  listener.route,
+				"error":  err.Error(),
+				"output": out,
+				"args":   args,
+			}
+
+			if errorHandler.storager != nil && errorHandler.config.Storage.StoreArgs() {
+				toStoreOnError["args"] = args
+			}
+
+			errorHandlerExecCommandResult, err := errorHandler.ExecCommand(onErrorArgs, toStoreOnError)
+			errorHandlerResult.ExecCommandResult = errorHandlerExecCommandResult
+			if err != nil {
+				errorHandlerResult.Error = stringPtr(err.Error())
+				errorHandler.log.WithError(err).Error("failed to execute error listener")
+			} else {
+				errorHandler.log.Info("executed error listener")
+			}
+
+			if errorHandler.storager != nil && len(toStoreOnError) > 0 {
+				if entry := storePayload(
+					errorHandler,
+					toStoreOnError,
+				); entry != nil {
+					if errorHandler.config.ReturnStorage() {
+						errorHandlerResult.Storage = entry
+					}
+				}
+			}
+
+			toStore["errorHandler"] = toStoreOnError
+			if listener.storager != nil && len(toStore) > 0 {
+				if entry := storePayload(
+					listener,
+					toStore,
+				); entry != nil {
+					if listener.config.ReturnStorage() {
+						response.Storage = entry
+					}
+				}
+			}
+
+			response.ErrorHandlerResult = errorHandlerResult
+		}
+
+		return response, err
+	}
+
+	response := &ListenerResponse{
+		ExecCommandResult: out,
+	}
+
+	if listener.storager != nil && len(toStore) > 0 {
+		if entry := storePayload(
+			listener,
+			toStore,
+		); entry != nil {
+			if listener.config.ReturnStorage() {
+				response.Storage = entry
+			}
+		}
+	}
+
+	return response, nil
+}
+
 var regexReplaceTemporaryFileName = regexp.MustCompile(`\W`)
 
-// processTemporaryFiles stores temporary files defined in the "files" listener config entry in the right place
-func (listener *CompiledListener) processTemporaryFiles(args map[string]interface{}) error {
+// processFiles stores files defined in the "files" listener config entry in the right place
+func (listener *CompiledListener) processFiles(args map[string]interface{}) error {
 	log := listener.log
 
 	filesDir := ""
 	tplTmpFileNames := make(map[string]interface{})
+	tplTmpFileNamesOriginalPaths := make(map[string]interface{})
 	for key, tpl := range listener.tplFiles {
 		log := log.WithField("file", key)
 
-		filePath := key
-		if !path.IsAbs(filePath) {
+		originalFilePath := key
+		realFilePath := originalFilePath
+		if !path.IsAbs(originalFilePath) {
 			if filesDir == "" {
 				_filesDir, err := os.MkdirTemp("", "gte-")
 				if err != nil {
@@ -452,10 +579,11 @@ func (listener *CompiledListener) processTemporaryFiles(args map[string]interfac
 				}
 				filesDir = _filesDir
 			}
-			filePath = filepath.Join(filesDir, filePath)
+			realFilePath = filepath.Join(filesDir, originalFilePath)
 		}
 		cleanFileName := regexReplaceTemporaryFileName.ReplaceAllString(key, "_")
-		tplTmpFileNames[cleanFileName] = filePath
+		tplTmpFileNames[cleanFileName] = realFilePath
+		tplTmpFileNamesOriginalPaths[cleanFileName] = originalFilePath
 
 		out, err := tpl.Execute(args)
 		if err != nil {
@@ -464,15 +592,16 @@ func (listener *CompiledListener) processTemporaryFiles(args map[string]interfac
 			return err
 		}
 
-		if err := os.WriteFile(filePath, []byte(out), 0777); err != nil {
+		if err := os.WriteFile(realFilePath, []byte(out), 0777); err != nil {
 			err := errors.WithMessage(err, "failed to write file template")
 			log.WithError(err).Error("error")
 			return err
 		}
 
-		log.Debugf("written temporary file %s", filePath)
+		log.Debugf("written temporary file %s at %s", originalFilePath, realFilePath)
 	}
 	listener.tplTmpFileNames = tplTmpFileNames
+	listener.tplTmpFileNamesOriginalPaths = tplTmpFileNamesOriginalPaths
 
 	return nil
 }
@@ -480,14 +609,23 @@ func (listener *CompiledListener) processTemporaryFiles(args map[string]interfac
 func (listener *CompiledListener) cleanTemporaryFiles() {
 	log := listener.log
 
-	for _, filePath := range listener.tplTmpFileNames {
-		log := log.WithField("file", filePath)
+	for key, filePathIntf := range listener.tplTmpFileNamesOriginalPaths {
+		filePath := filePathIntf.(string)
 
-		if err := os.Remove(filePath.(string)); err != nil {
-			err := errors.WithMessage(err, "failed to remove file template")
-			log.WithError(err).Error("error")
+		// Do NOT remove files with absolute paths
+		if path.IsAbs(filePath) {
+			continue
 		}
 
-		log.Debugf("removed temporary file %s", filePath)
+		realPath := listener.tplTmpFileNames[key].(string)
+
+		log := log.WithField("file", realPath)
+
+		if err := os.Remove(realPath); err != nil {
+			err := errors.WithMessage(err, "failed to remove file template")
+			log.WithError(err).Error("error")
+		} else {
+			log.Debugf("removed temporary file %s at %s", filePath, realPath)
+		}
 	}
 }

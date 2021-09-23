@@ -1,0 +1,31 @@
+# This example shows how to load a plugin, in this case the debug plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/hello"
+  # Expect "Hello Mr. Anderson"
+  #
+  /hello:
+    # Returns the output of the command in the response
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello {{ .name }}"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the debug plugin, which will let use merge new args for testing
+      # and will print a log line before the actual execution of a command
+      - debug:
+          prefix: EXAMPLE
+          args:
+            name: Mr. Anderson

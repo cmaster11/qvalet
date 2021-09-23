@@ -1,0 +1,1 @@
+Inspired heavily by https://github.com/deadmanssnitch/snshttp/

@@ -35,6 +35,10 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 			}
 		}
 
+		for _, plugin := range listener.plugins {
+			plugin.MountRoutes(engine, listener.route, listener.HandleRequest)
+		}
+
 		if logrus.IsLevelEnabled(logrus.DebugLevel) {
 			log.WithFields(logrus.Fields{
 				"config": spew.Sdump(listener.config),
@@ -60,9 +64,6 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
-
-		// Keep track of what to store
-		toStore := make(map[string]interface{})
 
 		args := make(map[string]interface{})
 
@@ -123,90 +124,10 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			}
 		}
 
-		if listener.storager != nil && listener.config.Storage.StoreArgs() {
-			toStore["args"] = args
-		}
-
-		out, err := listener.ExecCommand(args, toStore)
+		response, err := listener.HandleRequest(args)
 		if err != nil {
-			err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
-			response := &ListenerResponse{
-				ExecCommandResult: out,
-				Error:             stringPtr(err.Error()),
-			}
-
-			var errorHandlerResult *ListenerResponse
-			if listener.errorHandler != nil {
-				errorHandler := listener.errorHandler
-
-				errorHandlerResult = &ListenerResponse{}
-
-				toStoreOnError := make(map[string]interface{})
-
-				// Trigger a command on error
-				onErrorArgs := map[string]interface{}{
-					"route":  listener.route,
-					"error":  err.Error(),
-					"output": out,
-					"args":   args,
-				}
-
-				if errorHandler.storager != nil && errorHandler.config.Storage.StoreArgs() {
-					toStoreOnError["args"] = args
-				}
-
-				errorHandlerExecCommandResult, err := errorHandler.ExecCommand(onErrorArgs, toStoreOnError)
-				errorHandlerResult.ExecCommandResult = errorHandlerExecCommandResult
-				if err != nil {
-					errorHandlerResult.Error = stringPtr(err.Error())
-					errorHandler.log.WithError(err).Error("failed to execute error listener")
-				} else {
-					errorHandler.log.Info("executed error listener")
-				}
-
-				if errorHandler.storager != nil && len(toStoreOnError) > 0 {
-					if entry := storePayload(
-						errorHandler,
-						toStoreOnError,
-					); entry != nil {
-						if errorHandler.config.ReturnStorage() {
-							errorHandlerResult.Storage = entry
-						}
-					}
-				}
-
-				toStore["errorHandler"] = toStoreOnError
-				if listener.storager != nil && len(toStore) > 0 {
-					if entry := storePayload(
-						listener,
-						toStore,
-					); entry != nil {
-						if listener.config.ReturnStorage() {
-							response.Storage = entry
-						}
-					}
-				}
-
-				response.ErrorHandlerResult = errorHandlerResult
-			}
-
 			c.JSON(http.StatusInternalServerError, response)
 			return
-		}
-
-		response := &ListenerResponse{
-			ExecCommandResult: out,
-		}
-
-		if listener.storager != nil && len(toStore) > 0 {
-			if entry := storePayload(
-				listener,
-				toStore,
-			); entry != nil {
-				if listener.config.ReturnStorage() {
-					response.Storage = entry
-				}
-			}
 		}
 
 		c.JSON(http.StatusOK, response)

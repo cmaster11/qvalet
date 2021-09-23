@@ -127,17 +127,17 @@ can be remapped with `GTE_LISTENERS__HELLO_COMMAND=echo`.
 Notes:
 
 * All environment variables need to be prefixed by `GTE_`.
-* Dynamic entries (where you can define any kind of keys), like the `listeners` map, **need to be
-  defined in the initial config**, before they can be re-mapped using environment variables.
+* Dynamic entries (where you can define any kind of keys), like the `listeners` map, **need to be defined in the initial
+  config**, before they can be re-mapped using environment variables.
 * The environment variable name for a config entry is created by:
     1. Join all the keys' chain with `_`: `listeners_/hello_command`
     2. Replace all non `a-z`, `A-Z`, `0-9`, `_` characters with `_`: `listeners__hello_command`
     3. Turn the whole text to upper-case: `LISTENERS__HELLO_COMMAND`
     4. Prefix with `GTE_`: `GTE_LISTENERS__HELLO_COMMAND`
 
-## Temporary files
+## Local files
 
-You can also define temporary files to be written and used at runtime by creating entries in the `files` list.
+You can also define local files to be written and used at runtime by creating entries in the `files` list.
 
 Example:
 
@@ -145,16 +145,26 @@ Example:
 files:
   tmp1: Hello {{ .name }}
   /opt/tmp2: This is a file in an absolute route!
+
+  my_dump: |
+    Here is the dump of the request:
+
+    {{ dump . }}
 ```
 
 If the key is a relative route, it will be relative to an always-changing temporary location provided by the system (
-e.g. `/tmp/gte-1234`).
+e.g. `/tmp/gte-1234`), and the files will be **temporary**, so they will be deleted after the listener execution.
 
-All temporary files' paths will be accessible also as environment variables (with the `GTE_FILES_` prefix) and template
-vars (under the `(gte).files` map).
+If, instead, the path is an absolute one, the files will be **persistent**, and will NOT be deleted after each call.
+But, **beware** on using persistent files unless you know what you are doing! If there are two concurrent writes to the
+same persistent file, you may end up having errors and/or broken/corrupted data! Use the absolute path approach ONLY if
+you know what you are doing.
+
+All files' paths will be accessible also as environment variables (with the `GTE_FILES_` prefix) and template vars (
+under the `(gte).files` map).
 
 ```
-/tmp/key1 -> GTE_FILES_tmp_key1, {{ (gte).files.tmp_key1 }}
+/tmp/key1 -> GTE_FILES__tmp_key1, {{ (gte).files._tmp_key1 }}
 key2 -> GTE_FILES_key2, {{ (gte).files.tmp_key2 }}
 ```
 

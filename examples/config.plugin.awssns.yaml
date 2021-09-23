@@ -1,0 +1,39 @@
+# This example shows how to load a plugin, in this case the AWS SNS plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  # To test this example, you have to add an AWS SNS subscription, which points to e.g.
+  #
+  # "https://mydomain.me/hello/sns"
+  #
+  # Then, you can send an AWS SNS message and observe the generated file's content at `/tmp/dump_aws_sns_message`.
+  #
+  # NOTE: the AWS SNS plugin will create an `/sns` path to your listener. You have to
+  # use this `/sns` poth to process SNS notifications.
+  /hello:
+
+    files:
+      # AWS SNS messages can be multiline, or contain weird characters.
+      # So, it is safer to dump them in a temporary file instead of just using them directly in a command.
+      /tmp/dump_aws_sns_message: |
+        {{ .Message }}
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo $GTE_FILES__tmp_dump_aws_sns_message
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the AWS SNS plugin, which will add a `/sns` route to our listener.
+      # We can use this added route as a target for an AWS SNS subscription.
+      - awsSNS: {}
+          # We can also define some basic auth to be passed in the SNS subscription URL
+          # basicAuth:
+          #   username: hello
+          #   password: world

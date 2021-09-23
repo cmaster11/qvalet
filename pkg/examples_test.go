@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	"gotoexec/pkg/utils"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -253,7 +255,7 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 	}
 
 	if result.Status != expectedStatus {
-		return string(out), result, errors.New(fmt.Sprintf("bad status code %d", result.Status))
+		return string(out), result, errors.Errorf("bad status code %d", result.Status)
 	}
 	defer os.Remove(fileName)
 
@@ -332,7 +334,7 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 		// NOTE: This is needed for tests to succeed!
 		config.Defaults.Return = []ReturnKey{ReturnKeyAll}
 
-		require.NoError(t, Validate.Struct(config))
+		require.NoError(t, utils.Validate.Struct(config))
 		MountRoutes(router, config)
 	}
 
