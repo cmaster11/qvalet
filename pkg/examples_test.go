@@ -255,6 +255,12 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 
 	_ = json.Unmarshal([]byte(resultRaw.Output), &result.Response)
 
+	if result.Response.ExecCommandResult == nil {
+		result.Response.ExecCommandResult = &ExecCommandResult{
+			Output: resultRaw.Output,
+		}
+	}
+
 	if err != nil {
 		if result.Status == expectedStatus {
 			return string(out), result, nil

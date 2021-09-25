@@ -1,0 +1,53 @@
+# This example shows how to load a plugin, in this case the preview plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/hello?word=Mr.%20Anderson"
+  # Expect "Hello Mr. Anderson"
+  #
+  #
+  # To see the command preview (JSON format) use:
+  #
+  # [200] curl "http://localhost:7055/hello/preview?word=Mr.%20Anderson" -u gte:myPassword
+  # Expect "{\"cmdStr\":\"echo\",\"cmdArgs\":[\"Hello Mr. Anderson\"]}"
+  #
+  #
+  # To see the command preview (YAML format, more readable) use:
+  #
+  # [200] curl "http://localhost:7055/hello/previewYAML?word=Mr.%20Anderson"
+  # Expect "cmdStr: echo\ncmdArgs:\n- Hello Mr. Anderson"
+  #
+  # NOTE that we defined the path `/previewYAML` in the plugin configuration.
+  #
+  /hello:
+    # Returns the output of the command in the response
+    return: output
+
+    # Command to run, and list of arguments
+    command: echo
+    args:
+      - "Hello {{ .word }}"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the preview plugin, which will append a `/preview` route to the
+      # listener, and you can use this route to preview the command which will be executed.
+      - preview:
+          # A separate authentication method can be applied for the preview plugin
+          auth:
+            - apiKeys:
+                - myPassword
+              basicAuth: true
+
+      # We can also add another preview path, which in this case will print the result as YAML.
+      - preview:
+          # The generated path can be customized
+          path: /previewYAML
+
+          # When true, the output will be human-friendly, YAML-formatted.
+          asYAML: true

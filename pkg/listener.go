@@ -51,12 +51,8 @@ type CompiledListener struct {
 	plugins []Plugin
 }
 
-func (listener *CompiledListener) Route() string {
-	return listener.route
-}
-
 func (listener *CompiledListener) Logger() logrus.FieldLogger {
-	return logrus.WithField("listener", listener.Route())
+	return logrus.WithField("listener", listener.route)
 }
 
 const funcMapKeyGTE = "gte"
@@ -297,105 +293,30 @@ func (listener *CompiledListener) TplFuncMap() template.FuncMap {
 // @formatter:off
 /// [exec-command-result]
 type ExecCommandResult struct {
-	Command string   `json:"command,omitempty"`
-	Args    []string `json:"args,omitempty"`
-	Env     []string `json:"env,omitempty"`
-	Output  string   `json:"output,omitempty"`
+	Command string   `json:"command,omitempty" yaml:"command,omitempty"`
+	Args    []string `json:"args,omitempty" yaml:"args,omitempty"`
+	Env     []string `json:"env,omitempty" yaml:"env,omitempty"`
+	Output  string   `json:"output,omitempty" yaml:"output,omitempty"`
 }
 
 /// [exec-command-result]
 // @formatter:on
 
 func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toStore map[string]interface{}) (*ExecCommandResult, error) {
-	// Execute all pre-hooks
-	for _, plugin := range listener.plugins {
-		if plugin, ok := plugin.(PluginHookPreExecute); ok {
-			_args, err := plugin.HookPreExecute(args)
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
-			}
-			args = _args
-		}
-	}
-
-	if listener.storager != nil && listener.config.Storage.StoreArgs() {
-		toStore["args"] = args
-	}
-
-	/*
-		Create a new instance of the listener, to handle temporary files.
-
-		On every new run, we store files in different temporary folders, and we need to populate
-		the "files" map of the template with different values, which means pointing the "gte" function
-		to a different listener!
-	*/
 	log := listener.log
 
-	if listener.config.LogArgs() {
-		log = log.WithField("args", args)
+	preparedExecutionResult, err := listener.prepareExecution(args, toStore)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to prepare command execution")
 	}
 
-	if listener.config.Trigger != nil {
-		// The listener has a trigger condition, so evaluate it
-		isTrue, err := listener.config.Trigger.IsTrue(args)
-		if err != nil {
-			err := errors.WithMessage(err, "failed to evaluate listener trigger condition")
-			log.WithError(err).Error("error")
-			return nil, err
-		}
-
-		if !isTrue {
-			// All good, do nothing
-			return &ExecCommandResult{
-				Output: "not triggered",
-			}, nil
-		}
+	if preparedExecutionResult.HandledResult != nil {
+		return preparedExecutionResult.HandledResult, nil
 	}
 
-	if err := listener.processFiles(args); err != nil {
-		err := errors.WithMessage(err, "failed to process temporary files")
-		log.WithError(err).Error("error")
-		return nil, err
-	}
-
-	var cmdStr string
-	{
-		out, err := listener.tplCmd.Execute(args)
-		if err != nil {
-			err := errors.WithMessage(err, "failed to execute command template")
-			log.WithError(err).Error("error")
-			return nil, err
-		}
-		cmdStr = out
-	}
-
-	var cmdArgs []string
-	for _, tpl := range listener.tplArgs {
-		out, err := tpl.Execute(args)
-		if err != nil {
-			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
-			log.WithError(err).Error("error")
-			return nil, err
-		}
-		cmdArgs = append(cmdArgs, out)
-	}
-
-	var cmdEnv []string
-	for key, tpl := range listener.tplEnv {
-		out, err := tpl.Execute(args)
-		if err != nil {
-			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
-			log.WithError(err).Error("error")
-			return nil, err
-		}
-		// For env vars, we need to remove any new lines
-		out = strings.ReplaceAll(out, "\n", "")
-		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, out))
-	}
-
-	for cleanPath, realPath := range listener.tplTmpFileNames {
-		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
-	}
+	cmdStr := preparedExecutionResult.CmdStr
+	cmdArgs := preparedExecutionResult.CmdArgs
+	cmdEnv := preparedExecutionResult.CmdEnv
 
 	{
 		logCommandFields := map[string]interface{}{}
@@ -487,10 +408,116 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	return toReturn, nil
 }
 
+type preparedExecutionResult struct {
+	CmdStr  string   `json:"cmdStr,omitempty" yaml:"cmdStr,omitempty"`
+	CmdArgs []string `json:"cmdArgs,omitempty" yaml:"cmdArgs,omitempty"`
+	CmdEnv  []string `json:"cmdEnv,omitempty" yaml:"cmdEnv,omitempty"`
+
+	HandledResult *ExecCommandResult `json:"handledResult,omitempty" yaml:"handledResult,omitempty"`
+}
+
+func (listener *CompiledListener) prepareExecution(args map[string]interface{}, toStore map[string]interface{}) (*preparedExecutionResult, error) {
+	// Execute all pre-hooks
+	for _, plugin := range listener.plugins {
+		if plugin, ok := plugin.(PluginHookPreExecute); ok {
+			_args, err := plugin.HookPreExecute(args)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
+			}
+			args = _args
+		}
+	}
+
+	if listener.storager != nil && listener.config.Storage.StoreArgs() {
+		toStore["args"] = args
+	}
+
+	log := listener.log
+
+	if listener.config.LogArgs() {
+		log = log.WithField("args", args)
+	}
+
+	if listener.config.Trigger != nil {
+		// The listener has a trigger condition, so evaluate it
+		isTrue, err := listener.config.Trigger.IsTrue(args)
+		if err != nil {
+			err := errors.WithMessage(err, "failed to evaluate listener trigger condition")
+			log.WithError(err).Error("error")
+			return nil, err
+		}
+
+		if !isTrue {
+			// All good, do nothing
+			return &preparedExecutionResult{
+				HandledResult: &ExecCommandResult{
+					Output: "not triggered",
+				}}, nil
+		}
+	}
+
+	if err := listener.processFiles(args); err != nil {
+		err := errors.WithMessage(err, "failed to process temporary files")
+		log.WithError(err).Error("error")
+		return nil, err
+	}
+
+	var cmdStr string
+	{
+		out, err := listener.tplCmd.Execute(args)
+		if err != nil {
+			err := errors.WithMessage(err, "failed to execute command template")
+			log.WithError(err).Error("error")
+			return nil, err
+		}
+		cmdStr = out
+	}
+
+	var cmdArgs []string
+	for _, tpl := range listener.tplArgs {
+		out, err := tpl.Execute(args)
+		if err != nil {
+			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
+			log.WithError(err).Error("error")
+			return nil, err
+		}
+		cmdArgs = append(cmdArgs, out)
+	}
+
+	var cmdEnv []string
+	for key, tpl := range listener.tplEnv {
+		out, err := tpl.Execute(args)
+		if err != nil {
+			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
+			log.WithError(err).Error("error")
+			return nil, err
+		}
+		// For env vars, we need to remove any new lines
+		out = strings.ReplaceAll(out, "\n", "")
+		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, out))
+	}
+
+	for cleanPath, realPath := range listener.tplTmpFileNames {
+		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
+	}
+	return &preparedExecutionResult{
+		CmdStr:  cmdStr,
+		CmdArgs: cmdArgs,
+		CmdEnv:  cmdEnv,
+	}, nil
+}
+
 func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error) {
 	// Keep track of what to store
 	toStore := make(map[string]interface{})
 
+	/*
+		Create a new instance of the listener, to handle temporary files.
+
+		On every new run, we store files in different temporary folders, and we need to populate
+		the "files" map of the template with different values, which means pointing the "gte" function
+		to a different listener!
+	*/
 	l := listener.clone()
 
 	out, err := l.ExecCommand(args, toStore)

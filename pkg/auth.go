@@ -65,8 +65,8 @@ const (
 /// [auth-docs]
 // @formatter:on
 
-func verifyAuth(c *gin.Context, listener *CompiledListener) error {
-	if len(listener.config.Auth) == 0 {
+func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
+	if len(authConfigs) == 0 {
 		return nil
 	}
 
@@ -76,7 +76,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 	// Cache the body data, if needed
 	var bodyData []byte
 
-	for _, auth := range listener.config.Auth {
+	for _, auth := range authConfigs {
 
 		// Basic HTTP authentication
 		if auth.BasicAuth {
