@@ -38,6 +38,7 @@ jobs:
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
           GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
 
+      # Run at the end, since it exports GOROOT and can break the Run Tests step
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
