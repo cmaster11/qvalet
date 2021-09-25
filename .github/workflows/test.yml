@@ -28,7 +28,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -37,6 +37,11 @@ jobs:
 
       - name: Run AWS SNS test
         run: bash ./hack/test-awssns/upload.sh
+        env:
+          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SCP_HOST: ${{ secrets.SCP_HOST }}
+          SSH_KEY_BASE64: ${{ secrets.SSH_KEY_BASE64 }}
 
       - name: Run tests
         uses: ./.github/actions/test
