@@ -59,7 +59,7 @@ listeners:
       - httpResponse:
           statusCode: |
             {{ if eq .__gteResult.Output "Redirect me!" }}
-            301
+            302
             {{ end }}
           headers:
             # Here we define the redirect location.
