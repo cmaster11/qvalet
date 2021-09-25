@@ -3,6 +3,7 @@ package pkg
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/Masterminds/goutils"
 	"github.com/beyondstorage/go-storage/v4/types"
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -77,6 +79,11 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		tplFilesClones[key] = clone
 	}
 
+	var errorHandler *CompiledListener
+	if listener.errorHandler != nil {
+		errorHandler = listener.errorHandler.clone()
+	}
+
 	newListener := &CompiledListener{
 		listener.config,
 		listener.log,
@@ -89,23 +96,21 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		tplFilesClones,
 		listener.storager,
 		listener.storagePrefix,
-		listener.errorHandler,
+		errorHandler,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
 		map[string]interface{}{},
 		[]Plugin{},
 	}
 
-	var newPLugins []Plugin
+	var newPlugins []Plugin
 	for _, p := range listener.plugins {
-		newPLugins = append(newPLugins, p.Clone(newListener))
+		newPlugins = append(newPlugins, p.Clone(newListener))
 	}
-
-	funcMap := template.FuncMap{
-		funcMapKeyGTE: newListener.tplGTE,
-	}
+	newListener.plugins = newPlugins
 
 	// Replace the gte function in all cloned templates
+	funcMap := newListener.TplFuncMap()
 	newListener.tplCmd.Funcs(funcMap)
 	for _, tpl := range newListener.tplArgs {
 		tpl.Funcs(funcMap)
@@ -324,17 +329,15 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		the "files" map of the template with different values, which means pointing the "gte" function
 		to a different listener!
 	*/
-	l := listener.clone()
+	log := listener.log
 
-	log := l.log
-
-	if l.config.LogArgs() {
+	if listener.config.LogArgs() {
 		log = log.WithField("args", args)
 	}
 
-	if l.config.Trigger != nil {
+	if listener.config.Trigger != nil {
 		// The listener has a trigger condition, so evaluate it
-		isTrue, err := l.config.Trigger.IsTrue(args)
+		isTrue, err := listener.config.Trigger.IsTrue(args)
 		if err != nil {
 			err := errors.WithMessage(err, "failed to evaluate listener trigger condition")
 			log.WithError(err).Error("error")
@@ -349,16 +352,15 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		}
 	}
 
-	if err := l.processFiles(args); err != nil {
+	if err := listener.processFiles(args); err != nil {
 		err := errors.WithMessage(err, "failed to process temporary files")
 		log.WithError(err).Error("error")
 		return nil, err
 	}
-	defer l.cleanTemporaryFiles()
 
 	var cmdStr string
 	{
-		out, err := l.tplCmd.Execute(args)
+		out, err := listener.tplCmd.Execute(args)
 		if err != nil {
 			err := errors.WithMessage(err, "failed to execute command template")
 			log.WithError(err).Error("error")
@@ -368,7 +370,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	}
 
 	var cmdArgs []string
-	for _, tpl := range l.tplArgs {
+	for _, tpl := range listener.tplArgs {
 		out, err := tpl.Execute(args)
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
@@ -379,7 +381,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	}
 
 	var cmdEnv []string
-	for key, tpl := range l.tplEnv {
+	for key, tpl := range listener.tplEnv {
 		out, err := tpl.Execute(args)
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
@@ -391,17 +393,17 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		cmdEnv = append(cmdEnv, fmt.Sprintf("%s=%s", key, out))
 	}
 
-	for cleanPath, realPath := range l.tplTmpFileNames {
+	for cleanPath, realPath := range listener.tplTmpFileNames {
 		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
 	}
 
 	{
 		logCommandFields := map[string]interface{}{}
-		if l.config.LogCommand() {
+		if listener.config.LogCommand() {
 			logCommandFields["command"] = cmdStr
 			logCommandFields["args"] = cmdArgs
 		}
-		if l.config.LogEnv() {
+		if listener.config.LogEnv() {
 			logCommandFields["env"] = cmdEnv
 		}
 		if len(logCommandFields) > 0 {
@@ -413,11 +415,11 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 
 	toReturn := &ExecCommandResult{}
 
-	if l.config.ReturnCommand() {
+	if listener.config.ReturnCommand() {
 		toReturn.Command = cmdStr
 		toReturn.Args = cmdArgs
 	}
-	if l.config.ReturnEnv() {
+	if listener.config.ReturnEnv() {
 		toReturn.Env = cmdEnv
 	}
 
@@ -428,13 +430,13 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		cmd.Env = append(cmd.Env, env)
 	}
 
-	if l.storager != nil {
+	if listener.storager != nil {
 		storeCommandFields := map[string]interface{}{}
-		if l.config.Storage.StoreCommand() {
+		if listener.config.Storage.StoreCommand() {
 			storeCommandFields["command"] = cmdStr
 			storeCommandFields["args"] = cmdArgs
 		}
-		if l.config.Storage.StoreEnv() {
+		if listener.config.Storage.StoreEnv() {
 			storeCommandFields["env"] = cmdEnv
 		}
 
@@ -446,16 +448,16 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	out, err := cmd.CombinedOutput()
 	outStr := string(out)
 
-	if l.storager != nil && l.config.Storage.StoreOutput() {
+	if listener.storager != nil && listener.config.Storage.StoreOutput() {
 		toStore["output"] = outStr
 	}
 
-	if l.config.ReturnOutput() {
+	if listener.config.ReturnOutput() {
 		toReturn.Output = outStr
 	}
 
 	if err != nil {
-		if l.storager != nil && l.config.Storage.StoreOutput() {
+		if listener.storager != nil && listener.config.Storage.StoreOutput() {
 			toStore["error"] = err.Error()
 		}
 
@@ -463,7 +465,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		err := errors.WithMessage(err, msg)
 
 		log := log
-		if l.config.LogOutput() {
+		if listener.config.LogOutput() {
 			log = log.WithField("output", outStr)
 		}
 
@@ -472,11 +474,11 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 		return toReturn, err
 	}
 
-	if l.config.LogOutput() {
+	if listener.config.LogOutput() {
 		log = log.WithField("output", outStr)
 	}
 
-	if !l.config.ReturnOutput() {
+	if !listener.config.ReturnOutput() {
 		toReturn.Output = "success"
 	}
 
@@ -485,29 +487,31 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	return toReturn, nil
 }
 
-func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (*ListenerResponse, error) {
+func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error) {
 	// Keep track of what to store
 	toStore := make(map[string]interface{})
 
-	out, err := listener.ExecCommand(args, toStore)
+	l := listener.clone()
+
+	out, err := l.ExecCommand(args, toStore)
+	defer l.cleanTemporaryFiles()
 	if err != nil {
-		err := errors.WithMessagef(err, "failed to execute listener %s", listener.route)
+		err := errors.WithMessagef(err, "failed to execute listener %s", l.route)
 		response := &ListenerResponse{
 			ExecCommandResult: out,
 			Error:             stringPtr(err.Error()),
 		}
 
 		var errorHandlerResult *ListenerResponse
-		if listener.errorHandler != nil {
-			errorHandler := listener.errorHandler
-
+		if l.errorHandler != nil {
+			errorHandler := l.errorHandler
 			errorHandlerResult = &ListenerResponse{}
 
 			toStoreOnError := make(map[string]interface{})
 
 			// Trigger a command on error
 			onErrorArgs := map[string]interface{}{
-				"route":  listener.route,
+				"route":  l.route,
 				"error":  err.Error(),
 				"output": out,
 				"args":   args,
@@ -518,6 +522,7 @@ func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (*L
 			}
 
 			errorHandlerExecCommandResult, err := errorHandler.ExecCommand(onErrorArgs, toStoreOnError)
+			defer errorHandler.cleanTemporaryFiles()
 			errorHandlerResult.ExecCommandResult = errorHandlerExecCommandResult
 			if err != nil {
 				errorHandlerResult.Error = stringPtr(err.Error())
@@ -538,12 +543,12 @@ func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (*L
 			}
 
 			toStore["errorHandler"] = toStoreOnError
-			if listener.storager != nil && len(toStore) > 0 {
+			if l.storager != nil && len(toStore) > 0 {
 				if entry := storePayload(
-					listener,
+					l,
 					toStore,
 				); entry != nil {
-					if listener.config.ReturnStorage() {
+					if l.config.ReturnStorage() {
 						response.Storage = entry
 					}
 				}
@@ -552,25 +557,38 @@ func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (*L
 			response.ErrorHandlerResult = errorHandlerResult
 		}
 
-		return response, err
+		return false, response, err
 	}
 
 	response := &ListenerResponse{
 		ExecCommandResult: out,
 	}
 
-	if listener.storager != nil && len(toStore) > 0 {
+	if l.storager != nil && len(toStore) > 0 {
 		if entry := storePayload(
 			listener,
 			toStore,
 		); entry != nil {
-			if listener.config.ReturnStorage() {
+			if l.config.ReturnStorage() {
 				response.Storage = entry
 			}
 		}
 	}
 
-	return response, nil
+	for _, plugin := range l.plugins {
+		if p, ok := plugin.(PluginHookOutput); ok {
+			handled, err := p.HookOutput(c, args, response)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errors.WithMessage(err, "failed to process output via plugin"))
+				return true, response, err
+			}
+			if handled {
+				return true, response, nil
+			}
+		}
+	}
+
+	return false, response, nil
 }
 
 var regexReplaceTemporaryFileName = regexp.MustCompile(`\W`)

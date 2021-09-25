@@ -69,8 +69,12 @@ error, there will be a standard response.
 
 [filename](../pkg/plugin_http_response.go ':include :type=code :fragment=config')
 
-### Example
+### Examples
 
 This is an example on how to use the HTTP response plugin:
 
 [filename](../examples/config.plugin.httpresponse.yaml ':include :type=code')
+
+And, another example, which makes use of temporary files to store a redirection target:
+
+[filename](../examples/config.plugin.httpresponse-file.yaml ':include :type=code')

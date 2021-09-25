@@ -1,10 +1,12 @@
 package pkg
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 var _ PluginHookPreExecute = (*PluginDebug)(nil)
+var _ PluginHookOutput = (*PluginDebug)(nil)
 var _ PluginConfig = (*PluginDebugConfig)(nil)
 
 type PluginDebugConfig struct {
@@ -49,4 +51,9 @@ func (p *PluginDebug) HookPreExecute(args map[string]interface{}) (map[string]in
 	logrus.WithField("args", args).Warnf("[%s] PRE-EXECUTE", p.config.Prefix)
 
 	return args, nil
+}
+
+func (p *PluginDebug) HookOutput(c *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error) {
+	logrus.WithField("args", args).WithField("listenerResponse", listenerResponse).Warnf("[%s] OUTPUT", p.config.Prefix)
+	return false, nil
 }

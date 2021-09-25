@@ -17,7 +17,7 @@ type Plugin interface {
 
 type PluginHookMountRoutes interface {
 	// Called on initialization, allows plugins to mount additional routes
-	HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (*ListenerResponse, error))
+	HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error))
 }
 
 type PluginHookPreExecute interface {

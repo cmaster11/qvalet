@@ -1,0 +1,51 @@
+# This example shows how to load a plugin, in this case the HTTP Response plugin, which will
+# redirect you to another listener by fetching the redirect URL from a file we'll write to during
+# the execution of the request.
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/redirect" -L
+  # Expect "Hello!"
+  #
+  /redirect:
+    # Returns the output of the command in the response
+    return: output
+
+    # We initialize a temporary file to store the redirection target.
+    # NOTE we'll overwrite the contents of this file later
+    files:
+      tmp1: |
+        PLACEHOLDER
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        # Here we write an URL to the temporary file, and we'll
+        # use this URL while returning a new Location header, to perform the
+        # redirection to the next listener.
+        echo "/redirectTarget" > $GTE_FILES_tmp1
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the HTTP response plugin, and use it to set a custom redirect header.
+      # NOTE that empty headers will be ignored
+      - httpResponse:
+          statusCode: '302'
+          headers:
+            # We get the location address from the temporary file we previously wrote to
+            Location: |
+              {{ fileReadToString (gte).files.tmp1 }}
+
+  # This is the target of the previous redirect example
+  /redirectTarget:
+    return: output
+    command: echo
+    args:
+      - Hello!

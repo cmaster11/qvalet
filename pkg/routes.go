@@ -131,23 +131,13 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			}
 		}
 
-		response, err := listener.HandleRequest(args)
+		ctxHandled, response, err := listener.HandleRequest(c, args)
+		if ctxHandled {
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, response)
 			return
-		}
-
-		for _, plugin := range listener.plugins {
-			if p, ok := plugin.(PluginHookOutput); ok {
-				handled, err := p.HookOutput(c, args, response)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, errors.WithMessage(err, "failed to process output via plugin"))
-					return
-				}
-				if handled {
-					return
-				}
-			}
 		}
 
 		c.JSON(http.StatusOK, response)
