@@ -16,9 +16,9 @@ SSH_KEY=$(mktemp)
 # Path to the root of SSH keys&co
 DEV_SSH_ROOT="${DEV_SSH_ROOT:-.}"
 AWS_PROFILE="${AWS_PROFILE:-default}"
-AWS_SNS_ARN=${AWS_SNS_ARN:-$(cat "$DEV_SSH_ROOT/aws/gte-test-sns-arn.generated")}
-AWS_REGION=${AWS_REGION:-$(cat "$DEV_SSH_ROOT/aws/aws-region.generated")}
-SCP_HOST=${SCP_HOST:-$(cat "$DEV_SSH_ROOT/digitalocean/host-$HOST_NAME")}
+AWS_SNS_ARN=${AWS_SNS_ARN:-$(cat "$DEV_SSH_ROOT/aws/gte-test-sns-arn.generated" || true)}
+AWS_REGION=${AWS_REGION:-$(cat "$DEV_SSH_ROOT/aws/aws-region.generated" || true)}
+SCP_HOST=${SCP_HOST:-$(cat "$DEV_SSH_ROOT/digitalocean/host-$HOST_NAME" || true)}
 COPY_BIN="${COPY_BIN:-true}"
 
 AWS="aws --region $AWS_REGION"
