@@ -19,7 +19,6 @@ EOF
 ```
 
 And, on a separate terminal, run:
-``
 
 ```
 curl "http://localhost:7055/hello" -d name=Rose
