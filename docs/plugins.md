@@ -29,14 +29,26 @@ My message is: {{ .Message }}
 
 All the available SNS notification arguments are defined in the following struct:
 
-[filename](../pkg/plugins/snshttp/notification.go ':include :type=code :fragment=sns-notification')
+[filename](../pkg/snshttp/notification.go ':include :type=code :fragment=sns-notification')
 
 ### Configuration
 
-[filename](../pkg/plugins/aws_sns.go ':include :type=code :fragment=config')
+[filename](../pkg/plugin_aws_sns.go ':include :type=code :fragment=config')
 
 ### Example
 
 This is an example on how to use the AWS SNS plugin:
 
 [filename](../examples/config.plugin.awssns.yaml ':include :type=code')
+
+## HTTP response
+
+### Configuration
+
+[filename](../pkg/plugin_http_response.go ':include :type=code :fragment=config')
+
+### Example
+
+This is an example on how to use the HTTP response plugin:
+
+[filename](../examples/config.plugin.httpresponse.yaml ':include :type=code')

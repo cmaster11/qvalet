@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"gotoexec/pkg/plugins"
 	"gotoexec/pkg/utils"
 
 	"github.com/davecgh/go-spew/spew"
@@ -69,11 +68,11 @@ type ListenerConfig struct {
 
 	// What to return in the HTTP response? Can be a comma-separated mix of:
 	// - all: return everything
-	// - args: return every request's args
-	// - command: return every request's executed command details and its args
-	// - env: return every request's executed command env vars
-	// - output: return every executed command result
-	// - storage: return every stored entry details
+	// - args: return the request's args
+	// - command: return the request's executed command details and its args
+	// - env: return the request's executed command env vars
+	// - output: return the executed command result
+	// - storage: return the stored entry details
 	Return []ReturnKey `mapstructure:"return" validate:"dive,listenerReturnKey"`
 
 	// If defined, triggers a command whenever an error is raised in
@@ -84,7 +83,7 @@ type ListenerConfig struct {
 	Storage *StorageConfig `mapstructure:"storage"`
 
 	// List of plugins configurations
-	Plugins []*plugins.PluginEntryConfig `mapstructure:"plugins" validate:"uniquePlugins,dive,required"`
+	Plugins []*PluginEntryConfig `mapstructure:"plugins" validate:"uniquePlugins,dive,required"`
 }
 
 /// [config-docs]

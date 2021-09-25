@@ -1,4 +1,4 @@
-package plugins
+package pkg
 
 import (
 	"reflect"
@@ -12,19 +12,30 @@ import (
 )
 
 type Plugin interface {
-	// Called on initialization, allows plugins to mount additional routes
-	MountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (interface{}, error))
+	Clone(newListener *CompiledListener) Plugin
+}
 
+type PluginHookMountRoutes interface {
+	// Called on initialization, allows plugins to mount additional routes
+	HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (*ListenerResponse, error))
+}
+
+type PluginHookPreExecute interface {
 	// Called at runtime, before listener execution, allows alteration of args
 	HookPreExecute(args map[string]interface{}) (map[string]interface{}, error)
 }
 
+type PluginHookOutput interface {
+	// Called at runtime, after listener successful execution, allows alteration of output
+	HookOutput(c *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error)
+}
+
 type PluginConfig interface {
-	// If true, a plugin cannot be declared more than one time for a listener
+	// If true, a plugin cannot be declared more than once for a listener
 	IsUnique() bool
 
 	// Instantiates the plugin related to this config
-	NewPlugin() (Plugin, error)
+	NewPlugin(listener *CompiledListener) (Plugin, error)
 }
 
 type PluginEntryConfig struct {
@@ -32,11 +43,14 @@ type PluginEntryConfig struct {
 	// AWS SNS plugin, to auto-confirm AWS SNS subscriptions and handle SNS notifications
 	AWSSNS *PluginAWSSNSConfig `mapstructure:"awsSNS"`
 
+	// HTTP response plugin, to alter HTTP response headers, status code, etc...
+	HTTPResponse *PluginHTTPResponseConfig `mapstructure:"httpResponse"`
+
 	// Debug plugin, for testing
 	Debug *PluginDebugConfig `mapstructure:"debug"`
 }
 
-func (config *PluginEntryConfig) ToPluginList() ([]Plugin, error) {
+func (config *PluginEntryConfig) ToPluginList(listener *CompiledListener) ([]Plugin, error) {
 	var plugins []Plugin
 
 	configEntry := reflect.ValueOf(config).Elem()
@@ -50,7 +64,7 @@ func (config *PluginEntryConfig) ToPluginList() ([]Plugin, error) {
 			return nil, errors.New("failed to cast plugin entry field to PluginConfig")
 		}
 
-		plugin, err := configField.NewPlugin()
+		plugin, err := configField.NewPlugin(listener)
 		if err != nil {
 			return nil, errors.WithMessage(err, "failed to initialize plugin")
 		}

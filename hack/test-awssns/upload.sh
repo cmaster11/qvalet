@@ -9,15 +9,19 @@ if [[ -n "${DEBUG:-}" ]]; then
   set -x
 fi
 
+# Where/how do we deploy the binary?
+HOST_NAME="do-1"
+SSH_KEY=$(mktemp)
+
 # Path to the root of SSH keys&co
-DEV_SSH_ROOT="$DEV_SSH_ROOT"
-AWS_PROFILE="$AWS_PROFILE"
-SNS_ARN=$(cat "$DEV_SSH_ROOT/aws/gte-test-sns-arn.generated")
-AWS_REGION=$(cat "$DEV_SSH_ROOT/aws/aws-region.generated")
+DEV_SSH_ROOT="${DEV_SSH_ROOT:-.}"
+AWS_PROFILE="${AWS_PROFILE:-default}"
+AWS_SNS_ARN=${AWS_SNS_ARN:-$(cat "$DEV_SSH_ROOT/aws/gte-test-sns-arn.generated")}
+AWS_REGION=${AWS_REGION:-$(cat "$DEV_SSH_ROOT/aws/aws-region.generated")}
+SCP_HOST=${SCP_HOST:-$(cat "$DEV_SSH_ROOT/digitalocean/host-$HOST_NAME")}
+COPY_BIN="${COPY_BIN:-true}"
 
 AWS="aws --region $AWS_REGION"
-
-COPY_BIN="${COPY_BIN:-true}"
 
 # Testing steps:
 # 1. Compile the binary
@@ -26,10 +30,17 @@ COPY_BIN="${COPY_BIN:-true}"
 # 4. Test an AWS SNS message
 # 5. Cleanup
 
-# Where/how do we deploy the binary?
-HOST="do-1"
-SCP_HOST=$(cat "$DEV_SSH_ROOT/digitalocean/host-$HOST")
-SCP_KEY=$(mktemp)
+SSH_KEY_BASE64=${SSH_KEY_BASE64:-}
+if [[ -n "$SSH_KEY_BASE64" ]]; then
+  echo "Using private key from env..."
+  echo "$SSH_KEY_BASE64" | base64 -d > "$SSH_KEY"
+else
+  echo "Extracting private key..."
+  sops -d --extract '["ssh"]["private"]' "$DEV_SSH_ROOT/ssh/$HOST_NAME.yaml" > "$SSH_KEY"
+fi
+
+SSH="ssh -t -o IdentitiesOnly=yes -i $SSH_KEY $SCP_HOST -l root"
+SCP="scp -i $SSH_KEY"
 
 SUBSCRIPTION_ARN=""
 
@@ -37,17 +48,12 @@ SUBSCRIPTION_ARN=""
 trap cleanup err exit
 cleanup() {
   echo "Cleaning up..."
-  rm -f "$SCP_KEY" || true
+  rm -f "$SSH_KEY" || true
 
   if [[ -n "$SUBSCRIPTION_ARN" ]]; then
     $AWS sns unsubscribe --subscription-arn "$SUBSCRIPTION_ARN" || true
   fi
 }
-
-(
-  echo "Extracting private key..."
-  sops -d --extract '["ssh"]["private"]' "$DEV_SSH_ROOT/ssh/$HOST.yaml" >"$SCP_KEY"
-)
 
 if [[ "$COPY_BIN" == "true" ]]; then
   # Build the temporary binary to a temporary place
@@ -61,20 +67,20 @@ if [[ "$COPY_BIN" == "true" ]]; then
 
   echo "Copying binary..."
   # Stop any service
-  "$DEV_SSH_ROOT/digitalocean/ssh-host-$HOST.sh" -- "systemctl stop gte"
-  scp -i "$SCP_KEY" "$TMP_BIN" "root@$SCP_HOST:/var/gte/gotoexec"
+  $SSH -- "systemctl stop gte"
+  $SCP "$TMP_BIN" "root@$SCP_HOST:/var/gte/gotoexec"
 fi
 
 echo "Restarting service..."
-scp -i "$SCP_KEY" "$DIR/../../examples/config.plugin.awssns.yaml" "root@$SCP_HOST:/var/gte/config.plugin.awssns.yaml"
-scp -i "$SCP_KEY" "$DIR/gte.service" "root@$SCP_HOST:/etc/systemd/system/gte.service"
+$SCP "$DIR/../../examples/config.plugin.awssns.yaml" "root@$SCP_HOST:/var/gte/config.plugin.awssns.yaml"
+$SCP "$DIR/gte.service" "root@$SCP_HOST:/etc/systemd/system/gte.service"
 
 # Restart the service
-"$DEV_SSH_ROOT/digitalocean/ssh-host-$HOST.sh" -- "systemctl daemon-reload && systemctl enable gte && systemctl restart gte"
+$SSH -- "systemctl daemon-reload && systemctl enable gte && systemctl restart gte"
 
 # On error, show logs
-"$DEV_SSH_ROOT/digitalocean/ssh-host-$HOST.sh" -- "systemctl --no-pager -l status gte" || {
-  "$DEV_SSH_ROOT/digitalocean/ssh-host-$HOST.sh" -- "journalctl -u gte"
+$SSH -- "systemctl --no-pager -l status gte" || {
+  $SSH -- "journalctl -u gte"
   exit 1
 }
 
@@ -82,7 +88,7 @@ echo "Creating SNS subscription..."
 # Create an SNS subscription
 SNS_RESULT=$(
   $AWS sns subscribe \
-    --topic-arn "$SNS_ARN" \
+    --topic-arn "$AWS_SNS_ARN" \
     --protocol http \
     --notification-endpoint "http://$SCP_HOST:7055/hello/sns" \
     --return-subscription-arn
@@ -116,12 +122,12 @@ echo "Testing SNS subscription..."
 DATE=$(date +%s%N)
 FILENAME="/tmp/dump_aws_sns_message"
 
-$AWS sns publish --topic-arn "$SNS_ARN" \
+$AWS sns publish --topic-arn "$AWS_SNS_ARN" \
   --message "$DATE"
 
 sleep 1
 
-RESULT=$("$DEV_SSH_ROOT/digitalocean/ssh-host-$HOST.sh" -- "cat $FILENAME")
+RESULT=$($SSH -- "cat $FILENAME")
 
 if [[ "$(echo "$RESULT" | tr -d '\r')" != "$DATE" ]]; then
   echo "Bad result in dump file!"
