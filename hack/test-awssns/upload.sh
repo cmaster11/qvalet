@@ -40,7 +40,7 @@ else
   sops -d --extract '["ssh"]["private"]' "$DEV_SSH_ROOT/ssh/$HOST_NAME.yaml" > "$SSH_KEY"
 fi
 
-SSH="ssh -t -o IdentitiesOnly=yes -i $SSH_KEY $SCP_HOST -l root"
+SSH="ssh -t -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -i $SSH_KEY $SCP_HOST -l root"
 SCP="scp -i $SSH_KEY"
 
 SUBSCRIPTION_ARN=""
