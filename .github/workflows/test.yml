@@ -30,10 +30,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Run tests
+        uses: ./.github/actions/test
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+          GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
+
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '^1.16'
+          go-version: '~1.16'
 
       - name: Run AWS SNS test
         run: bash ./hack/test-awssns/upload.sh
@@ -42,11 +50,3 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SCP_HOST: ${{ secrets.SCP_HOST }}
           SSH_KEY_BASE64: ${{ secrets.SSH_KEY_BASE64 }}
-
-      - name: Run tests
-        uses: ./.github/actions/test
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
-          GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
