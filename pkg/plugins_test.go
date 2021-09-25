@@ -1,4 +1,4 @@
-package plugins
+package pkg
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ type PluginTestUniqueConfig struct {
 	Name string `mapstructure:"name"`
 }
 
-func (c *PluginTestUniqueConfig) NewPlugin() (Plugin, error) {
+func (c *PluginTestUniqueConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
 	panic("not implemented")
 }
 

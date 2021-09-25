@@ -1,0 +1,78 @@
+# This example shows how to load a plugin, in this case the HTTP Response plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # [467] curl "http://localhost:7055/statusCodeExample?code=467"
+  # Expect "Hello, I have a custom status code!"
+  #
+  /statusCodeExample:
+    # Returns the output of the command in the response
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello, I have a custom status code!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the http response plugin, and use it to set a custom status code,
+      # which we are getting directly from the request payload (in this example, in the URL query).
+      - httpResponse:
+          statusCode: '{{ .code }}'
+
+  # One way to use the HTTP response plugin, is altering HTTP headers. This means
+  # that you can e.g. cause an HTTP redirect to another page, depending on the result
+  # of your executed command.
+  #
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/redirect" -L
+  # Expect "Hello!"
+  #
+  /redirect:
+    # Returns the output of the command in the response.
+    # In this example, this flag is needed so that the HTTP response plugin can observe the
+    # command result, to evaluate if to redirect or not.
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        # -n prevents echoing a new line
+        echo -n "Redirect me!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the HTTP response plugin, and use it to set a custom redirect header.
+      # NOTE that empty headers will be ignored.
+      - httpResponse:
+          statusCode: |
+            {{ if eq .__gteResult.Output "Redirect me!" }}
+            301
+            {{ end }}
+          headers:
+            # Here we define the redirect location.
+            # This will point to the listener defined below.
+            # NOTE that you can use relative or absolute URLs in the location header.
+            Location: |
+              {{ if eq .__gteResult.Output "Redirect me!" }}
+              /redirectTarget
+              {{ end }}
+
+  # This is the target of the previous redirect example
+  /redirectTarget:
+    return: output
+    command: echo
+    args:
+      - Hello!

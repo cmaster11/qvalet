@@ -1,9 +1,9 @@
-package plugins
+package pkg
 
 import (
 	"fmt"
 
-	"gotoexec/pkg/plugins/snshttp"
+	snshttp2 "gotoexec/pkg/snshttp"
 	"gotoexec/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +11,7 @@ import (
 )
 
 var _ Plugin = (*PluginAWSSNS)(nil)
+var _ PluginHookMountRoutes = (*PluginAWSSNS)(nil)
 var _ PluginConfig = (*PluginAWSSNSConfig)(nil)
 
 // @formatter:off
@@ -30,7 +31,7 @@ type PluginAWSSNSConfigBasicAuth struct {
 /// [config]
 // @formatter:on
 
-func (c *PluginAWSSNSConfig) NewPlugin() (Plugin, error) {
+func (c *PluginAWSSNSConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
 	return NewPluginAWSSNS(c), nil
 }
 
@@ -40,21 +41,21 @@ func (c *PluginAWSSNSConfig) IsUnique() bool {
 
 type PluginAWSSNS struct {
 	config     *PluginAWSSNSConfig
-	snsHandler *snshttp.SNSHandler
+	snsHandler *snshttp2.SNSHandler
 }
 
-func (p *PluginAWSSNS) HookPreExecute(args map[string]interface{}) (map[string]interface{}, error) {
-	return args, nil
+func (p *PluginAWSSNS) Clone(newListener *CompiledListener) Plugin {
+	return p
 }
 
 func NewPluginAWSSNS(config *PluginAWSSNSConfig) *PluginAWSSNS {
-	var options []snshttp.Option
+	var options []snshttp2.Option
 
 	if config.BasicAuth != nil {
-		options = append(options, snshttp.WithAuthentication(config.BasicAuth.Username, config.BasicAuth.Password))
+		options = append(options, snshttp2.WithAuthentication(config.BasicAuth.Username, config.BasicAuth.Password))
 	}
 
-	snsHandler := snshttp.NewSNSHTTPHandler(options...)
+	snsHandler := snshttp2.NewSNSHTTPHandler(options...)
 
 	plugin := &PluginAWSSNS{
 		config:     config,
@@ -64,8 +65,8 @@ func NewPluginAWSSNS(config *PluginAWSSNSConfig) *PluginAWSSNS {
 	return plugin
 }
 
-func (p *PluginAWSSNS) MountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (interface{}, error)) {
-	engine.POST(fmt.Sprintf("%s/sns", listenerRoute), p.snsHandler.GetSNSRequestHandler(func(c *gin.Context, notification *snshttp.SNSNotification) error {
+func (p *PluginAWSSNS) HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (*ListenerResponse, error)) {
+	engine.POST(fmt.Sprintf("%s/sns", listenerRoute), p.snsHandler.GetSNSRequestHandler(func(c *gin.Context, notification *snshttp2.SNSNotification) error {
 
 		args := make(map[string]interface{})
 		if err := utils.DecodeStructJSONToMap(notification, &args); err != nil {

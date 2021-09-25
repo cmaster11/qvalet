@@ -13,7 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"gotoexec/pkg/plugins"
 	"gotoexec/pkg/utils"
 
 	"github.com/Masterminds/goutils"
@@ -47,11 +46,15 @@ type CompiledListener struct {
 	tplTmpFileNames              map[string]interface{}
 	tplTmpFileNamesOriginalPaths map[string]interface{}
 
-	plugins []plugins.Plugin
+	plugins []Plugin
 }
 
 func (listener *CompiledListener) Route() string {
 	return listener.route
+}
+
+func (listener *CompiledListener) Logger() logrus.FieldLogger {
+	return logrus.WithField("listener", listener.Route())
 }
 
 const funcMapKeyGTE = "gte"
@@ -90,7 +93,12 @@ func (listener *CompiledListener) clone() *CompiledListener {
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
 		map[string]interface{}{},
-		listener.plugins,
+		[]Plugin{},
+	}
+
+	var newPLugins []Plugin
+	for _, p := range listener.plugins {
+		newPLugins = append(newPLugins, p.Clone(newListener))
 	}
 
 	funcMap := template.FuncMap{
@@ -156,10 +164,7 @@ func compileListener(
 		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
 	}
 
-	tplFuncs := template.FuncMap{
-		// Added here to make tpls parse, but will be overwritten on clone
-		funcMapKeyGTE: listener.tplGTE,
-	}
+	tplFuncs := listener.TplFuncMap()
 
 	// Creates a unique tmp directory where to store the files
 	{
@@ -258,9 +263,9 @@ func compileListener(
 afterStorage:
 
 	// Group all plugins together
-	var listenerPlugins []plugins.Plugin
+	var listenerPlugins []Plugin
 	for _, pluginsEntry := range listenerConfig.Plugins {
-		list, err := pluginsEntry.ToPluginList()
+		list, err := pluginsEntry.ToPluginList(listener)
 		if err != nil {
 			listener.log.WithError(err).Fatal("failed to initialize plugins list")
 		}
@@ -277,7 +282,15 @@ func (listener *CompiledListener) tplGTE() map[string]interface{} {
 		"files": listener.tplTmpFileNames,
 	}
 }
+func (listener *CompiledListener) TplFuncMap() template.FuncMap {
+	return template.FuncMap{
+		// Added here to make tpls parse, but will be overwritten on clone
+		funcMapKeyGTE: listener.tplGTE,
+	}
+}
 
+// @formatter:off
+/// [exec-command-result]
 type ExecCommandResult struct {
 	Command string   `json:"command,omitempty"`
 	Args    []string `json:"args,omitempty"`
@@ -285,14 +298,19 @@ type ExecCommandResult struct {
 	Output  string   `json:"output,omitempty"`
 }
 
+/// [exec-command-result]
+// @formatter:on
+
 func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toStore map[string]interface{}) (*ExecCommandResult, error) {
 	// Execute all pre-hooks
 	for _, plugin := range listener.plugins {
-		_args, err := plugin.HookPreExecute(args)
-		if err != nil {
-			return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
+		if plugin, ok := plugin.(PluginHookPreExecute); ok {
+			_args, err := plugin.HookPreExecute(args)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
+			}
+			args = _args
 		}
-		args = _args
 	}
 
 	if listener.storager != nil && listener.config.Storage.StoreArgs() {
@@ -467,7 +485,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	return toReturn, nil
 }
 
-func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (interface{}, error) {
+func (listener *CompiledListener) HandleRequest(args map[string]interface{}) (*ListenerResponse, error) {
 	// Keep track of what to store
 	toStore := make(map[string]interface{})
 

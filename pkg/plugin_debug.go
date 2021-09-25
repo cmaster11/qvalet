@@ -1,11 +1,10 @@
-package plugins
+package pkg
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-var _ Plugin = (*PluginDebug)(nil)
+var _ PluginHookPreExecute = (*PluginDebug)(nil)
 var _ PluginConfig = (*PluginDebugConfig)(nil)
 
 type PluginDebugConfig struct {
@@ -17,7 +16,7 @@ type PluginDebugConfig struct {
 	Args map[string]interface{} `mapstructure:"args"`
 }
 
-func (c *PluginDebugConfig) NewPlugin() (Plugin, error) {
+func (c *PluginDebugConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
 	return NewPluginDebug(c), nil
 }
 
@@ -29,16 +28,16 @@ type PluginDebug struct {
 	config *PluginDebugConfig
 }
 
+func (p *PluginDebug) Clone(newListener *CompiledListener) Plugin {
+	return p
+}
+
 func NewPluginDebug(config *PluginDebugConfig) *PluginDebug {
 	plugin := &PluginDebug{
 		config: config,
 	}
 
 	return plugin
-}
-
-func (p *PluginDebug) MountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(args map[string]interface{}) (interface{}, error)) {
-	// NOOP for this plugin
 }
 
 func (p *PluginDebug) HookPreExecute(args map[string]interface{}) (map[string]interface{}, error) {

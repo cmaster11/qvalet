@@ -36,7 +36,9 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 		}
 
 		for _, plugin := range listener.plugins {
-			plugin.MountRoutes(engine, listener.route, listener.HandleRequest)
+			if plugin, ok := plugin.(PluginHookMountRoutes); ok {
+				plugin.HookMountRoutes(engine, listener.route, listener.HandleRequest)
+			}
 		}
 
 		if logrus.IsLevelEnabled(logrus.DebugLevel) {
@@ -49,12 +51,17 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 	}
 }
 
+// @formatter:off
+/// [listener-response]
 type ListenerResponse struct {
 	*ExecCommandResult
 	Storage            *StorageEntry     `json:"storage,omitempty"`
 	Error              *string           `json:"error,omitempty"`
 	ErrorHandlerResult *ListenerResponse `json:"errorHandlerResult,omitempty"`
 }
+
+/// [listener-response]
+// @formatter:on
 
 var regexListenerRouteCleaner = regexp.MustCompile(`[\W]`)
 
@@ -128,6 +135,19 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, response)
 			return
+		}
+
+		for _, plugin := range listener.plugins {
+			if p, ok := plugin.(PluginHookOutput); ok {
+				handled, err := p.HookOutput(c, args, response)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, errors.WithMessage(err, "failed to process output via plugin"))
+					return
+				}
+				if handled {
+					return
+				}
+			}
 		}
 
 		c.JSON(http.StatusOK, response)

@@ -22,6 +22,14 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
+      # Test AWS SNS
+      - name: Configure AWS credentials from test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Run tests
         uses: ./.github/actions/test
         env:
@@ -29,3 +37,17 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
           GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
+
+      # Run at the end, since it exports GOROOT and can break the Run Tests step
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '~1.16'
+
+      - name: Run AWS SNS test
+        run: bash ./hack/test-awssns/upload.sh
+        env:
+          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SCP_HOST: ${{ secrets.SCP_HOST }}
+          SSH_KEY_BASE64: ${{ secrets.SSH_KEY_BASE64 }}

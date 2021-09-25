@@ -32,12 +32,16 @@ const examplesDir = "../examples"
 const curlToGoInit = "curlToGoInit.js"
 const testTempDir = "../.test"
 
+const optionErr = "ERR"
+
 const expectPrefixError = "error"
 const expectPrefixErrorContains = "error contains"
 const expectPrefixErrorHandlerResult = "error handler result"
 
+const localHost = "http://localhost:7055"
+
 // # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
-var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)(?:,(ERR))?] )?curl "http://localhost:7055/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
+var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)((?:,` + optionErr + `)+)?] )?curl "` + localHost + `/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
 var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
 var regexExpectOutput = regexp.MustCompile(`^# Expect (.+)$`)
 
@@ -81,6 +85,8 @@ func TestExamples(t *testing.T) {
 
 			t.Logf("running at %s", addr)
 
+			newHost := fmt.Sprintf("http://%s", addr)
+
 			/*
 				Read the file to find testing cases
 			*/
@@ -98,10 +104,13 @@ func TestExamples(t *testing.T) {
 						match := regexTestCase.FindStringSubmatch(testCase)
 
 						statusCodeStr := match[1]
-						shouldHaveErr := match[2] == "ERR"
+						options := match[2]
 						path := match[3]
 						args := match[4]
 						expectString := match[5]
+
+						optionsList := strings.Split(options, ",")
+						optionShouldHaveError := utils.StringSliceContains(optionsList, optionErr)
 
 						var expectPrefix = ""
 						var expect = ""
@@ -132,7 +141,7 @@ func TestExamples(t *testing.T) {
 
 						t.Logf("executing test case %s", testCase)
 
-						command := fmt.Sprintf(`curl "http://%s/%s" %s`, addr, path, args)
+						command := fmt.Sprintf(`curl "%s/%s" %s`, newHost, path, args)
 
 						// Generate and run the test go script for the current test case
 						code, err := getCurlToGoCode(command)
@@ -145,7 +154,7 @@ func TestExamples(t *testing.T) {
 						rawOutput, result, err := execGoTest(t, code, int(statusCode))
 						require.NoErrorf(t, err, "go execution: %v", rawOutput)
 
-						if shouldHaveErr {
+						if optionShouldHaveError {
 							require.NotNil(t, result.Response.ErrorHandlerResult)
 							require.NotNil(t, result.Response.ErrorHandlerResult.Storage)
 							require.NotEmpty(t, result.Response.ErrorHandlerResult.Storage.Path)
@@ -274,12 +283,15 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 
 	// We need to pre-read the config file, to find out if we need to
 	// e.g. use a defaults file too
-	content, err := ioutil.ReadFile(configPath)
+	contentBytes, err := ioutil.ReadFile(configPath)
 	require.NoError(t, err)
+
+	content := string(contentBytes)
+
 	var defaults *ListenerConfig
 	{
 		// Find the FIRST defaults
-		if match := regexDefaults.FindStringSubmatch(string(content)); match != nil {
+		if match := regexDefaults.FindStringSubmatch(content); match != nil {
 			filename := match[1]
 			if !path.IsAbs(filename) {
 				// Take the file name relative to the config
@@ -302,7 +314,7 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 
 	// Also, check for additional configs to load
 	{
-		if lines := regexPart.FindAllStringSubmatch(string(content), -1); lines != nil {
+		if lines := regexPart.FindAllStringSubmatch(content, -1); lines != nil {
 			for _, match := range lines {
 				filename := match[1]
 				if !path.IsAbs(filename) {
