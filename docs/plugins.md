@@ -99,6 +99,10 @@ args:
   - Hello Mr. Anderson
 ```
 
+**SIDE EFFECTS:** when using [temporary/persistent files](./home.md#local-files), the preview plugin will **write** to
+these files in order to compute the command preview. This can lead to side effects, especially if you are using
+persistent files.
+
 ### Configuration
 
 [filename](../pkg/plugin_preview.go ':include :type=code :fragment=config')
