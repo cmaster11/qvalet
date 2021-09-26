@@ -65,15 +65,15 @@ func NewPluginAWSSNS(config *PluginAWSSNSConfig) *PluginAWSSNS {
 	return plugin
 }
 
-func (p *PluginAWSSNS) HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error)) {
-	engine.POST(fmt.Sprintf("%s/sns", listenerRoute), p.snsHandler.GetSNSRequestHandler(func(c *gin.Context, notification *snshttp2.SNSNotification) error {
+func (p *PluginAWSSNS) HookMountRoutes(engine *gin.Engine, listener *CompiledListener) {
+	engine.POST(fmt.Sprintf("%s/sns", listener.route), p.snsHandler.GetSNSRequestHandler(func(c *gin.Context, notification *snshttp2.SNSNotification) error {
 
 		args := make(map[string]interface{})
 		if err := utils.DecodeStructJSONToMap(notification, &args); err != nil {
 			return errors.WithMessage(err, "failed to decode sns notification struct to map")
 		}
 
-		_, _, err := listenerHandler(c, args)
+		_, _, err := listener.HandleRequest(c, args)
 		return err
 	}))
 }

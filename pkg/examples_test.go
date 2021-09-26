@@ -29,11 +29,13 @@ import (
 
 const hackDir = "../hack"
 const examplesDir = "../examples"
+const examplesEnvDir = "../test/examples"
 const curlToGoInit = "curlToGoInit.js"
 const testTempDir = "../.test"
 
 const optionErr = "ERR"
 
+const expectPrefixRaw = "raw"
 const expectPrefixError = "error"
 const expectPrefixErrorContains = "error contains"
 const expectPrefixErrorHandlerResult = "error handler result"
@@ -42,7 +44,7 @@ const localHost = "http://localhost:7055"
 
 // # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
 var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)((?:,` + optionErr + `)+)?] )?curl "` + localHost + `/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
-var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
+var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixRaw + `|` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
 var regexExpectOutput = regexp.MustCompile(`^# Expect (.+)$`)
 
 func TestExamples(t *testing.T) {
@@ -75,6 +77,38 @@ func TestExamples(t *testing.T) {
 	require.NoError(t, err)
 	for _, examplePath := range examplesFiles {
 		t.Run(fmt.Sprintf("example-%s", examplePath), func(t *testing.T) {
+			// Load any test-specific env vars
+			{
+				envFile := fmt.Sprintf("%s%s.env", examplesEnvDir, strings.Replace(examplePath, examplesDir, "", -1))
+				t.Logf("checking env vars for test: %s", envFile)
+				if _, err := os.Stat(envFile); err == nil {
+					// Load env vars for this test
+					file, err := os.Open(envFile)
+					require.NoError(t, err)
+					defer file.Close()
+
+					envMap, err := godotenv.Parse(file)
+					require.NoError(t, err)
+
+					t.Logf("loaded env vars for test: %+v", envMap)
+
+					// Save and restore later the env vars loaded here
+					saved := make(map[string]string)
+					for key, val := range envMap {
+						oldVal := os.Getenv(key)
+						saved[key] = oldVal
+						os.Setenv(key, val)
+					}
+
+					// Restore at the end of the test
+					defer func() {
+						for key, val := range saved {
+							os.Setenv(key, val)
+						}
+					}()
+				}
+			}
+
 			listener, _ := net.Listen("tcp", ":0")
 
 			router := loadGTE(t, examplePath, listener)
@@ -105,7 +139,7 @@ func TestExamples(t *testing.T) {
 
 						statusCodeStr := match[1]
 						options := match[2]
-						path := match[3]
+						listenerPath := match[3]
 						args := match[4]
 						expectString := match[5]
 
@@ -141,7 +175,7 @@ func TestExamples(t *testing.T) {
 
 						t.Logf("executing test case %s", testCase)
 
-						command := fmt.Sprintf(`curl "%s/%s" %s`, newHost, path, args)
+						command := fmt.Sprintf(`curl "%s/%s" %s`, newHost, listenerPath, args)
 
 						// Generate and run the test go script for the current test case
 						code, err := getCurlToGoCode(command)
@@ -173,6 +207,8 @@ func TestExamples(t *testing.T) {
 								errHandlerResult = result.Response.ErrorHandlerResult.Output
 							}
 							switch expectPrefix {
+							case expectPrefixRaw:
+								require.EqualValues(t, expect, strings.TrimSpace(rawOutput))
 							case expectPrefixError:
 								require.EqualValues(t, expect, strings.TrimSpace(errStr))
 							case expectPrefixErrorContains:
@@ -255,20 +291,26 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 
 	_ = json.Unmarshal([]byte(resultRaw.Output), &result.Response)
 
+	if result.Response.ExecCommandResult == nil {
+		result.Response.ExecCommandResult = &ExecCommandResult{
+			Output: resultRaw.Output,
+		}
+	}
+
 	if err != nil {
 		if result.Status == expectedStatus {
-			return string(out), result, nil
+			return resultRaw.Output, result, nil
 		}
 
-		return string(out), result, err
+		return resultRaw.Output, result, err
 	}
 
 	if result.Status != expectedStatus {
-		return string(out), result, errors.Errorf("bad status code %d", result.Status)
+		return resultRaw.Output, result, errors.Errorf("bad status code %d", result.Status)
 	}
 	defer os.Remove(fileName)
 
-	return string(out), result, nil
+	return resultRaw.Output, result, nil
 }
 
 var regexDefaults = regexp.MustCompile(`\[DEFAULTS=([^]]+)]`)

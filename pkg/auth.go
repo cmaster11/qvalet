@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 
+	"gotoexec/pkg/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 )
@@ -15,8 +17,14 @@ import (
 /// [auth-docs]
 
 type AuthConfig struct {
-	// Api keys for this auth type
-	ApiKeys []string `mapstructure:"apiKeys" validate:"required"`
+	// Api keys for this auth type.
+	// Each api key can also be loaded from the environment variables, by
+	// using the syntax `ENV{ENV_VAR_NAME}`, e.g.
+	//
+	// apiKeys:
+	// 	 - ENV{MY_PASSWORD}
+	//
+	ApiKeys []*utils.StringFromEnvVar `mapstructure:"apiKeys" validate:"required"`
 
 	// If true, allows basic HTTP authentication
 	BasicAuth bool `mapstructure:"basicAuth"`
@@ -65,8 +73,8 @@ const (
 /// [auth-docs]
 // @formatter:on
 
-func verifyAuth(c *gin.Context, listener *CompiledListener) error {
-	if len(listener.config.Auth) == 0 {
+func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
+	if len(authConfigs) == 0 {
 		return nil
 	}
 
@@ -76,7 +84,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 	// Cache the body data, if needed
 	var bodyData []byte
 
-	for _, auth := range listener.config.Auth {
+	for _, auth := range authConfigs {
 
 		// Basic HTTP authentication
 		if auth.BasicAuth {
@@ -89,7 +97,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 			if username, password, ok := c.Request.BasicAuth(); ok {
 				if username == authUser {
 					for _, apiKey := range auth.ApiKeys {
-						if password == apiKey {
+						if password == apiKey.Value() {
 							found = true
 							goto afterAuth
 						}
@@ -106,7 +114,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 			}
 			apiKeyQuery := c.Query(queryKey)
 			for _, apiKey := range auth.ApiKeys {
-				if apiKeyQuery == apiKey {
+				if apiKeyQuery == apiKey.Value() {
 					found = true
 					goto afterAuth
 				}
@@ -130,7 +138,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 
 					switch authHeader.Method {
 					case AuthHeaderMethodNone:
-						isValid = headerValue == apiKey
+						isValid = headerValue == apiKey.Value()
 					case AuthHeaderMethodHMACSHA256:
 						if bodyData == nil {
 							data, err := c.GetRawData()
@@ -142,7 +150,7 @@ func verifyAuth(c *gin.Context, listener *CompiledListener) error {
 							c.Request.Body = ioutil.NopCloser(bytes.NewReader(data))
 						}
 
-						hmacValue := authHMACSHA256(bodyData, apiKey)
+						hmacValue := authHMACSHA256(bodyData, apiKey.Value())
 						isValid = headerValue == hmacValue
 					default:
 						return errors.New("bad header auth method")

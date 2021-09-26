@@ -17,7 +17,7 @@ type Plugin interface {
 
 type PluginHookMountRoutes interface {
 	// Called on initialization, allows plugins to mount additional routes
-	HookMountRoutes(engine *gin.Engine, listenerRoute string, listenerHandler func(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error))
+	HookMountRoutes(engine *gin.Engine, listener *CompiledListener)
 }
 
 type PluginHookPreExecute interface {
@@ -45,6 +45,11 @@ type PluginEntryConfig struct {
 
 	// HTTP response plugin, to alter HTTP response headers, status code, etc...
 	HTTPResponse *PluginHTTPResponseConfig `mapstructure:"httpResponse"`
+
+	// Preview plugin, used to preview the command which will be executed
+	Preview *PluginPreviewConfig `mapstructure:"preview"`
+
+	// ---
 
 	// Debug plugin, for testing
 	Debug *PluginDebugConfig `mapstructure:"debug"`

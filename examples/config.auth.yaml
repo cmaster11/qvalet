@@ -32,6 +32,34 @@ listeners:
       - echo "Hello basic!"
   ### [docs-basic-auth]
 
+  ### [docs-basic-auth-env]
+  # Tests basic HTTP authentication using environment variables to store the api key.
+  #
+  # Run the example with env vars:
+  #
+  # EXAMPLE_AUTH_BASIC_ENV_APIKEY=helloBasicEnv
+  #
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/auth/basicEnv" -u myUser:helloBasicEnv
+  # Expect "Hello basic env!"
+  # [401] curl "http://localhost:7055/auth/basicEnv" -u myUser:helloBasicWrong
+  # Expect error "bad auth"
+  /auth/basicEnv:
+
+    auth:
+      - apiKeys:
+          - ENV{EXAMPLE_AUTH_BASIC_ENV_APIKEY}
+        basicAuth: true
+        # If not provided, defaults to `gte`
+        basicAuthUser: myUser
+
+    command: bash
+    args:
+      - -c
+      - echo "Hello basic env!"
+  ### [docs-basic-auth-env]
+
   ### [docs-query-auth]
   # Tests url query authentication
   #
