@@ -13,13 +13,13 @@ listeners:
   # To see the command preview (JSON format) use:
   #
   # [200] curl "http://localhost:7055/hello/preview?word=Mr.%20Anderson" -u gte:myPassword
-  # Expect "{\"cmdStr\":\"echo\",\"cmdArgs\":[\"Hello Mr. Anderson\"]}"
+  # Expect raw "{\"command\":\"echo\",\"args\":[\"Hello Mr. Anderson\"]}"
   #
   #
   # To see the command preview (YAML format, more readable) use:
   #
   # [200] curl "http://localhost:7055/hello/previewYAML?word=Mr.%20Anderson"
-  # Expect "cmdStr: echo\ncmdArgs:\n- Hello Mr. Anderson"
+  # Expect raw "command: echo\nargs:\n- Hello Mr. Anderson"
   #
   # NOTE that we defined the path `/previewYAML` in the plugin configuration.
   #
@@ -47,7 +47,42 @@ listeners:
       # We can also add another preview path, which in this case will print the result as YAML.
       - preview:
           # The generated path can be customized
-          path: /previewYAML
+          route: /previewYAML
 
           # When true, the output will be human-friendly, YAML-formatted.
+          asYAML: true
+
+  # The preview plugin will also tell you if a command is NOT going to be executed because
+  # of any trigger condition, here is an example to show this case.
+  #
+  # Test with:
+  #
+  # curl "http://localhost:7055/trigger?name=Poinki"
+  # Expect "Hello Poinki!"
+  #
+  # curl "http://localhost:7055/trigger?name=Arthur"
+  # Expect "not triggered"
+  #
+  #
+  # To see the command preview use:
+  #
+  # [200] curl "http://localhost:7055/trigger/preview?name=Poinki"
+  # Expect raw "command: echo\nargs:\n- Hello Poinki!"
+  #
+  # To see the command preview for when the command will NOT be triggered, use:
+  #
+  # [200] curl "http://localhost:7055/trigger/preview?name=Arthur"
+  # Expect raw "output: not triggered"
+  #
+  /trigger:
+
+    trigger: eq .name "Poinki"
+
+    command: echo
+    args:
+      - Hello Poinki!
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+      - preview:
           asYAML: true

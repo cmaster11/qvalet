@@ -216,6 +216,10 @@ The username is configurable via the `httpAuthUsername` config key, and will def
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-basic-auth')
 
+And, basic authentication using environment variables:
+
+[filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-basic-auth-env')
+
 ### Api key in query string
 
 You can authenticate requests also by passing the api key in the url parameter `__gteApiKey`.

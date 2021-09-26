@@ -211,6 +211,7 @@ var defaultDecodeHook = mapstructure.ComposeDecodeHookFunc(
 	// Default
 	mapstructure.StringToTimeDurationHookFunc(),
 	mapstructure.StringToSliceHookFunc(","),
+	utils.StringToStringFromEnvVarHookFunc(),
 
 	// Custom
 	StringToPointerIfTemplateHookFunc(),

@@ -305,18 +305,18 @@ type ExecCommandResult struct {
 func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toStore map[string]interface{}) (*ExecCommandResult, error) {
 	log := listener.log
 
-	preparedExecutionResult, err := listener.prepareExecution(args, toStore)
+	preparedExecutionResult, handledResult, err := listener.prepareExecution(args, toStore)
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to prepare command execution")
 	}
 
-	if preparedExecutionResult.HandledResult != nil {
-		return preparedExecutionResult.HandledResult, nil
+	if handledResult != nil {
+		return handledResult, nil
 	}
 
-	cmdStr := preparedExecutionResult.CmdStr
-	cmdArgs := preparedExecutionResult.CmdArgs
-	cmdEnv := preparedExecutionResult.CmdEnv
+	cmdStr := preparedExecutionResult.Command
+	cmdArgs := preparedExecutionResult.Args
+	cmdEnv := preparedExecutionResult.Env
 
 	{
 		logCommandFields := map[string]interface{}{}
@@ -409,20 +409,18 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 }
 
 type preparedExecutionResult struct {
-	CmdStr  string   `json:"cmdStr,omitempty" yaml:"cmdStr,omitempty"`
-	CmdArgs []string `json:"cmdArgs,omitempty" yaml:"cmdArgs,omitempty"`
-	CmdEnv  []string `json:"cmdEnv,omitempty" yaml:"cmdEnv,omitempty"`
-
-	HandledResult *ExecCommandResult `json:"handledResult,omitempty" yaml:"handledResult,omitempty"`
+	Command string   `json:"command,omitempty" yaml:"command,omitempty"`
+	Args    []string `json:"args,omitempty" yaml:"args,omitempty"`
+	Env     []string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
-func (listener *CompiledListener) prepareExecution(args map[string]interface{}, toStore map[string]interface{}) (*preparedExecutionResult, error) {
+func (listener *CompiledListener) prepareExecution(args map[string]interface{}, toStore map[string]interface{}) (*preparedExecutionResult, *ExecCommandResult, error) {
 	// Execute all pre-hooks
 	for _, plugin := range listener.plugins {
 		if plugin, ok := plugin.(PluginHookPreExecute); ok {
 			_args, err := plugin.HookPreExecute(args)
 			if err != nil {
-				return nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
+				return nil, nil, errors.WithMessage(err, "failed to execute pre-hook plugin")
 			}
 			args = _args
 		}
@@ -444,22 +442,21 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 		if err != nil {
 			err := errors.WithMessage(err, "failed to evaluate listener trigger condition")
 			log.WithError(err).Error("error")
-			return nil, err
+			return nil, nil, err
 		}
 
 		if !isTrue {
 			// All good, do nothing
-			return &preparedExecutionResult{
-				HandledResult: &ExecCommandResult{
-					Output: "not triggered",
-				}}, nil
+			return nil, &ExecCommandResult{
+				Output: "not triggered",
+			}, nil
 		}
 	}
 
 	if err := listener.processFiles(args); err != nil {
 		err := errors.WithMessage(err, "failed to process temporary files")
 		log.WithError(err).Error("error")
-		return nil, err
+		return nil, nil, err
 	}
 
 	var cmdStr string
@@ -468,7 +465,7 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 		if err != nil {
 			err := errors.WithMessage(err, "failed to execute command template")
 			log.WithError(err).Error("error")
-			return nil, err
+			return nil, nil, err
 		}
 		cmdStr = out
 	}
@@ -479,7 +476,7 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute args template %s", tpl.Name())
 			log.WithError(err).Error("error")
-			return nil, err
+			return nil, nil, err
 		}
 		cmdArgs = append(cmdArgs, out)
 	}
@@ -490,7 +487,7 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 		if err != nil {
 			err := errors.WithMessagef(err, "failed to execute env template %s", tpl.Name())
 			log.WithError(err).Error("error")
-			return nil, err
+			return nil, nil, err
 		}
 		// For env vars, we need to remove any new lines
 		out = strings.ReplaceAll(out, "\n", "")
@@ -501,10 +498,10 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
 	}
 	return &preparedExecutionResult{
-		CmdStr:  cmdStr,
-		CmdArgs: cmdArgs,
-		CmdEnv:  cmdEnv,
-	}, nil
+		Command: cmdStr,
+		Args:    cmdArgs,
+		Env:     cmdEnv,
+	}, nil, nil
 }
 
 func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error) {

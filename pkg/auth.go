@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 
+	"gotoexec/pkg/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 )
@@ -15,8 +17,14 @@ import (
 /// [auth-docs]
 
 type AuthConfig struct {
-	// Api keys for this auth type
-	ApiKeys []string `mapstructure:"apiKeys" validate:"required"`
+	// Api keys for this auth type.
+	// Each api key can also be loaded from the environment variables, by
+	// using the syntax `ENV{ENV_VAR_NAME}`, e.g.
+	//
+	// apiKeys:
+	// 	 - ENV{MY_PASSWORD}
+	//
+	ApiKeys []*utils.StringFromEnvVar `mapstructure:"apiKeys" validate:"required"`
 
 	// If true, allows basic HTTP authentication
 	BasicAuth bool `mapstructure:"basicAuth"`
@@ -89,7 +97,7 @@ func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
 			if username, password, ok := c.Request.BasicAuth(); ok {
 				if username == authUser {
 					for _, apiKey := range auth.ApiKeys {
-						if password == apiKey {
+						if password == apiKey.Value() {
 							found = true
 							goto afterAuth
 						}
@@ -106,7 +114,7 @@ func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
 			}
 			apiKeyQuery := c.Query(queryKey)
 			for _, apiKey := range auth.ApiKeys {
-				if apiKeyQuery == apiKey {
+				if apiKeyQuery == apiKey.Value() {
 					found = true
 					goto afterAuth
 				}
@@ -130,7 +138,7 @@ func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
 
 					switch authHeader.Method {
 					case AuthHeaderMethodNone:
-						isValid = headerValue == apiKey
+						isValid = headerValue == apiKey.Value()
 					case AuthHeaderMethodHMACSHA256:
 						if bodyData == nil {
 							data, err := c.GetRawData()
@@ -142,7 +150,7 @@ func verifyAuth(c *gin.Context, authConfigs []*AuthConfig) error {
 							c.Request.Body = ioutil.NopCloser(bytes.NewReader(data))
 						}
 
-						hmacValue := authHMACSHA256(bodyData, apiKey)
+						hmacValue := authHMACSHA256(bodyData, apiKey.Value())
 						isValid = headerValue == hmacValue
 					default:
 						return errors.New("bad header auth method")
