@@ -1,3 +1,4 @@
 .idea
 **/*.ignore*
 **/*.env
+!test/examples/*.env
