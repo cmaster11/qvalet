@@ -9,15 +9,15 @@
 Links:
 
 * [Docker image](https://hub.docker.com/r/cmaster11/go-to-exec/tags?page=1&ordering=last_updated)
-* [Some use cases](https://cmaster11.github.io/go-to-exec/#/./use-cases)
+* [Some use cases](https://cmaster11.github.io/go-to-exec/#/0120-use-cases)
 
 ## Feature list
 
-* Command execution with [templatable](https://cmaster11.github.io/go-to-exec/#/?id=templates) fields (command, arguments, environment variables, etc…)
-* Some built-in [authentication](https://cmaster11.github.io/go-to-exec/#/?id=authentication) methods
-* [Storage](https://cmaster11.github.io/go-to-exec/#/?id=storage) for payloads and execution results
-* [Trigger conditions](https://cmaster11.github.io/go-to-exec/#/?id=trigger-condition) to evaluate if a command should be run or not
-* [AWS SNS](https://cmaster11.github.io/go-to-exec/#/./plugins?id=aws-sns) support, to automatically accept subscription requests and receive AWS SNS messages
+* Command execution with [templatable](https://cmaster11.github.io/go-to-exec/#/0090-template-functions) fields (command, arguments, environment variables, etc…)
+* Some built-in [authentication](https://cmaster11.github.io/go-to-exec/#/0060-authentication) methods
+* [Storage](https://cmaster11.github.io/go-to-exec/#/0050-storage) for payloads and execution results
+* [Trigger conditions](https://cmaster11.github.io/go-to-exec/#/0080-trigger-conditions) to evaluate if a command should be run or not
+* [AWS SNS](https://cmaster11.github.io/go-to-exec/#/0110-plugins/awssns) support, to automatically accept subscription requests and receive AWS SNS messages
 * And more!
 
 ## Example
