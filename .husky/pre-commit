@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+. "$(dirname "$0")/_/husky.sh"
+
+make sidebar
+
+git ls-files docs | grep '_sidebar.md' | xargs git add
+git ls-files docs | grep '_toc.md' | xargs git add

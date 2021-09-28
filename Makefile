@@ -15,3 +15,7 @@ release-branch:
 	@echo You need to be on the main branch!
 	@exit 1
 endif
+
+.PHONY: sidebar
+sidebar:
+	cd hack/autosidebar; yarn tsc && node ./bin/index.js -d ../../docs

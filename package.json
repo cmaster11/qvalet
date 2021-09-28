@@ -1,0 +1,14 @@
+{
+  "name": "go-to-exec",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:cmaster11/go-to-exec.git",
+  "author": "Alberto Marchetti <cmaster11@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "husky": "^7.0.2"
+  },
+  "scripts": {
+    "prepare": "husky install"
+  }
+}
