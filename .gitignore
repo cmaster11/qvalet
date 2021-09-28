@@ -2,3 +2,4 @@
 **/*.ignore*
 **/*.env
 !test/examples/*.env
+**/node_modules

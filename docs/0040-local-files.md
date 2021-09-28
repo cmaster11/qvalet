@@ -1,0 +1,41 @@
+# Local files
+
+You can also define local files to be written and used at runtime by creating entries in the `files` list.
+
+Example:
+
+```yaml
+files:
+  tmp1: Hello {{ .name }}
+  /opt/tmp2: This is a file in an absolute route!
+
+  my_dump: |
+    Here is the dump of the request:
+
+    {{ dump . }}
+```
+
+If the key is a relative route, it will be relative to an always-changing temporary location provided by the system (
+e.g. `/tmp/gte-1234`), and the files will be **temporary**, so they will be deleted after the listener execution.
+
+If, instead, the path is an absolute one, the files will be **persistent**, and will NOT be deleted after each call.
+But, **beware** on using persistent files unless you know what you are doing! If there are two concurrent writes to the
+same persistent file, you may end up having errors and/or broken/corrupted data! Use the absolute path approach ONLY if
+you know what you are doing.
+
+All files' paths will be accessible also as environment variables (with the `GTE_FILES_` prefix) and template vars (
+under the `(gte).files` map).
+
+```
+/tmp/key1 -> GTE_FILES__tmp_key1, {{ (gte).files._tmp_key1 }}
+key2 -> GTE_FILES_key2, {{ (gte).files.tmp_key2 }}
+```
+
+NOTE: in environment variables and in the templates map's keys, all `\W` characters (NOT `a-z`, `A-Z`, `0-9`, `_`) will
+be replaced with `_`.
+
+## Example
+
+To see a real-case example, you can look at the following Slack webhook configuration:
+
+[filename](../examples/config.slack.yaml ':include :type=code')

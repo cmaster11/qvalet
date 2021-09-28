@@ -260,9 +260,9 @@ os.Exit(0)
       if (req.data.ascii) {
         var stringBody = function () {
           if (req.dataType == 'raw') {
-            go += defaultPayloadVar + ' := strings.NewReader("' + req.data.ascii.replace(/\"/g, '\\"') + '")\n';
-          } else {
             go += defaultPayloadVar + ' := strings.NewReader(`' + req.data.ascii + '`)\n';
+          } else {
+            go += defaultPayloadVar + ' := strings.NewReader("' + req.data.ascii.replace(/\"/g, '\\"') + '")\n';
           }
           ioReaders.push(defaultPayloadVar);
         };
