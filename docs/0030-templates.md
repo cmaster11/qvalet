@@ -17,9 +17,9 @@ files:
 ```
 
 You can use all functions from the [sprig](https://github.com/Masterminds/sprig) library in the templates, and
-some [additional](/template-functions.md) functions.
+some [additional](./0030-templates.md) functions.
 
-You can find some advanced use cases in our [use cases](/use-cases) page and in
+You can find some advanced use cases in our [use cases](./0120-use-cases/) page and in
 our [examples](https://github.com/cmaster11/go-to-exec/tree/main/examples) folder.
 
 Templates are populated with all parameters from:

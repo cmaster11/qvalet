@@ -38,11 +38,13 @@ go run ./cmd --config examples/config.simple.yaml
 gotoexec --config examples/config.simple.yaml
 ```
 
-Alternatively, the docker image `cmaster11/go-to-exec` is served
-on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
-
+* You can download `go-to-exec` binaries from the [releases](https://github.com/cmaster11/go-to-exec/releases)
+page. [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cmaster11/go-to-exec?sort=semver)](https://github.com/cmaster11/go-to-exec/releases)
+* The docker image `cmaster11/go-to-exec` is served on [Docker Hub](https://hub.docker.com/r/cmaster11/go-to-exec).
 To run the docker image on e.g. a local Windows machine:
 
 ```bash
 docker run -i -t -v "C:/path/to/config.yaml:/mnt/config.yaml" --rm cmaster11/go-to-exec --config /mnt/config.yaml 
 ```
+
+* You can see a simple Kubernetes deployment example in our [use cases](./0120-use-cases/kubernetes.md).
