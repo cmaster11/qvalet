@@ -7,7 +7,6 @@
   - [Authentication](/0060-authentication.md)
   - [Error handling](/0070-error-handling.md)
   - [Trigger conditions](/0080-trigger-conditions.md)
-  - [Template functions](/0090-template-functions.md)
   - [Tips and tricks](/0100-tips.md)
   - [Plugins](/0110-plugins/README.md)
     - [AWS SNS](/0110-plugins/awssns.md)

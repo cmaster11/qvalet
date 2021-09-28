@@ -9,11 +9,11 @@
 Links:
 
 * [Docker image](https://hub.docker.com/r/cmaster11/go-to-exec/tags?page=1&ordering=last_updated)
-* [Some use cases](https://cmaster11.github.io/go-to-exec/#/0120-use-cases)
+* [Some use cases](https://cmaster11.github.io/go-to-exec/#/0120-use-cases/)
 
 ## Feature list
 
-* Command execution with [templatable](https://cmaster11.github.io/go-to-exec/#/0090-template-functions) fields (command, arguments, environment variables, etc…)
+* Command execution with [templatable](https://cmaster11.github.io/go-to-exec/#/0030-templates) fields (command, arguments, environment variables, etc…)
 * Some built-in [authentication](https://cmaster11.github.io/go-to-exec/#/0060-authentication) methods
 * [Storage](https://cmaster11.github.io/go-to-exec/#/0050-storage) for payloads and execution results
 * [Trigger conditions](https://cmaster11.github.io/go-to-exec/#/0080-trigger-conditions) to evaluate if a command should be run or not
