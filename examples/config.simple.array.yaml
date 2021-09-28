@@ -1,0 +1,44 @@
+# This is an example to showcase what happens when an array payload is passed to a go-to-exec listener.
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Hello world listener
+  #
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/hello" -H 'Content-Type: application/json' -d '[{"name": "Ragnar"},{"name": "Rollo"}]'
+  # Expect "Hello Ragnar\nHello Rollo"
+  #
+  # [200] curl "http://localhost:7055/hello" -H 'Content-Type: application/yaml' -d $'- name: Ragnar\n- name: Rollo'
+  # Expect "Hello Ragnar\nHello Rollo"
+  #
+  # For more info about the $ sign in the previous command, check https://stackoverflow.com/a/5295906/3671330
+  #
+  /hello:
+
+    # Returns the output of the command in the response
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        {{/*
+        We can iterate on the array entries by using the special
+        __gtePayloadArrayLength key
+        */}}
+
+        {{ range $idx := until .__gtePayloadArrayLength }}
+
+        {{/*
+        `$` is a synonym for `.`, when `.` is the root context. If you
+        are inside a loop, `.` may NOT equal the root context.
+        */}}
+
+        {{ $obj := get $ ($idx | toString) }}
+        echo "Hello {{ $obj.name }}"
+
+        {{ end }}

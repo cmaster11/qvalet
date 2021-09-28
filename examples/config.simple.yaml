@@ -2,23 +2,17 @@
 debug: true
 listeners:
 
-  # Listener with path parameter, which is accessible
-  # via .param1
+  # Hello world listener
   #
   # Test with:
   #
-  # [200] curl "http://localhost:7055/hello/world?name=Mr.%20Anderson"
-  # Expect "Hello MR. ANDERSON, with param world"
+  # [200] curl "http://localhost:7055/hello?name=Mr.%20Anderson"
+  # Expect "Hello Mr. Anderson"
   #
-  # [200] curl "http://localhost:7055/hello/world" -d 'name=Mr. Anderson'
-  # [200] curl "http://localhost:7055/hello/world" -d '{"name": "Mr. Anderson"}' -H 'Content-Type: application/json'
+  # [200] curl "http://localhost:7055/hello" -d '{"name":"Mr. Anderson"}' -H 'Content-Type: application/json'
+  # Expect "Hello Mr. Anderson"
   #
-  # To make it crash, pass e.g. a number instead of a string, which
-  # is not supported by the `upper` function:
-  # [500] curl "http://localhost:7055/hello/world" -d '{"name": 3}' -H 'Content-Type: application/json'
-  # Expect error contains "wrong type for value"
-  #
-  /hello/:param1:
+  /hello:
 
     # Returns the output of the command in the response
     return: output
@@ -27,6 +21,6 @@ listeners:
     command: bash
     args:
       - -c
-      # Expects a `name` field to be passed by query or body (JSON/Form)
+      # You can use templates to customize commands/arguments/env vars
       - |
-        echo "Hello {{ .name | upper }}, with param {{ .param1 }}"
+        echo "Hello {{ .name }}"

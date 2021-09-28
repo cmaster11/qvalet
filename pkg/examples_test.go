@@ -22,7 +22,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -185,13 +184,21 @@ func TestExamples(t *testing.T) {
 							t.Logf("executing go code:\n%s", code)
 						}
 
-						rawOutput, result, err := execGoTest(t, code, int(statusCode))
-						require.NoErrorf(t, err, "go execution: %v", rawOutput)
+						result, err := execGoTest(t, code)
+						if err != nil {
+							if result.parsed.Status != int(statusCode) {
+								require.NoErrorf(t, err, "go execution: %+v", result)
+							}
+						}
+
+						require.EqualValues(t, int(statusCode), result.parsed.Status)
+
+						response := result.parsed.Response
 
 						if optionShouldHaveError {
-							require.NotNil(t, result.Response.ErrorHandlerResult)
-							require.NotNil(t, result.Response.ErrorHandlerResult.Storage)
-							require.NotEmpty(t, result.Response.ErrorHandlerResult.Storage.Path)
+							require.NotNil(t, response.ErrorHandlerResult)
+							require.NotNil(t, response.ErrorHandlerResult.Storage)
+							require.NotEmpty(t, response.ErrorHandlerResult.Storage.Path)
 						}
 
 						t.Log(spew.Sprint("executed go code: %v", result))
@@ -199,16 +206,16 @@ func TestExamples(t *testing.T) {
 						if expect != "" {
 							// If we're expecting a specific output, check!
 							var errStr string
-							if result.Response.Error != nil {
-								errStr = *result.Response.Error
+							if response.Error != nil {
+								errStr = *response.Error
 							}
 							var errHandlerResult string
-							if result.Response.ErrorHandlerResult != nil {
-								errHandlerResult = result.Response.ErrorHandlerResult.Output
+							if response.ErrorHandlerResult != nil {
+								errHandlerResult = response.ErrorHandlerResult.Output
 							}
 							switch expectPrefix {
 							case expectPrefixRaw:
-								require.EqualValues(t, expect, strings.TrimSpace(rawOutput))
+								require.EqualValues(t, expect, strings.TrimSpace(result.output))
 							case expectPrefixError:
 								require.EqualValues(t, expect, strings.TrimSpace(errStr))
 							case expectPrefixErrorContains:
@@ -216,11 +223,12 @@ func TestExamples(t *testing.T) {
 							case expectPrefixErrorHandlerResult:
 								require.EqualValues(t, expect, strings.TrimSpace(errHandlerResult))
 							case "":
-								require.EqualValues(t, expect, strings.TrimSpace(result.Response.Output))
+								require.EqualValues(t, expect, strings.TrimSpace(response.Output))
 							default:
 								t.Fatalf("invalid expect prefix %s in test %s", expectPrefix, testCase)
 							}
 						}
+						defer os.Remove(result.fileName)
 					})
 				}
 
@@ -265,18 +273,27 @@ type execGoTestResult struct {
 	Status   int
 }
 
-func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoTestResult, error) {
+type execResult struct {
+	output   string
+	parsed   *execGoTestResult
+	fileName string
+}
+
+func execGoTest(t *testing.T, code string) (*execResult, error) {
 	// Save the test to a temporary file, and execute
 	fileName := fmt.Sprintf("%s/test-%d.go", testTempDir, time.Now().UnixNano())
 	if err := ioutil.WriteFile(fileName, []byte(code), 0777); err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	t.Logf("written test go file %s", fileName)
 
 	out, err := exec.Command("goimports", "-w", fileName).CombinedOutput()
 	if err != nil {
-		return string(out), nil, err
+		return &execResult{
+			output:   string(out),
+			fileName: fileName,
+		}, err
 	}
 
 	cmd := exec.Command("go", "run", fileName)
@@ -297,20 +314,13 @@ func execGoTest(t *testing.T, code string, expectedStatus int) (string, *execGoT
 		}
 	}
 
-	if err != nil {
-		if result.Status == expectedStatus {
-			return resultRaw.Output, result, nil
-		}
-
-		return resultRaw.Output, result, err
+	execResult := &execResult{
+		output:   resultRaw.Output,
+		parsed:   result,
+		fileName: fileName,
 	}
 
-	if result.Status != expectedStatus {
-		return resultRaw.Output, result, errors.Errorf("bad status code %d", result.Status)
-	}
-	defer os.Remove(fileName)
-
-	return resultRaw.Output, result, nil
+	return execResult, err
 }
 
 var regexDefaults = regexp.MustCompile(`\[DEFAULTS=([^]]+)]`)

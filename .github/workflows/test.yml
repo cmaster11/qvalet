@@ -10,7 +10,7 @@ on:
     paths-ignore:
       - '.github/dependabot.yml'
       - 'docs/**'
-      - 'README'
+      - 'README.md'
       - 'LICENSE'
       - 'index.html'
 
