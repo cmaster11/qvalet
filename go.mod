@@ -19,7 +19,7 @@ require (
 	github.com/gin-contrib/timeout v0.0.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/goccy/go-yaml v1.9.2
+	github.com/goccy/go-yaml v1.9.3
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12
