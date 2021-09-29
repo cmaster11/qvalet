@@ -2,6 +2,10 @@ name: Test
 
 on:
   workflow_dispatch: {}
+  workflow_run:
+    workflows: [ "Dependabot PR Check" ]
+    types:
+      - completed
   push:
     branches:
       - '**'
