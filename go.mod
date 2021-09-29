@@ -13,7 +13,7 @@ require (
 	github.com/beyondstorage/go-service-kodo/v2 v2.3.0
 	github.com/beyondstorage/go-service-oss/v2 v2.3.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.2.0
-	github.com/beyondstorage/go-service-s3/v2 v2.3.0
+	github.com/beyondstorage/go-service-s3/v2 v2.4.0
 	github.com/beyondstorage/go-storage/v4 v4.7.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-contrib/timeout v0.0.1
