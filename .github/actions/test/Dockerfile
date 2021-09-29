@@ -3,6 +3,7 @@ FROM golang:1.16-buster
 RUN apt-get update && apt-get install -y \
   jq \
   unzip \
+  awscli \
   && rm -rf /var/lib/apt/lists/*
 
 # Install tools required for testing
