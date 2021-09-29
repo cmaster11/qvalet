@@ -99,8 +99,8 @@ github.com/beyondstorage/go-integration-test/v4 v4.3.0/go.mod h1:HKgzemQZpxoHBL4
 github.com/beyondstorage/go-integration-test/v4 v4.4.0/go.mod h1:o0pHhyaRR/OO6QxnRqWW3aFjTycBZjoKSdHKN/JZRjo=
 github.com/beyondstorage/go-service-azblob/v2 v2.2.0 h1:79WsySo51jA+tuHkN9agcxmSYWY4ad+tP+VKPIr95SA=
 github.com/beyondstorage/go-service-azblob/v2 v2.2.0/go.mod h1:Ik4vZKO5CWfpbGmqNRSyMjGmaiz2BHSsiO1bQzqxuyI=
-github.com/beyondstorage/go-service-cos/v2 v2.2.0 h1:MSoswF7t6t5XQ3GM+eVP0rQD8/cNUW71uqO73WFV5ro=
-github.com/beyondstorage/go-service-cos/v2 v2.2.0/go.mod h1:r5RZAj9JzYqg9ZuRxJCgYs1Dngmpm1oBqFhEB/aQPHk=
+github.com/beyondstorage/go-service-cos/v2 v2.3.0 h1:wgZWo/QUqc3Akfbems8uEOih2NFntynhrEEg4PnRY90=
+github.com/beyondstorage/go-service-cos/v2 v2.3.0/go.mod h1:Lrig+Sma+2XYUqnpHF/9cg8ORNt2ugNgR2Gw0FHu1Wg=
 github.com/beyondstorage/go-service-dropbox/v2 v2.2.0 h1:k8Jd3Jg+5D9HfVofQhBTjaKLmvFHIpCMwf8Rapd7hZs=
 github.com/beyondstorage/go-service-dropbox/v2 v2.2.0/go.mod h1:r6XggkJQvdSgxo2dCrHhR8dA6DGJWm/W7YvNfISBVek=
 github.com/beyondstorage/go-service-fs/v3 v3.3.0 h1:VOFdcshI4M1ovPbfwBpSdTp2CkzvdDKT6F70WQRdp4A=
@@ -465,8 +465,8 @@ github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.194/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/kms v1.0.194/go.mod h1:yrBKWhChnDqNz1xuXdSbWXG56XawEq0G5j1lg4VwBD4=
-github.com/tencentyun/cos-go-sdk-v5 v0.7.27 h1:rLlBZyC13xvDcaW/uNK68aSqtMktlFlXqAq2qNULg7E=
-github.com/tencentyun/cos-go-sdk-v5 v0.7.27/go.mod h1:4E4+bQ2gBVJcgEC9Cufwylio4mXOct2iu05WjgEBx1o=
+github.com/tencentyun/cos-go-sdk-v5 v0.7.31 h1:NujkkOKMJ3IFs1+trCwXOKRCIPQ8qI5Lxul9JkhTg6M=
+github.com/tencentyun/cos-go-sdk-v5 v0.7.31/go.mod h1:4E4+bQ2gBVJcgEC9Cufwylio4mXOct2iu05WjgEBx1o=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.7 h1:/68gy2h+1mWMrwZFeD1kQialdSzAb432dtpeJ42ovdo=
 github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVMw=
