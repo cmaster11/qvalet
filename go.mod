@@ -10,7 +10,7 @@ require (
 	github.com/beyondstorage/go-service-dropbox/v2 v2.2.0
 	github.com/beyondstorage/go-service-fs/v3 v3.3.0
 	github.com/beyondstorage/go-service-gcs/v2 v2.3.0
-	github.com/beyondstorage/go-service-kodo/v2 v2.2.0
+	github.com/beyondstorage/go-service-kodo/v2 v2.3.0
 	github.com/beyondstorage/go-service-oss/v2 v2.3.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.2.0
 	github.com/beyondstorage/go-service-s3/v2 v2.3.0
@@ -26,7 +26,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/joho/godotenv v1.4.0
 	github.com/mitchellh/copystructure v1.2.0 // indirect
-	github.com/mitchellh/mapstructure v1.4.1
+	github.com/mitchellh/mapstructure v1.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1

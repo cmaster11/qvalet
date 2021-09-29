@@ -107,8 +107,8 @@ github.com/beyondstorage/go-service-fs/v3 v3.3.0 h1:VOFdcshI4M1ovPbfwBpSdTp2Ckzv
 github.com/beyondstorage/go-service-fs/v3 v3.3.0/go.mod h1:/keWarsnGKz219wMyGN57OM7s5BUIZ/YlK9LhsXMwtQ=
 github.com/beyondstorage/go-service-gcs/v2 v2.3.0 h1:pkDZN0Y1n7oERJ44IQfrtjdwwJGmR125iH+IFACN9Ro=
 github.com/beyondstorage/go-service-gcs/v2 v2.3.0/go.mod h1:pevYiMspKamdWBB0DnMv6VZXTlDDC0RJHoB4Og2664k=
-github.com/beyondstorage/go-service-kodo/v2 v2.2.0 h1:OFa0o/H0j/TxnpT5MwPtrn8WDoiyBM1nMnRu2IL30S0=
-github.com/beyondstorage/go-service-kodo/v2 v2.2.0/go.mod h1:hNkpN2a2BLbiUVM3LyVRLsvV7iW/8Gj3sxnZHlkv+rg=
+github.com/beyondstorage/go-service-kodo/v2 v2.3.0 h1:otIu904eD/m6cLa1PW+DNKXEeaPV4u6YkBlplhbVYpo=
+github.com/beyondstorage/go-service-kodo/v2 v2.3.0/go.mod h1:7bfAb9qjeCtQdnW12VOOHnSU9PFWnxMB4aGR7P8zKh8=
 github.com/beyondstorage/go-service-oss/v2 v2.3.0 h1:et/4yrgE/32eMvDfoeyI38O2C7UrpzcNoxILC5BqeC4=
 github.com/beyondstorage/go-service-oss/v2 v2.3.0/go.mod h1:1QIf33rz6AJg6KImx6v7n+zEkdUWQSquUFoT0De7ngc=
 github.com/beyondstorage/go-service-qingstor/v3 v3.2.0 h1:74nZZ8hvB8JxN7zYzHJMgxRQxOR7Zn56rQhgNTLwcUg=
@@ -376,8 +376,8 @@ github.com/mitchellh/gox v0.4.0/go.mod h1:Sd9lOJ0+aimLBi73mGofS1ycjY8lL3uZM3JPS4
 github.com/mitchellh/iochan v1.0.0/go.mod h1:JwYml1nuB7xOzsp52dPpHFffvOCDupsG0QubkSMEySY=
 github.com/mitchellh/mapstructure v0.0.0-20160808181253-ca63d7c062ee/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
-github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
-github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
+github.com/mitchellh/mapstructure v1.4.2 h1:6h7AQ0yhTcIsmFmnAwQls75jp2Gzs4iB8W7pjMO+rqo=
+github.com/mitchellh/mapstructure v1.4.2/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.0/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
@@ -420,8 +420,8 @@ github.com/qingstor/log v0.0.0-20200804082313-615256cccabc h1:633tgwvkk8O26HZD/u
 github.com/qingstor/log v0.0.0-20200804082313-615256cccabc/go.mod h1:XfNhERXtkg/S9MWaMOk/m7mrmj4vcWDvhw17hmH4JGQ=
 github.com/qingstor/qingstor-sdk-go/v4 v4.3.0 h1:+qcVqBiuGUsTPJZCHc5QK81NgfIMLjoIHXovdIRHKvk=
 github.com/qingstor/qingstor-sdk-go/v4 v4.3.0/go.mod h1:GT0QY+LwqnOQhsRkbxUds8cTYR4inZpgOQEkCKYRiAs=
-github.com/qiniu/go-sdk/v7 v7.9.7 h1:sVt6cHzG52nGGULeZkcAVpwj5eyQcgJsbSbTPkPAkLo=
-github.com/qiniu/go-sdk/v7 v7.9.7/go.mod h1:Eeqk1/Km3f1MuLUUkg2JCSg/dVkydKbBvEdJJqFgn9g=
+github.com/qiniu/go-sdk/v7 v7.9.8 h1:QE3Nj+bj+ZHGWed2L+nuOKGhtJgXqdMbSaC69YZ05L8=
+github.com/qiniu/go-sdk/v7 v7.9.8/go.mod h1:Eeqk1/Km3f1MuLUUkg2JCSg/dVkydKbBvEdJJqFgn9g=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
