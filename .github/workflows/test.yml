@@ -20,7 +20,7 @@ on:
 
 jobs:
   test:
-    if: ${{ !(github.event_name == 'push' && github.actor == "dependabot[bot]") }}
+    if: ${{ !(github.event_name == 'push' && github.actor == 'dependabot[bot]') }}
     name: Run tests
     runs-on: ubuntu-latest
     steps:
