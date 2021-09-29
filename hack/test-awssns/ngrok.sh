@@ -43,58 +43,99 @@ cleanup() {
   fi
 }
 
-nohup ngrok http 7055 > nohup-ngrok.log 2>&1 &
-NGROK_PID=$!
-
 # Try to get the exposed ngrok URL
 HTTPS_URL=
 
-n=0
-until [ "$n" -ge 10 ]; do
-  HTTPS_URL=$(curl -sS "http://localhost:4040/api/tunnels" --max-time 3 | jq -r -M '.tunnels | .[] | select(.proto == "https") | .public_url' || true)
-  if [[ -n "$HTTPS_URL" ]]; then
-    break
+start_ngrok() {
+  retriesProcess=0
+  until [ "$retriesProcess" -ge 3 ]; do
+    nohup ngrok http 7055 >nohup-ngrok.log 2>&1 &
+    NGROK_PID=$!
+
+    retriesHealth=0
+    until [ "$retriesHealth" -ge 5 ]; do
+      HTTPS_URL=$(curl -sS "http://localhost:4040/api/tunnels" --max-time 3 | jq -r -M '.tunnels | .[] | select(.proto == "https") | .public_url' || true)
+      if [[ -n "$HTTPS_URL" ]]; then
+        break
+      fi
+
+      if ! ps -p $NGROK_PID >/dev/null; then
+        NGROK_PID=
+        echo "ngrok has died"
+        cat nohup-ngrok.log || true
+        break
+      fi
+
+      retriesHealth=$((retriesHealth + 1))
+      sleep 1
+    done
+
+    if [[ -n "$HTTPS_URL" ]]; then
+      break
+    fi
+
+    if [[ -n "$NGROK_PID" ]]; then
+      kill -9 "$NGROK_PID" || true
+      NGROK_PID=
+    fi
+
+    retriesProcess=$((retriesProcess + 1))
+    # The reason for this to fail is mostly concurrency (too many tests running), so wait a sec
+    sleep 5
+  done
+
+  if [[ -z "$HTTPS_URL" ]]; then
+    echo "Unable to set up remote HTTPS endpoint"
+    cat nohup-ngrok.log || true
+    return 1
   fi
 
-  n=$((n + 1))
-  sleep 1
-done
+  return 0
+}
 
-if [[ -z "$HTTPS_URL" ]]; then
-  echo "Unable to set up remote HTTPS endpoint"
-  exit 1
-fi
+start_gte() {
+  # Run gte
+  TMP_BIN=$(mktemp)
+  (
+    echo "Building binary..."
+    cd "$DIR/../.."
+    go build -o "$TMP_BIN" ./cmd
+    chmod +x "$TMP_BIN"
+  )
+  nohup "$TMP_BIN" --config "$DIR/../../examples/config.plugin.awssns.yaml" >nohup-gte.log 2>&1 &
+  GTE_PID=$!
 
-# Run gte
-TMP_BIN=$(mktemp)
-(
-  echo "Building binary..."
-  cd "$DIR/../.."
-  go build -o "$TMP_BIN" ./cmd
-  chmod +x "$TMP_BIN"
-)
-nohup "$TMP_BIN" --config "$DIR/../../examples/config.plugin.awssns.yaml" > nohup-gte.log 2>&1 &
-GTE_PID=$!
-
-# Verify that gte is healthy
-(
   STATUS=
-  n=0
-  until [ "$n" -ge 10 ]; do
+
+  retriesHealth=0
+  until [ "$retriesHealth" -ge 10 ]; do
     STATUS=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:7055/healthz" || true)
     if [[ "$STATUS" == "200" ]]; then
       break
     fi
 
-    n=$((n + 1))
+    if ! ps -p $GTE_PID >/dev/null; then
+      GTE_PID=
+      echo "go-to-exec has died"
+      cat nohup-gte.log || true
+      break
+    fi
+
+    retriesHealth=$((retriesHealth + 1))
     sleep 1
   done
 
   if [[ "$STATUS" != "200" ]]; then
     echo "go-to-exec is not healthy"
-    exit 1
+    cat nohup-gte.log || true
+    return 1
   fi
-)
+
+  return 0
+}
+
+start_ngrok
+start_gte
 
 echo "Creating SNS subscription..."
 # Create an SNS subscription
@@ -147,4 +188,3 @@ if [[ "$(echo "$RESULT" | tr -d '\r')" != "$DATE" ]]; then
 fi
 
 echo "Test successful!"
-
