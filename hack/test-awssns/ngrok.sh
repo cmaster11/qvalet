@@ -79,7 +79,15 @@ start_ngrok() {
       NGROK_PID=
     fi
 
-    retriesProcess=$((retriesProcess + 1))
+    # If we are here, ngrok has not succeeded.
+    # So, we can check if the error is just of max simultaneous connections.
+    if grep -q "ERR_NGROK_108" nohup-ngrok.log; then
+      echo "Detected ERR_NGROK_108, retrying..."
+    elsegrep
+      # For any other error, increase retries
+      retriesProcess=$((retriesProcess + 1))
+    fi
+
     # The reason for this to fail is mostly concurrency (too many tests running), so wait a sec
     sleep 5
   done
