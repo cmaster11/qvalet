@@ -13,12 +13,12 @@ require (
 	github.com/beyondstorage/go-service-kodo/v2 v2.2.0
 	github.com/beyondstorage/go-service-oss/v2 v2.3.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.2.0
-	github.com/beyondstorage/go-service-s3/v2 v2.3.0
+	github.com/beyondstorage/go-service-s3/v2 v2.4.0
 	github.com/beyondstorage/go-storage/v4 v4.7.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-contrib/timeout v0.0.1
 	github.com/gin-gonic/gin v1.7.2
-	github.com/go-playground/validator/v10 v10.4.1
+	github.com/go-playground/validator/v10 v10.9.0
 	github.com/goccy/go-yaml v1.9.2
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/huandu/xstrings v1.3.2 // indirect
