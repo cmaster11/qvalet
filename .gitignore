@@ -3,3 +3,4 @@
 **/*.env
 !test/examples/*.env
 **/node_modules
+nohup-*.log

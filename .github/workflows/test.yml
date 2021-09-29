@@ -20,6 +20,7 @@ on:
 
 jobs:
   test:
+    if: ${{ !(github.event_name == 'push' && github.actor == 'dependabot[bot]') }}
     name: Run tests
     runs-on: ubuntu-latest
     steps:
@@ -41,17 +42,6 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
           GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
-
-      # Run at the end, since it exports GOROOT and can break the Run Tests step
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: '~1.16'
-
-      - name: Run AWS SNS test
-        run: bash ./hack/test-awssns/upload.sh
-        env:
           AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          SCP_HOST: ${{ secrets.SCP_HOST }}
-          SSH_KEY_BASE64: ${{ secrets.SSH_KEY_BASE64 }}
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
