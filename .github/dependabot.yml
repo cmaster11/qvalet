@@ -2,5 +2,7 @@ version: 2
 updates:
   - package-ecosystem: gomod
     directory: "/"
+    ignore:
+      - dependency-name: github.com/spf13/viper
     schedule:
       interval: daily
