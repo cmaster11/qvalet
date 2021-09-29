@@ -83,7 +83,7 @@ start_ngrok() {
     # So, we can check if the error is just of max simultaneous connections.
     if grep -q "ERR_NGROK_108" nohup-ngrok.log; then
       echo "Detected ERR_NGROK_108, retrying..."
-    elsegrep
+    else
       # For any other error, increase retries
       retriesProcess=$((retriesProcess + 1))
     fi
