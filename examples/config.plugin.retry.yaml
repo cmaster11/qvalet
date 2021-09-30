@@ -55,6 +55,7 @@ listeners:
   #
   /rateLimit:
     return: output
+    log: all
 
     files:
       # Temporary storage for curl status code
