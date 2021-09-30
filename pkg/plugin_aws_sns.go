@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Plugin = (*PluginAWSSNS)(nil)
+var _ PluginInterface = (*PluginAWSSNS)(nil)
 var _ PluginHookMountRoutes = (*PluginAWSSNS)(nil)
 var _ PluginConfig = (*PluginAWSSNSConfig)(nil)
 
@@ -31,8 +31,22 @@ type PluginAWSSNSConfigBasicAuth struct {
 /// [config]
 // @formatter:on
 
-func (c *PluginAWSSNSConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
-	return NewPluginAWSSNS(c), nil
+func (c *PluginAWSSNSConfig) NewPlugin(listener *CompiledListener) (PluginInterface, error) {
+	var options []snshttp2.Option
+
+	if c.BasicAuth != nil {
+		options = append(options, snshttp2.WithAuthentication(c.BasicAuth.Username, c.BasicAuth.Password))
+	}
+
+	snsHandler := snshttp2.NewSNSHTTPHandler(options...)
+
+	plugin := &PluginAWSSNS{
+		NewPluginBase("awssns"),
+		c,
+		snsHandler,
+	}
+
+	return plugin, nil
 }
 
 func (c *PluginAWSSNSConfig) IsUnique() bool {
@@ -40,29 +54,14 @@ func (c *PluginAWSSNSConfig) IsUnique() bool {
 }
 
 type PluginAWSSNS struct {
+	PluginBase
+
 	config     *PluginAWSSNSConfig
 	snsHandler *snshttp2.SNSHandler
 }
 
-func (p *PluginAWSSNS) Clone(newListener *CompiledListener) Plugin {
-	return p
-}
-
-func NewPluginAWSSNS(config *PluginAWSSNSConfig) *PluginAWSSNS {
-	var options []snshttp2.Option
-
-	if config.BasicAuth != nil {
-		options = append(options, snshttp2.WithAuthentication(config.BasicAuth.Username, config.BasicAuth.Password))
-	}
-
-	snsHandler := snshttp2.NewSNSHTTPHandler(options...)
-
-	plugin := &PluginAWSSNS{
-		config:     config,
-		snsHandler: snsHandler,
-	}
-
-	return plugin
+func (p *PluginAWSSNS) Clone(newListener *CompiledListener) (PluginInterface, error) {
+	return p, nil
 }
 
 func (p *PluginAWSSNS) HookMountRoutes(engine *gin.Engine, listener *CompiledListener) {
@@ -73,7 +72,7 @@ func (p *PluginAWSSNS) HookMountRoutes(engine *gin.Engine, listener *CompiledLis
 			return errors.WithMessage(err, "failed to decode sns notification struct to map")
 		}
 
-		_, _, err := listener.HandleRequest(c, args)
+		_, _, err := listener.HandleRequest(c, args, nil)
 		return err
 	}))
 }

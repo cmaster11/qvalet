@@ -22,15 +22,15 @@ type IfTemplate struct {
 	tpl          *template.Template
 }
 
-func MustParseIfTemplate(templateKey string, ifTemplate string) *IfTemplate {
-	ift, err := ParseIfTemplate(templateKey, ifTemplate)
+func MustParseIfTemplate(templateKey string, ifTemplate string, funcs ...template.FuncMap) *IfTemplate {
+	ift, err := ParseIfTemplate(templateKey, ifTemplate, funcs...)
 	if err != nil {
 		logrus.WithError(err).WithField("template", ifTemplate).Fatal("failed to parse if template")
 	}
 	return ift
 }
 
-func ParseIfTemplate(templateKey string, ifTemplate string) (*IfTemplate, error) {
+func ParseIfTemplate(templateKey string, ifTemplate string, funcs ...template.FuncMap) (*IfTemplate, error) {
 	originalText := ifTemplate
 
 	// Simple validation to prevent hacks
@@ -46,7 +46,14 @@ false
 {{- end -}}
 `, ifTemplate)
 
-	wrapper, err := template.New(templateKey).Funcs(GetTPLFuncsMap()).Parse(templateContent)
+	funcMap := GetTPLFuncsMap()
+	for _, m := range funcs {
+		for k, v := range m {
+			funcMap[k] = v
+		}
+	}
+
+	wrapper, err := template.New(templateKey).Funcs(funcMap).Parse(templateContent)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "failed to parse if-template %s", templateKey)
 	}
@@ -89,13 +96,19 @@ func StringToPointerIfTemplateHookFunc() mapstructure.DecodeHookFuncType {
 		}
 
 		str := data.(string)
-
-		if str == "" {
-			return nil, nil
-		}
-
 		return ParseIfTemplate("ift", str)
 	}
+}
+
+func (ift *IfTemplate) Clone() (*IfTemplate, error) {
+	clone, err := ift.tpl.Clone()
+	if err != nil {
+		return nil, err
+	}
+	return &IfTemplate{
+		ift.originalText,
+		clone,
+	}, nil
 }
 
 func (ift *IfTemplate) MarshalJSON() ([]byte, error) {
