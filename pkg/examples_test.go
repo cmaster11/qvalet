@@ -108,7 +108,7 @@ func TestExamples(t *testing.T) {
 				}
 			}
 
-			listener, _ := net.Listen("tcp", ":0")
+			listener, _ := net.Listen("tcp4", "localhost:0")
 
 			router := loadGTE(t, examplePath, listener)
 
