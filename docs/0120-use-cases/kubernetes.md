@@ -1,5 +1,7 @@
 # Kubernetes restart helper
 
+Code at: [`/examples/k8s-restart-helper.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/k8s-restart-helper.yaml)
+
 Blog post: [Restart Kubernetes deployments using HTTP requests](https://cmaster11.medium.com/restart-kubernetes-deployments-using-http-requests-9db21a928c82)
 
 One example use case for `go-to-exec` is to be used to restart deployments on demand from external HTTP calls.

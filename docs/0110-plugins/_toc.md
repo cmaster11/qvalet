@@ -1,4 +1,4 @@
-- [Plugins](/0110-plugins/README.md)
   - [AWS SNS](/0110-plugins/awssns.md)
   - [HTTP response](/0110-plugins/http-response.md)
   - [Preview](/0110-plugins/preview.md)
+  - [Retry](/0110-plugins/retry.md)

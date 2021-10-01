@@ -14,6 +14,8 @@ on:
     paths-ignore:
       - '.github/dependabot.yml'
       - 'docs/**'
+      - '.husky/**'
+      - 'hack/autosidebar/**'
       - 'README.md'
       - 'LICENSE'
       - 'index.html'

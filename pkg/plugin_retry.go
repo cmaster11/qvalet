@@ -11,8 +11,6 @@ var _ PluginInterface = (*PluginRetry)(nil)
 var _ PluginHookRetry = (*PluginRetry)(nil)
 var _ PluginConfig = (*PluginRetryConfig)(nil)
 
-const pluginRetryKeyRetryInfo = "__gteRetry"
-
 // @formatter:off
 /// [config]
 const (
@@ -29,17 +27,37 @@ type PluginRetryConfig struct {
 	// Defaults to [pluginRetryDefaultDelay].
 	Delay *ListenerTemplate `mapstructure:"delay"`
 
+	// NOTE: If neither MaxRetries nor MaxElapsed are provided, the plugin
+	// will default to a MaxRetries of [pluginRetryDefaultMaxRetries].
+
 	// If provided, limits max amount of retries
 	MaxRetries *int `mapstructure:"maxRetries"`
 
 	// If provided, limits the maximum amount of time spent retrying
 	MaxElapsed *time.Duration `mapstructure:"maxElapsed"`
-
-	// NOTE: If neither MaxRetries nor MaxElapsed are provided, the plugin\
-	// will default to a MaxRetries of [pluginRetryDefaultMaxRetries].
 }
 
 /// [config]
+// @formatter:on
+
+// @formatter:off
+/// [retry-payload]
+// On every retry cycle, the [PluginRetryInfo] payload can be accessed
+// under the [pluginRetryKeyRetryInfo] key.
+const pluginRetryKeyRetryInfo = "__gteRetry"
+
+type PluginRetryInfo struct {
+	// How much time has passed since the request started?
+	Elapsed time.Duration
+
+	// Which retry are we at? Starts from 1.
+	RetryCount int
+
+	// What has been the previous execution result?
+	PreviousResult *ExecCommandResult
+}
+
+/// [retry-payload]
 // @formatter:on
 
 func (c *PluginRetryConfig) NewPlugin(listener *CompiledListener) (PluginInterface, error) {
@@ -85,17 +103,6 @@ func (p *PluginRetry) Clone(newListener *CompiledListener) (PluginInterface, err
 		tplCondition: tplConditionClone,
 		tplDelay:     tplDelayClone,
 	}, nil
-}
-
-type PluginRetryInfo struct {
-	// How much time has passed since the request started?
-	Elapsed time.Duration
-
-	// Which retry are we at? Starts from 1.
-	RetryCount int
-
-	// What has been the previous execution result?
-	PreviousResult *ExecCommandResult
 }
 
 func (p *PluginRetry) HookShouldRetry(currentHookRetryInfo *HookShouldRetryInfo, args map[string]interface{}, commandResult *ExecCommandResult) (*time.Duration, map[string]interface{}, error) {

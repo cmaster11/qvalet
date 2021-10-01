@@ -47,4 +47,4 @@ To run the docker image on e.g. a local Windows machine:
 docker run -i -t -v "C:/path/to/config.yaml:/mnt/config.yaml" --rm cmaster11/go-to-exec --config /mnt/config.yaml 
 ```
 
-* You can see a simple Kubernetes deployment example in our [use cases](./0120-use-cases/kubernetes.md).
+* You can see a simple Kubernetes deployment example in our [use cases](/0120-use-cases/kubernetes.md).
