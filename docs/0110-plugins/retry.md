@@ -18,6 +18,8 @@ NOTE: the `condition` field uses the syntax of an [if-template](/0900-appendix/i
 
 ## Examples
 
+> Example code at: [`/examples/config.plugin.retry.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.retry.yaml)
+
 This is a simple example on how to use the retry plugin:
 
 [filename](../../examples/config.plugin.retry.yaml ':include :type=code :fragment=docs-retry-simple')

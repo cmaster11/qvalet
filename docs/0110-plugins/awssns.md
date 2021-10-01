@@ -36,4 +36,6 @@ All the available SNS notification arguments are defined in the following struct
 
 This is an example on how to use the AWS SNS plugin:
 
+> Example code at: [`/examples/config.plugin.awssns.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.awssns.yaml)
+
 [filename](../../examples/config.plugin.awssns.yaml ':include :type=code')

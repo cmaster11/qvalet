@@ -30,4 +30,6 @@ persistent files.
 
 This is an example on how to use the preview plugin:
 
+> Example code at: [`/examples/config.plugin.preview.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.preview.yaml)
+
 [filename](../../examples/config.plugin.preview.yaml ':include :type=code')
