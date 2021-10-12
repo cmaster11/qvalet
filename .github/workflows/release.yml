@@ -33,6 +33,9 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
           GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
+          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Generate build files
         uses: thatisuday/go-cross-build@v1.0.2
