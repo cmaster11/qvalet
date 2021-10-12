@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/Masterminds/goutils v1.1.1
-	github.com/Masterminds/sprig/v3 v3.2.1
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/beyondstorage/go-service-azblob/v2 v2.2.0
 	github.com/beyondstorage/go-service-cos/v2 v2.2.0
 	github.com/beyondstorage/go-service-dropbox/v2 v2.2.0
