@@ -17,6 +17,7 @@ on:
       - '.husky/**'
       - 'hack/autosidebar/**'
       - 'README.md'
+      - 'CHANGELOG.md'
       - 'LICENSE'
       - 'index.html'
 
