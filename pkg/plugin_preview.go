@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Plugin = (*PluginPreview)(nil)
+var _ PluginInterface = (*PluginPreview)(nil)
 var _ PluginHookMountRoutes = (*PluginPreview)(nil)
 var _ PluginConfig = (*PluginPreviewConfig)(nil)
 
@@ -31,9 +31,10 @@ type PluginPreviewConfig struct {
 /// [config]
 // @formatter:on
 
-func (c *PluginPreviewConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
+func (c *PluginPreviewConfig) NewPlugin(listener *CompiledListener) (PluginInterface, error) {
 	return &PluginPreview{
-		config: c,
+		NewPluginBase("preview"),
+		c,
 	}, nil
 }
 
@@ -42,11 +43,13 @@ func (c *PluginPreviewConfig) IsUnique() bool {
 }
 
 type PluginPreview struct {
+	PluginBase
+
 	config *PluginPreviewConfig
 }
 
-func (p *PluginPreview) Clone(newListener *CompiledListener) Plugin {
-	return p
+func (p *PluginPreview) Clone(newListener *CompiledListener) (PluginInterface, error) {
+	return p, nil
 }
 
 func (p *PluginPreview) HookMountRoutes(engine *gin.Engine, listener *CompiledListener) {
@@ -63,7 +66,11 @@ func (p *PluginPreview) HookMountRoutes(engine *gin.Engine, listener *CompiledLi
 
 		toStore := make(map[string]interface{})
 
-		preparedExecutionResult, handledResult, err := listener.clone().prepareExecution(args, toStore)
+		listenerClone, err := listener.clone()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, errors.WithMessage(err, "failed to clone listener"))
+		}
+		preparedExecutionResult, handledResult, err := listenerClone.prepareExecution(args, toStore)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.WithMessage(err, "failed to prepare command execution"))
 		}

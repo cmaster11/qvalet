@@ -4,14 +4,14 @@ go 1.16
 
 require (
 	github.com/Masterminds/goutils v1.1.1
-	github.com/Masterminds/sprig/v3 v3.2.1
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/beyondstorage/go-service-azblob/v2 v2.2.0
-	github.com/beyondstorage/go-service-cos/v2 v2.2.0
+	github.com/beyondstorage/go-service-cos/v2 v2.3.0
 	github.com/beyondstorage/go-service-dropbox/v2 v2.2.0
 	github.com/beyondstorage/go-service-fs/v3 v3.3.0
 	github.com/beyondstorage/go-service-gcs/v2 v2.3.0
-	github.com/beyondstorage/go-service-kodo/v2 v2.2.0
-	github.com/beyondstorage/go-service-oss/v2 v2.3.0
+	github.com/beyondstorage/go-service-kodo/v2 v2.3.0
+	github.com/beyondstorage/go-service-oss/v2 v2.4.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.2.0
 	github.com/beyondstorage/go-service-s3/v2 v2.4.0
 	github.com/beyondstorage/go-storage/v4 v4.7.0
@@ -19,7 +19,7 @@ require (
 	github.com/gin-contrib/timeout v0.0.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/goccy/go-yaml v1.9.2
+	github.com/goccy/go-yaml v1.9.3
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12
@@ -29,6 +29,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cast v1.3.1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 )

@@ -36,23 +36,23 @@ type Config struct {
 
 type ListenerConfig struct {
 	// Command to run
-	Command string `mapstructure:"command" validate:"required"`
+	Command *ListenerTemplate `mapstructure:"command" validate:"required"`
 
 	// Arguments for `Command`
-	Args []string `mapstructure:"args"`
+	Args []*ListenerTemplate `mapstructure:"args"`
 
 	// Environment variables to pass to the command
-	Env map[string]string `mapstructure:"env"`
+	Env map[string]*ListenerTemplate `mapstructure:"env"`
 
 	// Which methods to enable for this listener. Defaults to GET, POST
 	// MUST be UPPERCASE!
 	Methods []string `mapstructure:"methods"`
 
 	// Define which temporary files you want to create
-	Files map[string]string `mapstructure:"files"`
+	Files map[string]*ListenerTemplate `mapstructure:"files"`
 
 	// If defined, the hook will be triggered only if this condition is met
-	Trigger *IfTemplate `mapstructure:"trigger"`
+	Trigger *ListenerIfTemplate `mapstructure:"trigger"`
 
 	// List of allowed authentication methods
 	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
@@ -198,10 +198,10 @@ func init() {
 func MergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
 	// Merge with the defaults
 	mergedConfig := &ListenerConfig{}
-	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(MergoTransformerCustomInstance)); err != nil {
 		return nil, errors.WithMessage(err, "failed to merge defaults config")
 	}
-	if err := mergo.Merge(mergedConfig, listenerConfig, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+	if err := mergo.Merge(mergedConfig, listenerConfig, mergo.WithOverride, mergo.WithTransformers(MergoTransformerCustomInstance)); err != nil {
 		return nil, errors.WithMessage(err, "failed to merge overriding listener config")
 	}
 	return mergedConfig, nil
@@ -214,6 +214,9 @@ var defaultDecodeHook = mapstructure.ComposeDecodeHookFunc(
 	utils.StringToStringFromEnvVarHookFunc(),
 
 	// Custom
+	StringToPointerListenerTemplateHookFunc(),
+	StringToPointerListenerIfTemplateHookFunc(),
+
 	StringToPointerIfTemplateHookFunc(),
 	StringToPointerTemplateHookFunc(),
 )

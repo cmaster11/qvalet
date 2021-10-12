@@ -8,7 +8,7 @@ route, you will be able to see what the command execution will be like.
 
 You can also customize the `/preview` route to have its own authentication method, especially if you don't want to keep
 private the content of a command. This authentication configuration follows the same rules as a
-generic [listener one](./0_home.md#authentication).
+generic [listener one](/0060-authentication.md).
 
 An example of what you can see with this plugin is:
 
@@ -18,7 +18,7 @@ args:
   - Hello Mr. Anderson
 ```
 
-**SIDE EFFECTS:** when using [temporary/persistent files](./0_home.md#local-files), the preview plugin will **write** to
+**SIDE EFFECTS:** when using [temporary/persistent files](/0040-local-files.md), the preview plugin will **write** to
 these files in order to compute the command preview. This can lead to side effects, especially if you are using
 persistent files.
 
@@ -29,5 +29,7 @@ persistent files.
 ## Examples
 
 This is an example on how to use the preview plugin:
+
+> Example code at: [`/examples/config.plugin.preview.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.preview.yaml)
 
 [filename](../../examples/config.plugin.preview.yaml ':include :type=code')

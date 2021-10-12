@@ -74,7 +74,7 @@ func getGinListenerHandler(listener *CompiledListener) gin.HandlerFunc {
 			return
 		}
 
-		ctxHandled, response, err := listener.HandleRequest(c, args)
+		ctxHandled, response, err := listener.HandleRequest(c, args, nil)
 		if ctxHandled {
 			return
 		}

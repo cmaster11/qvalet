@@ -15,4 +15,6 @@ missing library, please open an [issue](https://github.com/cmaster11/go-to-exec/
 
 Here is an example, which uses GCS and FS (file-system) as a storage backend:
 
+> Example code at: [`/examples/config.storage.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.storage.yaml)
+
 [filename](../examples/config.storage.yaml ':include :type=code')

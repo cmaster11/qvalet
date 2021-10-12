@@ -11,6 +11,8 @@ Here are all available configuration entries:
 
 ## Configuration example
 
+> Example code at: [`/examples/config.simple.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.simple.yaml)
+
 [filename](../examples/config.simple.yaml ':include :type=code')
 
 Test with:

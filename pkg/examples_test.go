@@ -108,7 +108,7 @@ func TestExamples(t *testing.T) {
 				}
 			}
 
-			listener, _ := net.Listen("tcp", ":0")
+			listener, _ := net.Listen("tcp4", "localhost:0")
 
 			router := loadGTE(t, examplePath, listener)
 
@@ -327,7 +327,8 @@ var regexDefaults = regexp.MustCompile(`\[DEFAULTS=([^]]+)]`)
 var regexPart = regexp.MustCompile(`\[PART=([^]]+)]`)
 
 func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine {
-	os.Setenv("GTE_TEST_URL", listener.Addr().String())
+	newAddress := fmt.Sprintf("http://%s", listener.Addr().String())
+	os.Setenv("GTE_TEST_URL", newAddress)
 
 	if os.Getenv("GTE_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -358,8 +359,11 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 
 	var configs []*Config
 
+	/*
+		For the configs, we want to replace all localhost entries with the test-runtime ones
+	*/
 	{
-		config, err := LoadConfig(configPath)
+		config, err := LoadConfig(replaceConfigInLocalhost(t, configPath, newAddress))
 		require.NoError(t, err)
 		configs = append(configs, config)
 	}
@@ -375,6 +379,7 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 				}
 
 				t.Logf("using additional config %s", filename)
+				filename = replaceConfigInLocalhost(t, filename, newAddress)
 				config, err := LoadConfig(filename)
 				require.NoError(t, err)
 				configs = append(configs, config)
@@ -403,6 +408,23 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 	}
 
 	return router
+}
+
+func replaceConfigInLocalhost(t *testing.T, configPath string, newAddress string) string {
+	contentBytes, err := ioutil.ReadFile(configPath)
+	require.NoError(t, err)
+
+	content := string(contentBytes)
+	content = strings.ReplaceAll(content, localHost, newAddress)
+
+	// Write to a temporary file
+	tmp, err := ioutil.TempFile("", "gte_test_*.yaml")
+	require.NoError(t, err)
+
+	_, err = tmp.WriteString(content)
+	require.NoError(t, err)
+
+	return tmp.Name()
 }
 
 var visitRegex = regexp.MustCompile(`^config.(.+).yaml$`)
