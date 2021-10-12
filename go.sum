@@ -106,8 +106,8 @@ github.com/beyondstorage/go-service-fs/v3 v3.3.0 h1:VOFdcshI4M1ovPbfwBpSdTp2Ckzv
 github.com/beyondstorage/go-service-fs/v3 v3.3.0/go.mod h1:/keWarsnGKz219wMyGN57OM7s5BUIZ/YlK9LhsXMwtQ=
 github.com/beyondstorage/go-service-gcs/v2 v2.3.0 h1:pkDZN0Y1n7oERJ44IQfrtjdwwJGmR125iH+IFACN9Ro=
 github.com/beyondstorage/go-service-gcs/v2 v2.3.0/go.mod h1:pevYiMspKamdWBB0DnMv6VZXTlDDC0RJHoB4Og2664k=
-github.com/beyondstorage/go-service-kodo/v2 v2.2.0 h1:OFa0o/H0j/TxnpT5MwPtrn8WDoiyBM1nMnRu2IL30S0=
-github.com/beyondstorage/go-service-kodo/v2 v2.2.0/go.mod h1:hNkpN2a2BLbiUVM3LyVRLsvV7iW/8Gj3sxnZHlkv+rg=
+github.com/beyondstorage/go-service-kodo/v2 v2.3.0 h1:otIu904eD/m6cLa1PW+DNKXEeaPV4u6YkBlplhbVYpo=
+github.com/beyondstorage/go-service-kodo/v2 v2.3.0/go.mod h1:7bfAb9qjeCtQdnW12VOOHnSU9PFWnxMB4aGR7P8zKh8=
 github.com/beyondstorage/go-service-oss/v2 v2.4.0 h1:Gu1P9HnG9UnT6Opbk7BQxRUwtRHOT1jwfwPJhj2dW8Q=
 github.com/beyondstorage/go-service-oss/v2 v2.4.0/go.mod h1:88a1zCDG5d3FsaljSUwFuJXoaQ+Sub8pI3ZjXxgvdco=
 github.com/beyondstorage/go-service-qingstor/v3 v3.2.0 h1:74nZZ8hvB8JxN7zYzHJMgxRQxOR7Zn56rQhgNTLwcUg=
@@ -122,8 +122,6 @@ github.com/beyondstorage/go-storage/v4 v4.7.0/go.mod h1:mc9VzBImjXDg1/1sLfta2MJH
 github.com/beyondstorage/specs/go v0.0.0-20210623065218-d1c2d7d81259/go.mod h1:vF/Q0P1tCvhVAUrxg7i6NvrARRMQVTAuQdDNqpSzR1w=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
-github.com/cenkalti/backoff/v4 v4.1.1 h1:G2HAfAmvm/GcKan2oOQpBXOd2tT2G57ZnZGWa1PxPBQ=
-github.com/cenkalti/backoff/v4 v4.1.1/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -419,8 +417,8 @@ github.com/qingstor/log v0.0.0-20200804082313-615256cccabc h1:633tgwvkk8O26HZD/u
 github.com/qingstor/log v0.0.0-20200804082313-615256cccabc/go.mod h1:XfNhERXtkg/S9MWaMOk/m7mrmj4vcWDvhw17hmH4JGQ=
 github.com/qingstor/qingstor-sdk-go/v4 v4.3.0 h1:+qcVqBiuGUsTPJZCHc5QK81NgfIMLjoIHXovdIRHKvk=
 github.com/qingstor/qingstor-sdk-go/v4 v4.3.0/go.mod h1:GT0QY+LwqnOQhsRkbxUds8cTYR4inZpgOQEkCKYRiAs=
-github.com/qiniu/go-sdk/v7 v7.9.7 h1:sVt6cHzG52nGGULeZkcAVpwj5eyQcgJsbSbTPkPAkLo=
-github.com/qiniu/go-sdk/v7 v7.9.7/go.mod h1:Eeqk1/Km3f1MuLUUkg2JCSg/dVkydKbBvEdJJqFgn9g=
+github.com/qiniu/go-sdk/v7 v7.9.8 h1:QE3Nj+bj+ZHGWed2L+nuOKGhtJgXqdMbSaC69YZ05L8=
+github.com/qiniu/go-sdk/v7 v7.9.8/go.mod h1:Eeqk1/Km3f1MuLUUkg2JCSg/dVkydKbBvEdJJqFgn9g=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
