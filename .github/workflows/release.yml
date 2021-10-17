@@ -53,10 +53,7 @@ jobs:
           package: 'cmd'
           dest: 'dist'
           name: 'gotoexec'
-      - name: Release
-        uses: softprops/action-gh-release@v0.1.8
-        with:
-          files: dist/*
+
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
@@ -65,3 +62,8 @@ jobs:
           tags: |
             cmaster11/go-to-exec:latest
             cmaster11/go-to-exec:${{ env.TAG }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.8
+        with:
+          files: dist/*
