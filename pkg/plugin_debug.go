@@ -79,7 +79,7 @@ func (p *PluginDebug) HookPostExecute(commandResult *ExecCommandResult) error {
 	return nil
 }
 
-func (p *PluginDebug) HookOutput(c *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error) {
+func (p *PluginDebug) HookOutput(_ *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error) {
 	p.listener.Logger().WithField("args", args).WithField("listenerResponse", listenerResponse).Warnf("[%s] OUTPUT", p.config.Prefix)
 	return false, nil
 }

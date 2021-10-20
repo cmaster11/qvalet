@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/uptrace/bun/migrate"
 )
 
 var pluginCounter int
@@ -38,11 +39,31 @@ func NewPluginBase(idPrefix string) PluginBase {
 	return PluginBase{id: fmt.Sprintf("plugin-%s-%d", idPrefix, GetNextPluginIdx())}
 }
 
+type PluginLifecycle interface {
+	PluginInterface
+
+	// Invoked after all routes are mounted and plugins can start operating
+	OnStart() error
+
+	// Invoked on server shutdown
+	OnStop()
+}
+
+type PluginConfigNeedsDb interface {
+	PluginInterface
+
+	// If true, it marks that this plugin will require a database connection to work
+	NeedsDb() bool
+
+	// Returns the database initialization migrations
+	Migrations() *migrate.Migrations
+}
+
 type PluginHookMountRoutes interface {
 	PluginInterface
 
 	// Called on initialization, allows plugins to mount additional routes
-	HookMountRoutes(engine *gin.Engine, listener *CompiledListener)
+	HookMountRoutes(engine *gin.Engine)
 }
 
 type PluginHookPreExecute interface {
@@ -63,7 +84,13 @@ type PluginHookOutput interface {
 	PluginInterface
 
 	// Called at runtime, after listener successful execution, allows alteration of output
-	HookOutput(c *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error)
+	HookOutput(
+		// NOTE: this context can be artificial at times (e.g. if during a delayed execution), which means
+		// you CANNOT read from this context, but only write to it
+		writeOnlyContext *gin.Context,
+		args map[string]interface{},
+		listenerResponse *ListenerResponse,
+	) (handled bool, err error)
 }
 
 type HookShouldRetryInfo struct {
@@ -105,6 +132,9 @@ type PluginEntryConfig struct {
 	// You can use the Retry plugin to retry a command execution, depending on
 	// any condition you want
 	Retry *PluginRetryConfig `mapstructure:"retry"`
+
+	// You can use the Schedule plugin to defer command executions in the future
+	Schedule *PluginScheduleConfig `mapstructure:"schedule"`
 
 	// ---
 

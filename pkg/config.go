@@ -23,14 +23,17 @@ type Config struct {
 	// If true, enable all logging by default
 	Debug bool `mapstructure:"debug"`
 
-	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055
+	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055.
+	//
+	// NOTE: if multiple ports are defined in multiple config files, multiple listeners
+	// will be spawn, each on the defined port.
 	Port int `mapstructure:"port" validate:"min=0,max=65535"`
 
 	// Map of route -> listener
 	Listeners map[string]*ListenerConfig `mapstructure:"listeners" validate:"-"`
 
 	// Holds default configs valid for all listeners in this config.
-	// Values defined in each listener will overwrite these ones.
+	// Values defined in each listener will overwrite the default ones.
 	Defaults ListenerConfig `mapstructure:"defaults" validate:"-"`
 }
 
@@ -84,6 +87,9 @@ type ListenerConfig struct {
 
 	// List of plugins configurations
 	Plugins []*PluginEntryConfig `mapstructure:"plugins" validate:"uniquePlugins,dive,required"`
+
+	// Database connection configuration, to be used by any plugins that require one
+	Database *DatabaseConfig `mapstructure:"database"`
 }
 
 /// [config-docs]

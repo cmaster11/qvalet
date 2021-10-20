@@ -110,7 +110,17 @@ func TestExamples(t *testing.T) {
 
 			listener, _ := net.Listen("tcp4", "localhost:0")
 
-			router := loadGTE(t, examplePath, listener)
+			router, mountRoutesResults := loadGTE(t, examplePath, listener)
+
+			for _, r := range mountRoutesResults {
+				require.NoError(t, r.PluginsStart())
+			}
+			defer func() {
+				for _, r := range mountRoutesResults {
+					r.PluginsStop()
+				}
+			}()
+			defer CloseAllDBConnections()
 
 			addr := listener.Addr().String()
 			go http.Serve(listener, router)
@@ -326,7 +336,9 @@ func execGoTest(t *testing.T, code string) (*execResult, error) {
 var regexDefaults = regexp.MustCompile(`\[DEFAULTS=([^]]+)]`)
 var regexPart = regexp.MustCompile(`\[PART=([^]]+)]`)
 
-func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine {
+var testRootCounter = 0
+
+func loadGTE(t *testing.T, configPath string, listener net.Listener) (*gin.Engine, []*MountRoutesResult) {
 	newAddress := fmt.Sprintf("http://%s", listener.Addr().String())
 	os.Setenv("GTE_TEST_URL", newAddress)
 
@@ -391,6 +403,8 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 	router := gin.Default()
 	router.Use(gin.ErrorLogger())
 
+	var mountRoutesResults []*MountRoutesResult
+
 	for _, config := range configs {
 		config.Debug = true
 
@@ -404,10 +418,15 @@ func loadGTE(t *testing.T, configPath string, listener net.Listener) *gin.Engine
 		config.Defaults.Return = []ReturnKey{ReturnKeyAll}
 
 		require.NoError(t, utils.Validate.Struct(config))
-		MountRoutes(router, config)
+		counter := testRootCounter
+		testRootCounter++
+		mountResult, err := MountRoutes(router, config, fmt.Sprintf("test_%d_%d_", time.Now().UnixMilli(), counter))
+		require.NoError(t, err)
+
+		mountRoutesResults = append(mountRoutesResults, mountResult)
 	}
 
-	return router
+	return router, mountRoutesResults
 }
 
 func replaceConfigInLocalhost(t *testing.T, configPath string, newAddress string) string {
