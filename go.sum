@@ -418,8 +418,6 @@ github.com/qingstor/go-mime v0.1.0 h1:FhTJtM7TRm9pfgCXpjGUxqwbumGojrgE9ecRz5PXvf
 github.com/qingstor/go-mime v0.1.0/go.mod h1:EDwWgaMufg74m7futsF0ZGkdA52ajjAycY+XDeV8M88=
 github.com/qingstor/qingstor-sdk-go/v4 v4.4.0 h1:tbItWtGB1TDfYzqK8dtm6tV+xWU5iYMwL37C6AL5dDs=
 github.com/qingstor/qingstor-sdk-go/v4 v4.4.0/go.mod h1:mDVFtA7+bXQ5xoELTWkoFy1Ad13wtp8jtlnl/RU+zzM=
-github.com/qingstor/log v0.0.0-20200804082313-615256cccabc h1:633tgwvkk8O26HZD/upVtDzWcrMoCiffZAVDtEtFW9E=
-github.com/qingstor/log v0.0.0-20200804082313-615256cccabc/go.mod h1:XfNhERXtkg/S9MWaMOk/m7mrmj4vcWDvhw17hmH4JGQ=
 github.com/qiniu/go-sdk/v7 v7.9.8 h1:QE3Nj+bj+ZHGWed2L+nuOKGhtJgXqdMbSaC69YZ05L8=
 github.com/qiniu/go-sdk/v7 v7.9.8/go.mod h1:Eeqk1/Km3f1MuLUUkg2JCSg/dVkydKbBvEdJJqFgn9g=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=

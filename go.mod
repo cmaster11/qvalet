@@ -42,7 +42,6 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/azure-storage-blob-go v0.14.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
-	github.com/Xuanwo/go-bufferpool v0.0.0-20200622083641-bc954721ce54 // indirect
 	github.com/Xuanwo/templateutils v0.1.0 // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.10+incompatible // indirect
 	github.com/aws/aws-sdk-go v1.40.36 // indirect
@@ -81,8 +80,7 @@ require (
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/qingstor/go-mime v0.1.0 // indirect
-	github.com/qingstor/log v0.0.0-20200804082313-615256cccabc // indirect
-	github.com/qingstor/qingstor-sdk-go/v4 v4.3.0 // indirect
+	github.com/qingstor/qingstor-sdk-go/v4 v4.4.0 // indirect
 	github.com/qiniu/go-sdk/v7 v7.9.8 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
@@ -95,6 +93,9 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
@@ -112,7 +113,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	mellium.im/sasl v0.2.1 // indirect
 )
 
