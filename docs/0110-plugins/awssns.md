@@ -1,7 +1,7 @@
 # AWS SNS
 
-You can create AWS SNS subscriptions, and point them to a `go-to-exec` instance, to automatically confirm the
-subscription and process SNS messages. The AWS SNS plugin automatically verifies the validity of the messages.
+You can create [AWS SNS](https://aws.amazon.com/sns/) subscriptions, and point them to a `go-to-exec` instance, to automatically confirm the
+subscription and process SNS messages. The `awssns` plugin automatically verifies the validity of the messages.
 
 The AWS SNS plugin will add a `/sns` route to your listener, and you can refer to this route when you will add an SNS
 subscription.
@@ -35,5 +35,7 @@ All the available SNS notification arguments are defined in the following struct
 ## Example
 
 This is an example on how to use the AWS SNS plugin:
+
+> Example code at: [`/examples/config.plugin.awssns.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.awssns.yaml)
 
 [filename](../../examples/config.plugin.awssns.yaml ':include :type=code')

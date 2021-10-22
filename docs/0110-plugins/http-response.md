@@ -29,8 +29,12 @@ error, there will be a standard response.
 
 This is an example on how to use the HTTP response plugin:
 
+> Example code at: [`/examples/config.plugin.httpresponse.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.httpresponse.yaml)
+
 [filename](../../examples/config.plugin.httpresponse.yaml ':include :type=code')
 
 And, another example, which makes use of temporary files to store a redirection target:
+
+> Example code at: [`/examples/config.plugin.httpresponse-file.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.httpresponse-file.yaml)
 
 [filename](../../examples/config.plugin.httpresponse-file.yaml ':include :type=code')

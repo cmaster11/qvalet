@@ -21,8 +21,8 @@ type Template struct {
 	tpl          *textTemplate.Template
 }
 
-func MustParseTemplate(templateKey string, template string) *Template {
-	ift, err := ParseTemplate(templateKey, template)
+func MustParseTemplate(templateKey string, template string, funcs ...textTemplate.FuncMap) *Template {
+	ift, err := ParseTemplate(templateKey, template, funcs...)
 	if err != nil {
 		logrus.WithError(err).WithField("template", template).Fatal("failed to parse if template")
 	}
@@ -78,12 +78,7 @@ func StringToPointerTemplateHookFunc() mapstructure.DecodeHookFuncType {
 		}
 
 		str := data.(string)
-
-		if str == "" {
-			return nil, nil
-		}
-
-		return ParseTemplate("ift", str)
+		return ParseTemplate("tpl", str)
 	}
 }
 

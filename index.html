@@ -2,9 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>go-to-exec: trigger commands from HTTP requests</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+    <!-- Primary Meta Tags -->
+    <title>go-to-exec: trigger commands from HTTP requests</title>
+    <meta name="title" content="go-to-exec: trigger commands from HTTP requests">
     <meta name="description" content="go-to-exec listens for HTTP requests and executes commands on demand">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cmaster11.github.io/go-to-exec/">
+    <meta property="og:title" content="go-to-exec: trigger commands from HTTP requests">
+    <meta property="og:description" content="go-to-exec listens for HTTP requests and executes commands on demand">
+    <!--    <meta property="og:image" content="">-->
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://cmaster11.github.io/go-to-exec/">
+    <meta property="twitter:title" content="go-to-exec: trigger commands from HTTP requests">
+    <meta property="twitter:description" content="go-to-exec listens for HTTP requests and executes commands on demand">
+    <!--    <meta property="twitter:image" content="">-->
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4.12.1/lib/themes/vue.css">
 </head>
@@ -12,10 +30,8 @@
 <div data-app id="main">Please wait...</div>
 
 <script>
-  const basePath = window.location.host === 'cmaster11.github.io' ? '/go-to-exec/docs' : '/docs';
-
   window.$docsify = {
-    basePath: basePath,
+    basePath: './docs',
     el: '#main',
     homepage: 'README.md',
     loadNavbar: '_navbar.md',
