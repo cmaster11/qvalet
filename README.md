@@ -5,8 +5,9 @@
 `go-to-exec` listens for HTTP requests and executes commands on demand.
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cmaster11/go-to-exec?sort=semver)](https://github.com/cmaster11/go-to-exec/releases)
+![GitHub all releases](https://img.shields.io/github/downloads/cmaster11/go-to-exec/total)
 
-## View **docs** at [https://cmaster11.github.io/go-to-exec/](https://cmaster11.github.io/go-to-exec/)
+## View **docs** at [https://cmaster11.github.io/go-to-exec/](https://cmaster11.github.io/go-to-exec/#/0010-getting-started)
 
 Links:
 

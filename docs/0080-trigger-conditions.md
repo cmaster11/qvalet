@@ -3,11 +3,8 @@
 You can configure a specific `trigger` condition for every listener. This means that the listener will be invoked only
 if the trigger condition is met.
 
-The syntax of the `trigger` field is the same as inside an `if` block of a Go template. All that matters is that the
-`trigger` if-template returns a `true`/`false` result.
+The `trigger` field uses the syntax of an [if-template](/0900-appendix/if-templates.md).
 
-```
-{{ if eq .name "Wren" }} -> eq .name "Wren"
-```
+> Example code at: [`/examples/config.trigger.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.trigger.yaml)
 
 [filename](../examples/config.trigger.yaml ':include :type=code')

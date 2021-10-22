@@ -64,7 +64,7 @@ function buildTree (dirPath: string, name = '', dirLink = ''): Entry {
   return {name, fileName: dirPath, children, link: dirLink};
 }
 
-function renderToMd (tree: Entry, linkDir = false): string {
+function renderToMd (tree: Entry, linkDir = false, skipRootLevel = false): string {
   if (!tree.children) {
     return `- [${tree.name || niceName(path.basename(tree.fileName, '.md'))}](${tree.link.replace(/ /g, '%20')})`;
   } else {
@@ -79,7 +79,7 @@ function renderToMd (tree: Entry, linkDir = false): string {
       .map(item => '  ' + item)
       .join('\n');
     let prefix = '';
-    if (tree.fileName) {
+    if (tree.fileName && !skipRootLevel) {
       if (linkDir || fileNames.has('README.md')) {
         let linkPath = tree.link.replace(/ /g, '%20');
         if (fileNames.has('README.md')) {
@@ -98,7 +98,7 @@ function renderToMd (tree: Entry, linkDir = false): string {
 function buildTOC (entry: Entry, skipFirstLevel = false) {
   if (!skipFirstLevel) {
     console.log(`Generating TOC for folder ${entry.fileName}`);
-    fs.writeFileSync(path.join(entry.fileName, '_toc.md'), renderToMd(entry));
+    fs.writeFileSync(path.join(entry.fileName, '_toc.md'), renderToMd(entry, false, true));
   }
 
   if (entry.children) {

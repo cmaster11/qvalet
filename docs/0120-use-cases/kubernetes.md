@@ -10,4 +10,6 @@ The following sample code can be tested, from inside the Kubernetes cluster, wit
 curl "http://restart-helper:7055/restart/deployment/a-deployment-name"
 ```
 
+> Example code at: [`/examples/k8s-restart-helper.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/k8s-restart-helper.yaml)
+
 [filename](../../examples/k8s-restart-helper.yaml ':include :type=code')
