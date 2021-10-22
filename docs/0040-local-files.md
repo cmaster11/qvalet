@@ -34,8 +34,16 @@ key2 -> GTE_FILES_key2, {{ (gte).files.tmp_key2 }}
 NOTE: in environment variables and in the templates map's keys, all `\W` characters (NOT `a-z`, `A-Z`, `0-9`, `_`) will
 be replaced with `_`.
 
-## Example
+## Examples
 
-To see a real-case example, you can look at the following Slack webhook configuration:
+This is an example on how to use temporary files:
 
-[filename](../examples/config.slack.yaml ':include :type=code')
+> Example code at: [`/examples/config.files.temporary.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.files.temporary.yaml)
+
+[filename](../examples/config.files.temporary.yaml ':include :type=code')
+
+And this is an example for persistent files:
+
+> Example code at: [`/examples/config.files.persistent.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.files.persistent.yaml)
+
+[filename](../examples/config.files.persistent.yaml ':include :type=code')

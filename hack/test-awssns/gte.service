@@ -1,9 +1,0 @@
-[Unit]
-Description=GTE
-
-[Service]
-Environment=GTE_VERBOSE=on
-ExecStart=/var/gte/gotoexec --config=/var/gte/config.plugin.awssns.yaml
-
-[Install]
-WantedBy=multi-user.target

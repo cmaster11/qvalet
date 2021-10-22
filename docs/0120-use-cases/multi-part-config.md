@@ -1,5 +1,10 @@
 # Multi-part configuration
 
+> Example code at: 
+> * [`/examples/defaults.combined.echo.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/defaults.combined.echo.yaml) 
+> * [`/examples/config.combined.echo.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.combined.echo.yaml) 
+> * [`/examples/config.combined.echo.part2.notest.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.combined.echo.part2.notest.yaml)
+
 Defaults:
 
 [filename](../../examples/defaults.combined.echo.yaml ':include :type=code')

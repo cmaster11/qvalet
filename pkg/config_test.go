@@ -7,6 +7,14 @@ import (
 )
 
 func TestMergeListenerConfig(t *testing.T) {
+	tplHello := MustParseListenerTemplate("", "hello")
+	tplHello2 := MustParseListenerTemplate("", "hello2")
+
+	tplA := MustParseListenerTemplate("", "a")
+	tplB := MustParseListenerTemplate("", "b")
+	tplC := MustParseListenerTemplate("", "c")
+	tplD := MustParseListenerTemplate("", "d")
+
 	tests := []struct {
 		exp ListenerConfig
 		def ListenerConfig
@@ -14,16 +22,16 @@ func TestMergeListenerConfig(t *testing.T) {
 	}{
 		{ListenerConfig{}, ListenerConfig{}, ListenerConfig{}},
 		// Simple overwrite
-		{ListenerConfig{Command: "hello"}, ListenerConfig{Command: "hello"}, ListenerConfig{}},
-		{ListenerConfig{Command: "hello2"}, ListenerConfig{Command: "hello"}, ListenerConfig{Command: "hello2"}},
+		{ListenerConfig{Command: tplHello}, ListenerConfig{Command: tplHello}, ListenerConfig{}},
+		{ListenerConfig{Command: tplHello2}, ListenerConfig{Command: tplHello}, ListenerConfig{Command: tplHello2}},
 		// Slice overwrite
-		{ListenerConfig{Args: []string{"a", "b"}}, ListenerConfig{Args: []string{"a", "b"}}, ListenerConfig{}},
-		{ListenerConfig{Args: []string{"e", "c"}}, ListenerConfig{Args: []string{"a", "b"}}, ListenerConfig{Args: []string{"e", "c"}}},
-		{ListenerConfig{Args: []string{"e", "c"}}, ListenerConfig{}, ListenerConfig{Args: []string{"e", "c"}}},
+		{ListenerConfig{Args: []*ListenerTemplate{tplA, tplB}}, ListenerConfig{Args: []*ListenerTemplate{tplA, tplB}}, ListenerConfig{}},
+		{ListenerConfig{Args: []*ListenerTemplate{tplD, tplC}}, ListenerConfig{Args: []*ListenerTemplate{tplA, tplB}}, ListenerConfig{Args: []*ListenerTemplate{tplD, tplC}}},
+		{ListenerConfig{Args: []*ListenerTemplate{tplD, tplC}}, ListenerConfig{}, ListenerConfig{Args: []*ListenerTemplate{tplD, tplC}}},
 		//  Map overwrite
-		{ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{}},
-		{ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}, ListenerConfig{Files: map[string]string{"a": "c1", "b": "c2"}}, ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}},
-		{ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}, ListenerConfig{}, ListenerConfig{Files: map[string]string{"c": "c3", "d": "c4"}}},
+		{ListenerConfig{Files: map[string]*ListenerTemplate{"a": tplA, "b": tplB}}, ListenerConfig{Files: map[string]*ListenerTemplate{"a": tplA, "b": tplB}}, ListenerConfig{}},
+		{ListenerConfig{Files: map[string]*ListenerTemplate{"c": tplC, "d": tplD}}, ListenerConfig{Files: map[string]*ListenerTemplate{"a": tplA, "b": tplB}}, ListenerConfig{Files: map[string]*ListenerTemplate{"c": tplC, "d": tplD}}},
+		{ListenerConfig{Files: map[string]*ListenerTemplate{"c": tplC, "d": tplD}}, ListenerConfig{}, ListenerConfig{Files: map[string]*ListenerTemplate{"c": tplC, "d": tplD}}},
 		// Log key overwrite
 		{ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{}},
 		{ListenerConfig{Log: []LogKey{LogKeyAll}}, ListenerConfig{Log: []LogKey{LogKeyArgs, LogKeyOutput}}, ListenerConfig{Log: []LogKey{LogKeyAll}}},

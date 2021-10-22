@@ -59,6 +59,8 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	var mountResults []*pkg.MountRoutesResult
+
 	wg := sync.WaitGroup{}
 	for port, configs := range configsByPort {
 		port := port
@@ -86,7 +88,19 @@ func main() {
 			if err := utils.Validate.Struct(config); err != nil {
 				logrus.WithError(err).Fatalf("failed to validate config")
 			}
-			pkg.MountRoutes(router, config)
+
+			mountResult, err := pkg.MountRoutes(router, config, fmt.Sprintf("%d_", port))
+			if err != nil {
+				logrus.WithError(err).Fatalf("failed to mount routes")
+			}
+
+			mountResults = append(mountResults, mountResult)
+		}
+
+		for _, r := range mountResults {
+			if err := r.PluginsStart(); err != nil {
+				logrus.WithError(err).Fatalf("failed to start plugins")
+			}
 		}
 
 		logrus.WithField("port", port).Info("server listening")
@@ -98,5 +112,12 @@ func main() {
 			wg.Done()
 		}()
 	}
+	defer func() {
+		for _, r := range mountResults {
+			r.PluginsStop()
+		}
+	}()
+	defer pkg.CloseAllDBConnections()
+
 	wg.Wait()
 }

@@ -13,6 +13,8 @@ Here are all available auth configuration entries:
 
 [filename](../pkg/auth.go ':include :type=code :fragment=auth-docs')
 
+> Example code at: [`/examples/config.auth.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.auth.yaml)
+
 ## Basic auth
 
 The username is configurable via the `httpAuthUsername` config key, and will default to `gte` if none is provided.

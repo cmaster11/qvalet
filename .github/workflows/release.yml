@@ -11,6 +11,18 @@ jobs:
   generate:
     name: Generate cross-platform builds
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
@@ -26,16 +38,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
+      # Test AWS SNS
+      - name: Configure AWS credentials from test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
       - name: Run tests
         uses: ./.github/actions/test
         env:
+          GTE_DEFAULTS_DATABASE_HOST: postgres
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
           GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
+          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Generate build files
-        uses: thatisuday/go-cross-build@v1.0.2
+        uses: ./.github/actions/build
         env:
           CGO_ENABLED: "0"
         with:
@@ -43,10 +66,7 @@ jobs:
           package: 'cmd'
           dest: 'dist'
           name: 'gotoexec'
-      - name: Release
-        uses: softprops/action-gh-release@v0.1.8
-        with:
-          files: dist/*
+
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
@@ -55,3 +75,8 @@ jobs:
           tags: |
             cmaster11/go-to-exec:latest
             cmaster11/go-to-exec:${{ env.TAG }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.8
+        with:
+          files: dist/*
