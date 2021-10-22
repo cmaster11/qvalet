@@ -1,4 +1,3 @@
-- [Use cases](/0120-use-cases/README.md)
   - [Kubernetes restart helper](/0120-use-cases/kubernetes.md)
   - [Multi-part configuration](/0120-use-cases/multi-part-config.md)
   - [Slack messages](/0120-use-cases/slack.md)

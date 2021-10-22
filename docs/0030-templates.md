@@ -17,9 +17,9 @@ files:
 ```
 
 You can use all functions from the [sprig](https://github.com/Masterminds/sprig) library in the templates, and
-some [additional](./0030-templates.md) functions.
+some [additional](#template-functions) functions.
 
-You can find some advanced use cases in our [use cases](./0120-use-cases/) page and in
+You can find some advanced use cases in our [use cases](/0120-use-cases/) page and in
 our [examples](https://github.com/cmaster11/go-to-exec/tree/main/examples) folder.
 
 Templates are populated with all parameters from:
@@ -47,6 +47,8 @@ You can then use any fields of these objects in your templates.
 A special case applies when a listener receives an array payload (JSON/YAML content type). In this case, the processed
 payload will be an object, where there is one key for each array index (`0, 1, 2 -> "0", "1", "2"`), and the
 key `__gtePayloadArrayLength` will contain the length of the original array. This is an example:
+
+> Example code at: [`/examples/config.simple.array.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.simple.array.yaml)
 
 [filename](../examples/config.simple.array.yaml ':include :type=code')
 

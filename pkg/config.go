@@ -23,36 +23,39 @@ type Config struct {
 	// If true, enable all logging by default
 	Debug bool `mapstructure:"debug"`
 
-	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055
+	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055.
+	//
+	// NOTE: if multiple ports are defined in multiple config files, multiple listeners
+	// will be spawn, each on the defined port.
 	Port int `mapstructure:"port" validate:"min=0,max=65535"`
 
 	// Map of route -> listener
 	Listeners map[string]*ListenerConfig `mapstructure:"listeners" validate:"-"`
 
 	// Holds default configs valid for all listeners in this config.
-	// Values defined in each listener will overwrite these ones.
+	// Values defined in each listener will overwrite the default ones.
 	Defaults ListenerConfig `mapstructure:"defaults" validate:"-"`
 }
 
 type ListenerConfig struct {
 	// Command to run
-	Command string `mapstructure:"command" validate:"required"`
+	Command *ListenerTemplate `mapstructure:"command" validate:"required"`
 
 	// Arguments for `Command`
-	Args []string `mapstructure:"args"`
+	Args []*ListenerTemplate `mapstructure:"args"`
 
 	// Environment variables to pass to the command
-	Env map[string]string `mapstructure:"env"`
+	Env map[string]*ListenerTemplate `mapstructure:"env"`
 
 	// Which methods to enable for this listener. Defaults to GET, POST
 	// MUST be UPPERCASE!
 	Methods []string `mapstructure:"methods"`
 
 	// Define which temporary files you want to create
-	Files map[string]string `mapstructure:"files"`
+	Files map[string]*ListenerTemplate `mapstructure:"files"`
 
 	// If defined, the hook will be triggered only if this condition is met
-	Trigger *IfTemplate `mapstructure:"trigger"`
+	Trigger *ListenerIfTemplate `mapstructure:"trigger"`
 
 	// List of allowed authentication methods
 	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
@@ -84,6 +87,9 @@ type ListenerConfig struct {
 
 	// List of plugins configurations
 	Plugins []*PluginEntryConfig `mapstructure:"plugins" validate:"uniquePlugins,dive,required"`
+
+	// Database connection configuration, to be used by any plugins that require one
+	Database *DatabaseConfig `mapstructure:"database"`
 }
 
 /// [config-docs]
@@ -198,10 +204,10 @@ func init() {
 func MergeListenerConfig(defaults *ListenerConfig, listenerConfig *ListenerConfig) (*ListenerConfig, error) {
 	// Merge with the defaults
 	mergedConfig := &ListenerConfig{}
-	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+	if err := mergo.Merge(mergedConfig, defaults, mergo.WithOverride, mergo.WithTransformers(MergoTransformerCustomInstance)); err != nil {
 		return nil, errors.WithMessage(err, "failed to merge defaults config")
 	}
-	if err := mergo.Merge(mergedConfig, listenerConfig, mergo.WithOverride, mergo.WithTransformers(mergoTransformerCustomInstance)); err != nil {
+	if err := mergo.Merge(mergedConfig, listenerConfig, mergo.WithOverride, mergo.WithTransformers(MergoTransformerCustomInstance)); err != nil {
 		return nil, errors.WithMessage(err, "failed to merge overriding listener config")
 	}
 	return mergedConfig, nil
@@ -214,6 +220,9 @@ var defaultDecodeHook = mapstructure.ComposeDecodeHookFunc(
 	utils.StringToStringFromEnvVarHookFunc(),
 
 	// Custom
+	StringToPointerListenerTemplateHookFunc(),
+	StringToPointerListenerIfTemplateHookFunc(),
+
 	StringToPointerIfTemplateHookFunc(),
 	StringToPointerTemplateHookFunc(),
 )

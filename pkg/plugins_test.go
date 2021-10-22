@@ -14,7 +14,7 @@ type PluginTestUniqueConfig struct {
 	Name string `mapstructure:"name"`
 }
 
-func (c *PluginTestUniqueConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
+func (c *PluginTestUniqueConfig) NewPlugin(listener *CompiledListener) (PluginInterface, error) {
 	panic("not implemented")
 }
 

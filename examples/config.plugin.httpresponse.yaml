@@ -67,7 +67,7 @@ listeners:
             # NOTE that you can use relative or absolute URLs in the location header.
             Location: |
               {{ if eq .__gteResult.Output "Redirect me!" }}
-              /redirectTarget
+              http://localhost:7055/redirectTarget
               {{ end }}
 
   # This is the target of the previous redirect example
