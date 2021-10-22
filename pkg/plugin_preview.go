@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Plugin = (*PluginPreview)(nil)
+var _ PluginInterface = (*PluginPreview)(nil)
 var _ PluginHookMountRoutes = (*PluginPreview)(nil)
 var _ PluginConfig = (*PluginPreviewConfig)(nil)
 
@@ -18,7 +18,7 @@ const pluginPreviewRouteDefault = "/preview"
 // @formatter:off
 /// [config]
 type PluginPreviewConfig struct {
-	// List of allowed authentication methods
+	// List of allowed authentication methods, defaults to the listener ones
 	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
 
 	// Route to append, defaults to `/preview`
@@ -31,9 +31,11 @@ type PluginPreviewConfig struct {
 /// [config]
 // @formatter:on
 
-func (c *PluginPreviewConfig) NewPlugin(listener *CompiledListener) (Plugin, error) {
+func (c *PluginPreviewConfig) NewPlugin(listener *CompiledListener) (PluginInterface, error) {
 	return &PluginPreview{
-		config: c,
+		NewPluginBase("preview"),
+		c,
+		listener,
 	}, nil
 }
 
@@ -42,30 +44,44 @@ func (c *PluginPreviewConfig) IsUnique() bool {
 }
 
 type PluginPreview struct {
+	PluginBase
+
 	config *PluginPreviewConfig
+	listener *CompiledListener
 }
 
-func (p *PluginPreview) Clone(newListener *CompiledListener) Plugin {
-	return p
+func (p *PluginPreview) Clone(_ *CompiledListener) (PluginInterface, error) {
+	return p, nil
 }
 
-func (p *PluginPreview) HookMountRoutes(engine *gin.Engine, listener *CompiledListener) {
+func (p *PluginPreview) HookMountRoutes(engine *gin.Engine) {
 	route := pluginPreviewRouteDefault
 	if p.config.Route != nil {
 		route = *p.config.Route
 	}
 
 	handler := func(c *gin.Context) {
-		handled, args := prepareListenerRequestHandling(c, p.config.Auth)
+		authConfig := p.config.Auth
+		if authConfig == nil {
+			authConfig = p.listener.config.Auth
+		}
+
+		handled, args := prepareListenerRequestHandling(c, authConfig)
 		if handled {
 			return
 		}
 
 		toStore := make(map[string]interface{})
 
-		preparedExecutionResult, handledResult, err := listener.clone().prepareExecution(args, toStore)
+		listenerClone, err := p.listener.clone()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, errors.WithMessage(err, "failed to clone listener"))
+			return
+		}
+		preparedExecutionResult, handledResult, err := listenerClone.prepareExecution(args, toStore)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.WithMessage(err, "failed to prepare command execution"))
+			return
 		}
 
 		var toReturn interface{}
@@ -86,5 +102,5 @@ func (p *PluginPreview) HookMountRoutes(engine *gin.Engine, listener *CompiledLi
 		c.AbortWithStatusJSON(http.StatusOK, toReturn)
 	}
 
-	mountRoutesByMethod(engine, listener.config.Methods, fmt.Sprintf("%s%s", listener.route, route), handler)
+	mountRoutesByMethod(engine, p.listener.config.Methods, fmt.Sprintf("%s%s", p.listener.route, route), handler)
 }

@@ -24,6 +24,9 @@ import (
 )
 
 type CompiledListener struct {
+	// The id will be filled at runtime
+	id string
+
 	config *ListenerConfig
 	log    logrus.FieldLogger
 
@@ -46,79 +49,104 @@ type CompiledListener struct {
 
 	// Maps fixed file names to execution-time file names
 	tplTmpFileNames              map[string]interface{}
-	tplTmpFileNamesOriginalPaths map[string]interface{}
+	tplTmpFileNamesOriginalPaths map[string]string
 
-	plugins []Plugin
+	plugins []PluginInterface
+
+	dbWrapper *BunDbWrapper
+}
+
+func (listener *CompiledListener) Plugins() []PluginInterface {
+	return listener.plugins
 }
 
 func (listener *CompiledListener) Logger() logrus.FieldLogger {
 	return logrus.WithField("listener", listener.route)
 }
 
+func (listener *CompiledListener) SetId(value string) {
+	listener.id = value
+}
+
 const funcMapKeyGTE = "gte"
 
-func (listener *CompiledListener) clone() *CompiledListener {
-	tplCmdClone, _ := listener.tplCmd.Clone()
-	var tplArgsClones []*Template
-	for _, tpl := range listener.tplArgs {
-		clone, _ := tpl.Clone()
-		tplArgsClones = append(tplArgsClones, clone)
-	}
-	tplEnvClones := make(map[string]*Template)
-	for key, tpl := range listener.tplEnv {
-		clone, _ := tpl.Clone()
-		tplEnvClones[key] = clone
-	}
-	tplFilesClones := make(map[string]*Template)
-	for key, tpl := range listener.tplFiles {
-		clone, _ := tpl.Clone()
-		tplFilesClones[key] = clone
-	}
-
-	var errorHandler *CompiledListener
-	if listener.errorHandler != nil {
-		errorHandler = listener.errorHandler.clone()
-	}
-
+func (listener *CompiledListener) clone() (*CompiledListener, error) {
 	newListener := &CompiledListener{
+		listener.id,
 		listener.config,
 		listener.log,
 		listener.route,
 		listener.sourceRoute,
 		listener.isErrorHandler,
-		tplCmdClone,
-		tplArgsClones,
-		tplEnvClones,
-		tplFilesClones,
+		nil,
+		nil,
+		nil,
+		nil,
 		listener.storager,
 		listener.storagePrefix,
-		errorHandler,
+		nil,
 		// On clone, generate a new execution-time temporary files map
 		map[string]interface{}{},
-		map[string]interface{}{},
-		[]Plugin{},
+		map[string]string{},
+		[]PluginInterface{},
+		listener.dbWrapper,
 	}
 
-	var newPlugins []Plugin
+	tplCmdClone, err := listener.tplCmd.CloneForListener(newListener)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to clone command template")
+	}
+	newListener.tplCmd = tplCmdClone
+
+	var tplArgsClones []*Template
+	for _, tpl := range listener.tplArgs {
+		clone, err := tpl.CloneForListener(newListener)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone arg template")
+		}
+		tplArgsClones = append(tplArgsClones, clone)
+	}
+	newListener.tplArgs = tplArgsClones
+
+	tplEnvClones := make(map[string]*Template)
+	for key, tpl := range listener.tplEnv {
+		clone, err := tpl.CloneForListener(newListener)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone env template")
+		}
+		tplEnvClones[key] = clone
+	}
+	newListener.tplEnv = tplEnvClones
+
+	tplFilesClones := make(map[string]*Template)
+	for key, tpl := range listener.tplFiles {
+		clone, err := tpl.CloneForListener(newListener)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone file template")
+		}
+		tplFilesClones[key] = clone
+	}
+	newListener.tplFiles = tplFilesClones
+
+	if listener.errorHandler != nil {
+		errorHandler, err := listener.errorHandler.clone()
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone error handler listener")
+		}
+		newListener.errorHandler = errorHandler
+	}
+
+	var newPlugins []PluginInterface
 	for _, p := range listener.plugins {
-		newPlugins = append(newPlugins, p.Clone(newListener))
+		clone, err := p.Clone(newListener)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone plugin")
+		}
+		newPlugins = append(newPlugins, clone)
 	}
 	newListener.plugins = newPlugins
 
-	// Replace the gte function in all cloned templates
-	funcMap := newListener.TplFuncMap()
-	newListener.tplCmd.Funcs(funcMap)
-	for _, tpl := range newListener.tplArgs {
-		tpl.Funcs(funcMap)
-	}
-	for _, tpl := range newListener.tplEnv {
-		tpl.Funcs(funcMap)
-	}
-	for _, tpl := range newListener.tplFiles {
-		tpl.Funcs(funcMap)
-	}
-
-	return newListener
+	return newListener, nil
 }
 
 var regexClearPath = regexp.MustCompile(`/+`)
@@ -129,7 +157,7 @@ func compileListener(
 	route string,
 	isErrorHandler bool,
 	storageCache *sync.Map,
-) *CompiledListener {
+) (*CompiledListener, error) {
 	sourceRoute := route
 	if isErrorHandler {
 		route = fmt.Sprintf("%s-on-error", route)
@@ -139,11 +167,11 @@ func compileListener(
 
 	listenerConfig, err := MergeListenerConfig(defaults, listenerConfig)
 	if err != nil {
-		log.WithError(err).Fatal("failed to merge listener config")
+		return nil, errors.WithMessage(err, "failed to merge listener config")
 	}
 
 	if err := utils.Validate.Struct(listenerConfig); err != nil {
-		log.WithError(err).Fatal("failed to validate listener config")
+		return nil, errors.WithMessage(err, "failed to validate listener config")
 	}
 
 	if isErrorHandler {
@@ -159,59 +187,19 @@ func compileListener(
 		route:          route,
 		sourceRoute:    sourceRoute,
 		isErrorHandler: isErrorHandler,
+
+		tplCmd:   listenerConfig.Command,
+		tplArgs:  listenerConfig.Args,
+		tplEnv:   listenerConfig.Env,
+		tplFiles: listenerConfig.Files,
 	}
 
 	if listenerConfig.ErrorHandler != nil {
-		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
-	}
-
-	tplFuncs := listener.TplFuncMap()
-
-	// Creates a unique tmp directory where to store the files
-	{
-		tplFiles := make(map[string]*Template)
-		for key, content := range listener.config.Files {
-			filePath := key
-
-			tpl, err := ParseTemplate(fmt.Sprintf("files-%s", key), content, tplFuncs)
-			if err != nil {
-				log.WithError(err).WithField("file", key).WithField("template", tpl).Fatal("failed to parse listener file template")
-			}
-			tplFiles[filePath] = tpl
-		}
-		listener.tplFiles = tplFiles
-	}
-
-	{
-		tplCmd, err := ParseTemplate(route, listenerConfig.Command, tplFuncs)
+		errorHandler, err := compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
 		if err != nil {
-			log.WithError(err).WithField("template", listenerConfig.Command).Fatal("failed to parse listener command template")
+			return nil, errors.WithMessage(err, "failed to compile error handler listener")
 		}
-		listener.tplCmd = tplCmd
-	}
-
-	{
-		var tplArgs []*Template
-		for idx, str := range listenerConfig.Args {
-			tpl, err := ParseTemplate(fmt.Sprintf("%s-%d", route, idx), str, tplFuncs)
-			if err != nil {
-				log.WithError(err).WithField("template", tpl).Fatal("failed to parse listener args template")
-			}
-			tplArgs = append(tplArgs, tpl)
-		}
-		listener.tplArgs = tplArgs
-	}
-
-	{
-		tplEnv := make(map[string]*Template)
-		for key, content := range listener.config.Env {
-			tpl, err := ParseTemplate(fmt.Sprintf("env-%s", key), content, tplFuncs)
-			if err != nil {
-				log.WithError(err).WithField("file", key).WithField("template", tpl).Fatal("failed to parse listener env template")
-			}
-			tplEnv[key] = tpl
-		}
-		listener.tplEnv = tplEnv
+		listener.errorHandler = errorHandler
 	}
 
 	// If storage is defined, we need to initialize the storager
@@ -226,11 +214,12 @@ func compileListener(
 
 		storager, err := GetStoragerFromString(listenerConfig.Storage.Conn)
 		if err != nil {
-			log := log.WithError(err)
+			// Suffix for debugging purposes
+			suffix := ""
 			if logrus.IsLevelEnabled(logrus.DebugLevel) {
-				log = log.WithField("conn", listenerConfig.Storage.Conn)
+				suffix = fmt.Sprintf(" for conn %s", listenerConfig.Storage.Conn)
 			}
-			log.Fatal("failed to initialize storage")
+			return nil, errors.WithMessagef(err, "failed to initialize storage%s", suffix)
 		}
 
 		// Check that we can write there
@@ -243,7 +232,7 @@ func compileListener(
 			b := []byte(fmt.Sprintf("%d", nowNano))
 			_, err = storager.Write(p, bytes.NewBuffer(b), int64(len(b)))
 			if err != nil {
-				listener.log.WithError(err).Fatal("failed to check if storage is writable")
+				return nil, errors.WithMessage(err, "failed to check if storage is writable")
 			}
 
 			listener.log.WithField("path", p).Debug("written check writable file")
@@ -264,18 +253,46 @@ func compileListener(
 afterStorage:
 
 	// Group all plugins together
-	var listenerPlugins []Plugin
+	var listenerPlugins []PluginInterface
+	var dbRequiredForPlugins []PluginConfigNeedsDb
 	for _, pluginsEntry := range listenerConfig.Plugins {
 		list, err := pluginsEntry.ToPluginList(listener)
 		if err != nil {
-			listener.log.WithError(err).Fatal("failed to initialize plugins list")
+			return nil, errors.WithMessage(err, "failed to initialize plugins list")
+		}
+
+		for _, p := range list {
+			if p, ok := p.(PluginConfigNeedsDb); ok && p.NeedsDb() {
+				dbRequiredForPlugins = append(dbRequiredForPlugins, p)
+			}
 		}
 
 		listenerPlugins = append(listenerPlugins, list...)
 	}
 	listener.plugins = listenerPlugins
 
-	return listener
+	// If a database is defined and is required, connect!
+	if len(dbRequiredForPlugins) > 0 {
+		if listenerConfig.Database == nil {
+			return nil, errors.WithMessagef(err, "database is required for plugins %v to work", dbRequiredForPlugins)
+		}
+
+		db, err := NewDB(listenerConfig.Database)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "failed to initialize database at %s", listenerConfig.Database.ParsedLogSafeDSN())
+		}
+
+		// Perform any pending migrations
+		for _, p := range dbRequiredForPlugins {
+			if err := db.ApplyMigrations(p); err != nil {
+				return nil, errors.WithMessagef(err, "failed to apply migrations for plugin %s", p.Id())
+			}
+		}
+
+		listener.dbWrapper = db
+	}
+
+	return listener, nil
 }
 
 func (listener *CompiledListener) tplGTE() map[string]interface{} {
@@ -317,6 +334,10 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 	cmdStr := preparedExecutionResult.Command
 	cmdArgs := preparedExecutionResult.Args
 	cmdEnv := preparedExecutionResult.Env
+
+	if listener.config.LogArgs() {
+		log = log.WithField("args", args)
+	}
 
 	{
 		logCommandFields := map[string]interface{}{}
@@ -382,8 +403,7 @@ func (listener *CompiledListener) ExecCommand(args map[string]interface{}, toSto
 			toStore["error"] = err.Error()
 		}
 
-		msg := "failed to execute command"
-		err := errors.WithMessage(err, msg)
+		err := errors.WithMessage(err, "failed to execute command")
 
 		log := log
 		if listener.config.LogOutput() {
@@ -504,7 +524,11 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 	}, nil, nil
 }
 
-func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]interface{}) (bool, *ListenerResponse, error) {
+func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]interface{}, retryMap map[string]*HookShouldRetryInfo) (bool, *ListenerResponse, error) {
+	if retryMap == nil {
+		retryMap = make(map[string]*HookShouldRetryInfo)
+	}
+
 	// Keep track of what to store
 	toStore := make(map[string]interface{})
 
@@ -515,12 +539,70 @@ func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]
 		the "files" map of the template with different values, which means pointing the "gte" function
 		to a different listener!
 	*/
-	l := listener.clone()
-
-	out, err := l.ExecCommand(args, toStore)
-	defer l.cleanTemporaryFiles()
+	l, err := listener.clone()
 	if err != nil {
-		err := errors.WithMessagef(err, "failed to execute listener %s", l.route)
+		return false, nil, errors.WithMessage(err, "failed to clone listener")
+	}
+
+	timeStart := time.Now()
+
+	out, errCommand := l.ExecCommand(args, toStore)
+	defer l.cleanTemporaryFiles()
+
+	for _, plugin := range l.plugins {
+		if p, ok := plugin.(PluginHookPostExecute); ok {
+			err := p.HookPostExecute(out)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errors.WithMessage(err, "failed to process post execution via plugin"))
+				return true, nil, err
+			}
+		}
+	}
+
+	var retryDelay *time.Duration
+	for _, plugin := range l.plugins {
+		if p, ok := plugin.(PluginHookRetry); ok {
+			id := p.Id()
+			previousRetry := retryMap[id]
+
+			var currentRetry *HookShouldRetryInfo
+			if previousRetry == nil {
+				currentRetry = &HookShouldRetryInfo{
+					RetryCount: 1,
+				}
+			} else {
+				currentRetry = previousRetry
+				currentRetry.RetryCount++
+			}
+
+			currentRetry.Elapsed = time.Now().Sub(timeStart)
+
+			retryMap[id] = currentRetry
+
+			delayPtr, newArgs, err := p.HookShouldRetry(currentRetry, args, out)
+			if err != nil {
+				// If there is an error on retry, we should trigger the listener error handler
+				errCommand = errors.WithMessage(err, "failed to perform retry")
+				break
+			}
+
+			if delayPtr != nil {
+				retryDelay = delayPtr
+				args = newArgs
+				break
+			}
+		}
+	}
+
+	if retryDelay != nil {
+		// We should retry!
+		l.log.Infof("retrying command in %s", retryDelay.String())
+		time.Sleep(*retryDelay)
+		return l.HandleRequest(c, args, retryMap)
+	}
+
+	if errCommand != nil {
+		err := errors.WithMessagef(errCommand, "failed to execute listener %s", l.route)
 		response := &ListenerResponse{
 			ExecCommandResult: out,
 			Error:             stringPtr(err.Error()),
@@ -623,7 +705,7 @@ func (listener *CompiledListener) processFiles(args map[string]interface{}) erro
 
 	filesDir := ""
 	tplTmpFileNames := make(map[string]interface{})
-	tplTmpFileNamesOriginalPaths := make(map[string]interface{})
+	tplTmpFileNamesOriginalPaths := make(map[string]string)
 	for key, tpl := range listener.tplFiles {
 		log := log.WithField("file", key)
 
@@ -669,9 +751,7 @@ func (listener *CompiledListener) processFiles(args map[string]interface{}) erro
 func (listener *CompiledListener) cleanTemporaryFiles() {
 	log := listener.log
 
-	for key, filePathIntf := range listener.tplTmpFileNamesOriginalPaths {
-		filePath := filePathIntf.(string)
-
+	for key, filePath := range listener.tplTmpFileNamesOriginalPaths {
 		// Do NOT remove files with absolute paths
 		if path.IsAbs(filePath) {
 			continue

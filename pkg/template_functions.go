@@ -7,11 +7,14 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/goccy/go-yaml"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 func GetTPLFuncsMap() template.FuncMap {
@@ -28,6 +31,10 @@ func GetTPLFuncsMap() template.FuncMap {
 	tplFuncs["yamlDecode"] = tplYAMLDecode
 	tplFuncs["yamlToJson"] = tplYAMLToJson
 	tplFuncs["cleanNewLines"] = tplCleanNewLines
+	tplFuncs["backoff"] = tplBackoff
+
+	// Override of Sprig function, waiting for https://github.com/Masterminds/sprig/pull/275
+	tplFuncs["duration"] = tplDuration
 
 	tplFuncs["eq"] = tplEq
 	tplFuncs["ne"] = tplNE
@@ -75,6 +82,22 @@ func tplFileReadToString(path string) (string, error) {
 		return "", errors.WithMessage(err, "failed to read file")
 	}
 	return string(b), nil
+}
+
+// Override of Sprig function, waiting for https://github.com/Masterminds/sprig/pull/275
+func tplDuration(sec interface{}) string {
+	var n int64
+	switch value := sec.(type) {
+	default:
+		n = 0
+	case string:
+		n, _ = strconv.ParseInt(value, 10, 64)
+	case int64:
+		n = value
+	case int:
+		n = int64(value)
+	}
+	return (time.Duration(n) * time.Second).String()
 }
 
 // Straight from sprig
@@ -128,4 +151,86 @@ var regexCleanNewLines = regexp.MustCompile(`(\n\s*){3,}`)
 
 func tplCleanNewLines(text string) string {
 	return regexCleanNewLines.ReplaceAllString(text, "\n\n")
+}
+
+func tplDurationFromValue(val reflect.Value) (time.Duration, error) {
+	if val.IsZero() {
+		return 0, nil
+	}
+
+	if val.Type() == reflect.TypeOf(time.Duration(0)) {
+		return val.Interface().(time.Duration), nil
+	}
+
+	if val.Kind() == reflect.String {
+		str := val.String()
+		return time.ParseDuration(str)
+	}
+
+	return 0, errors.Errorf("failed to cast duration from value: %+v", val.Interface())
+}
+
+const (
+	backoffDefaultInitialInterval = 500 * time.Millisecond
+	backoffDefaultMultiplier      = 1.5
+	backoffDefaultMaxInterval     = 60 * time.Second
+)
+
+func tplBackoff(args ...reflect.Value) (time.Duration, error) {
+	argsLen := len(args)
+	if argsLen == 0 {
+		return 0, errors.New("at least one argument is required")
+	}
+
+	idx := 0
+
+	initialInterval := backoffDefaultInitialInterval
+	if argsLen > idx {
+		valInitialInterval := indirectInterface(args[idx])
+		idx++
+
+		_initialInterval, err := tplDurationFromValue(valInitialInterval)
+		if err != nil {
+			return 0, errors.WithMessage(err, "failed to parse initial interval argument")
+		}
+
+		initialInterval = _initialInterval
+	}
+
+	multiplier := backoffDefaultMultiplier
+	if argsLen > idx {
+		valMultiplier := indirectInterface(args[idx])
+		idx++
+
+		if valMultiplier.IsZero() {
+			return 0, errors.New("the backoff multiplier must be greater than 0")
+		}
+
+		casted, err := cast.ToFloat64E(valMultiplier.Interface())
+		if err != nil {
+			return 0, errors.WithMessage(err, "failed to parse multiplier argument")
+		}
+
+		multiplier = casted
+	}
+
+	maxInterval := backoffDefaultMaxInterval
+	if argsLen > idx {
+		valMaxInterval := indirectInterface(args[idx])
+		idx++
+
+		_maxInterval, err := tplDurationFromValue(valMaxInterval)
+		if err != nil {
+			return 0, errors.WithMessage(err, "failed to parse max interval argument")
+		}
+		maxInterval = _maxInterval
+	}
+
+	if maxInterval > 0 {
+		if float64(initialInterval) >= float64(maxInterval)/multiplier {
+			return maxInterval, nil
+		}
+	}
+
+	return time.Duration(float64(initialInterval) * multiplier), nil
 }

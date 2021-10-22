@@ -13,6 +13,11 @@ listeners:
     # Returns the output of the command in the response
     return: output
 
+    files:
+      test_file: |
+        My args are:
+        {{ dump . }}
+
     # Command to run, and list of arguments
     command: bash
     args:
@@ -26,6 +31,7 @@ listeners:
       # We initialize the debug plugin, which will let use merge new args for testing
       # and will print a log line before the actual execution of a command
       - debug:
+          logFiles: true
           prefix: EXAMPLE
           args:
             name: Mr. Anderson

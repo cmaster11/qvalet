@@ -1,0 +1,121 @@
+# This example shows how to load a plugin, in this case the retry plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  ### [docs-retry-simple]
+  # This listener will succeed on the first retry.
+  #
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/hello?name=Mr.%20Anderson"
+  # Expect "This is the retry 1\nHello Mr. Anderson"
+  #
+  /hello:
+    # Returns the output of the command in the response
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        set -e
+
+        {{ $currentRetry := default -1 .__gteRetry.RetryCount }}
+        echo "This is the retry {{ $currentRetry }}"
+
+        {{ if eq $currentRetry 1 }}
+        echo "Hello {{ .name }}"
+        exit 0
+        {{ end }}
+
+        echo "No retries detected!"
+        exit 1
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the retry plugin, and configure it to retry if we have thrown an error
+      - retry:
+          condition: |
+            contains "No retries detected" .__gteRetry.PreviousResult.Output
+          delay: "1s"
+  ### [docs-retry-simple]
+
+  ### [docs-retry-429]
+  # One common use case of using retries is when you send a curl request, and
+  # the endpoint returns a 429 error (rate-limiting).
+  #
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/rateLimit"
+  # Expect "All good!"
+  #
+  /rateLimit:
+    return: output
+    # Verbose logging, to see what happens behind the scenes
+    log: all
+
+    files:
+      # Temporary storage for curl status code
+      curl_status: ""
+      curl_output: ""
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        set -e
+
+        # We send a request to the local rate limiting endpoint, which will return
+        # a 429 if we have not yet retried once (`.__gteRetry.RetryCount` will not be set).
+        #
+        # Also, we can store the curl output in a temporary file, if we need to reuse it or log it.
+        STATUS=$(curl -s -o "$GTE_FILES_curl_output" --write-out "%{http_code}" \
+          "http://localhost:7055/rateLimitEndpoint?retry={{ default 0 .__gteRetry.RetryCount }}")
+
+        # Store the status to re-use it in the retry condition
+        echo "$STATUS" > $GTE_FILES_curl_status
+
+        if [[ "$STATUS" -eq 429 ]]; then
+          echo "Oh no, we got rate limited!"
+          exit 1
+        fi
+
+        echo "All good!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+      # We initialize the retry plugin, and configure it to retry if we have been rate-limited
+      - retry:
+          condition: eq (trim (fileReadToString (gte).files.curl_status)) "429"
+          delay: "1s"
+
+      # Useful for debugging, especially if you are dealing with temporary files and
+      # you're not sure about their content.
+      # This plugin will print in the logs the content of all your temporary files after
+      # the main command executes.
+      - debug:
+          logFiles: true
+
+  # This is the endpoint that generates the rate limit error
+  /rateLimitEndpoint:
+    command: echo
+    args:
+      - Rate limited?
+
+    # This example also uses the HTTP response plugin (see [./config.plugin.httpresponse.yaml])
+    plugins:
+      - httpResponse:
+          # The request will succeed only if the passed argument is 1, which mean we are
+          # retrying for the first time
+          statusCode: |
+            {{ if eq .retry "1" }}
+            200
+            {{ else }}
+            429
+            {{ end }}
+  ### [docs-retry-429]
