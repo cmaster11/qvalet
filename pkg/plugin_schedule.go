@@ -170,6 +170,7 @@ func (p *PluginSchedule) loopIteration() (bool, error) {
 			Where("listener_id = ?", listenerId).
 			Where("execute_at < ?", time.Now()).
 			Limit(1).
+			Order("execute_at ASC").
 			// Create a lock on the row
 			For("UPDATE SKIP LOCKED").
 			Scan(ctx)
