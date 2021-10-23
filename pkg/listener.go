@@ -149,8 +149,6 @@ func (listener *CompiledListener) clone() (*CompiledListener, error) {
 	return newListener, nil
 }
 
-var regexClearPath = regexp.MustCompile(`/+`)
-
 func compileListener(
 	defaults *ListenerConfig,
 	listenerConfig *ListenerConfig,

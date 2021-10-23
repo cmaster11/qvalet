@@ -50,7 +50,8 @@ listeners:
 
         [ $STATUS -eq 200 ]
 
-    plugins: # We initialize the retry plugin, and configure it to retry if we have been rate-limited
+    plugins:
+      # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
           condition: eq (fileReadToString (gte).files.curl_status) "429"
           delay: "5s"

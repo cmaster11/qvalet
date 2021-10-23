@@ -14,6 +14,9 @@ You can use any of the following syntax's:
   time, defined by a [Unix timestamp](https://www.unixtimestamp.com/) (expressed in seconds).
 * `curl "http://localhost:7055/hello/schedule/1634917558123"`: schedule the execution of the command at a specific point
   in time, defined by a [Unix timestamp](https://www.unixtimestamp.com/) (expressed in milliseconds).
+* Additionally, the `schedule` plugin supports all the ISO layouts defined in
+  the [Go documentation of the `time` package](https://pkg.go.dev/time#pkg-constants),
+  like `curl "http://localhost:7055/hello/schedule/2021-10-23T05:18:37+00:00"`.
 
 Also, while evaluating the command templates, you will have access to the `__gteScheduleTime` key, which contains the
 command execution time. This field is of [`time.Time`](https://pkg.go.dev/time#Time) type, which means you can e.g.

@@ -1,0 +1,104 @@
+# This example shows the use case where we want to send a Telegram message when the sun is raising.
+# To do so, we have two steps:
+#
+# 1. Fetch the next sunrise time using an API
+# 2. Schedule the notification to happen at the right time the next day
+
+# All logging enabled
+debug: true
+
+defaults:
+  # To use the schedule plugin we need to define a postgres database.
+  database:
+    host: localhost
+    port: 5432
+    dbName: postgres
+    username: postgres
+    password: password
+    # You can see available options at https://bun.uptrace.dev/postgres/#pgdriver
+    options:
+      sslmode: disable
+
+listeners:
+
+  # Test with:
+  #
+  # Trigger the initial command, which fetches the next sunrise and schedules the notification
+  # curl "http://localhost:7055/scheduleSunrise"
+  #
+  /scheduleSunrise:
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - -e
+      - |
+        # The coordinates need to match your desired location
+        latitude=60.143627
+        longitude=24.889838
+        {{/*
+          Take today's date, add 24 hours to it, and format it.
+          This implicitely assumes we are running this command the day BEFORE
+          the one we want to get the sunrise time for.
+        */}}
+        date={{ now | date_modify "24h" | date "2006-01-02" }}
+
+        # We can use the free https://sunrise-sunset.org/api to get the next sunrise
+        query="lat=$latitude&lng=$longitude&date=$date"
+        sunriseISO=$(curl -sS "https://api.sunrise-sunset.org/json?formatted=0&$query" | \
+          jq -r ".results.sunrise")
+
+        # The next sunrise comes formatted as ISO_8601 ( https://en.wikipedia.org/wiki/ISO_8601 ), so we can
+        # directly use it to schedule our sunrise notification
+        curl -sS "http://localhost:7055/sunrise/schedule/$sunriseISO"
+
+  /sunrise:
+    log: all
+
+    env:
+      # If the program is run with the TELEGRAM_BOT_TOKEN environment
+      # variable set, it will use that one, otherwise use the provided
+      # string.
+      TELEGRAM_BOT_TOKEN: '{{ coalesce (env "TELEGRAM_BOT_TOKEN") "123123123:xxxxxxxxxxxxxxxxxxxxx" }}'
+
+    # For cleanliness and readability, save the Telegram payload in a tmp YAML file,
+    # which will be converted to JSON later.
+    files:
+      payload.yaml: |
+        # Replace with your chat id
+        chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
+        text: |
+          It's sunrise time!!! ☀
+      # We store the response code to see if we need to retry (429)
+      curl_status: ""
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      # When executing bash commands, we need to set -e to propagate any errors.
+      - -e
+      - |
+        HOOK="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+        # Send the request, converting the YAML file into a JSON one on the fly, and
+        # expect HTTP 200 code
+        STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
+          -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
+        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        EOF
+        )
+        echo -n "$STATUS" > $GTE_FILES_curl_status
+
+        [ $STATUS -eq 200 ]
+
+    plugins:
+      # We initialize the schedule plugin, which will let us execute commands in the future
+      - schedule:
+          id: sunrise
+      # We initialize the retry plugin, and configure it to retry if we have been rate-limited
+      - retry:
+          condition: eq (fileReadToString (gte).files.curl_status) "429"
+          delay: "5s"

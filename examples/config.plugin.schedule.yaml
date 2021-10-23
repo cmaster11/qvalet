@@ -29,6 +29,9 @@ listeners:
   # Schedule the execution at a specific point in time using unix timestamp (milliseconds)
   # [200] curl "http://localhost:7055/hello/schedule/1634917558123"
   #
+  # Schedule the execution at a specific point in time using the ISO_8601 format
+  # [200] curl "http://localhost:7055/hello/schedule/2021-10-23T05:18:37+00:00"
+  #
   /hello:
     # Log all the execution elements, so it is easy to see the
     # scheduled execution from the logs
@@ -48,6 +51,9 @@ listeners:
       # We initialize the schedule plugin, which will let us execute commands
       # in the future
       - schedule:
+          # The id is used to identify this plugin's events in the database
+          id: hello
+
           # We can customize how frequently the plugin will check for scheduled tasks
           scanInterval: 1s
 

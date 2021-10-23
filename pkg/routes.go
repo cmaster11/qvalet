@@ -92,6 +92,30 @@ func mountRoutesByMethod(engine *gin.Engine, methods []string, route string, han
 }
 
 func (r *MountRoutesResult) PluginsStart() error {
+	var allPlugins []PluginInterface
+
+	for _, listener := range r.listenersMap {
+		plugins := listener.Plugins()
+		for _, plugin := range plugins {
+			allPlugins = append(allPlugins, plugin)
+		}
+	}
+
+	for _, plugin := range allPlugins {
+		if plugin, ok := plugin.(PluginConfigValidateCheckOtherPlugins); ok {
+			var otherPlugins []PluginInterface
+			for _, other := range allPlugins {
+				if other == plugin {
+					continue
+				}
+				otherPlugins = append(otherPlugins, other)
+			}
+			if err := plugin.ValidateCheckOtherPlugins(otherPlugins); err != nil {
+				return errors.WithMessage(err, "failed to validate plugin against other plugins")
+			}
+		}
+	}
+
 	// For listeners which mount multiple methods, keep track of which plugins
 	// have been started, to prevent double OnStart()
 	var startedPlugins []PluginLifecycle
@@ -99,6 +123,7 @@ func (r *MountRoutesResult) PluginsStart() error {
 	for _, listener := range r.listenersMap {
 		plugins := listener.Plugins()
 		for _, plugin := range plugins {
+
 			if plugin, ok := plugin.(PluginLifecycle); ok {
 				// Do not start the same plugin twice
 				found := false
@@ -113,7 +138,7 @@ func (r *MountRoutesResult) PluginsStart() error {
 				}
 
 				if err := plugin.OnStart(); err != nil {
-					logrus.WithError(err).Fatalf("failed to start plugin")
+					return errors.WithMessage(err, "failed to start plugin")
 				}
 				startedPlugins = append(startedPlugins, plugin)
 			}

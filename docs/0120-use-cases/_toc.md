@@ -1,4 +1,5 @@
   - [Kubernetes restart helper](/0120-use-cases/kubernetes.md)
   - [Multi-part configuration](/0120-use-cases/multi-part-config.md)
   - [Slack messages](/0120-use-cases/slack.md)
+  - [Sunrise notification](/0120-use-cases/sunrise.md)
   - [Telegram messages](/0120-use-cases/telegram.md)

@@ -49,6 +49,12 @@ type PluginLifecycle interface {
 	OnStop()
 }
 
+type PluginConfigValidateCheckOtherPlugins interface {
+	PluginInterface
+
+	ValidateCheckOtherPlugins(otherPlugins []PluginInterface) error
+}
+
 type PluginConfigNeedsDb interface {
 	PluginInterface
 

@@ -23,6 +23,7 @@ import (
 var _ PluginInterface = (*PluginSchedule)(nil)
 var _ PluginLifecycle = (*PluginSchedule)(nil)
 var _ PluginConfigNeedsDb = (*PluginSchedule)(nil)
+var _ PluginConfigValidateCheckOtherPlugins = (*PluginSchedule)(nil)
 var _ PluginHookMountRoutes = (*PluginSchedule)(nil)
 var _ PluginConfig = (*PluginScheduleConfig)(nil)
 
@@ -36,6 +37,10 @@ const pluginScheduleRouteDefault = "/schedule"
 const pluginScheduleScanIntervalRestDefault = 10 * time.Second
 
 type PluginScheduleConfig struct {
+	// What id should be used to identify this plugin's events in the database?
+	// An error will be thrown and multiple schedule plugins with the same id exist.
+	Id string `mapstructure:"id" validate:"required"`
+
 	// List of allowed authentication methods, defaults to the listener ones
 	Auth []*AuthConfig `mapstructure:"auth" validate:"dive"`
 
@@ -70,6 +75,17 @@ type PluginSchedule struct {
 	runLoop  bool
 }
 
+func (p *PluginSchedule) ValidateCheckOtherPlugins(otherPlugins []PluginInterface) error {
+	for _, other := range otherPlugins {
+		if other, ok := other.(*PluginSchedule); ok {
+			if p.config.Id == other.config.Id {
+				return errors.Errorf("duplicate schedule plugin with id `%s` found", p.config.Id)
+			}
+		}
+	}
+	return nil
+}
+
 func (p *PluginSchedule) Migrations() *migrate.Migrations {
 	return plugin_schedule.Migrations
 }
@@ -83,6 +99,19 @@ func (p *PluginSchedule) NeedsDb() bool {
 }
 
 var pluginScheduleRegexTime = regexp.MustCompile(`^\d+$`)
+var parseParamTimeLayouts = []string{
+	time.Layout,
+	time.ANSIC,
+	time.UnixDate,
+	time.RubyDate,
+	time.RFC822,
+	time.RFC822Z,
+	time.RFC850,
+	time.RFC1123,
+	time.RFC1123Z,
+	time.RFC3339,
+	time.RFC3339Nano,
+}
 
 // Evaluates all possible types of "time"
 func parseParamTime(val string, refTime *time.Time) (*time.Time, error) {
@@ -115,11 +144,20 @@ func parseParamTime(val string, refTime *time.Time) (*time.Time, error) {
 		}
 	}
 
+	// Try the ISO formats
+	for _, layout := range parseParamTimeLayouts {
+		t, err := time.Parse(layout, val)
+		if err == nil {
+			return &t, nil
+		}
+	}
+
 	return nil, errors.Errorf("invalid time value: %s", val)
 }
 
 type PluginScheduleResult struct {
-	TaskId int64 `json:"taskId"`
+	TaskId    int64     `json:"taskId"`
+	ExecuteAt time.Time `json:"executeAt"`
 }
 
 func (p *PluginSchedule) scheduleTask(scheduleTime time.Time, args map[string]interface{}) (*PluginScheduleResult, error) {
@@ -132,7 +170,7 @@ func (p *PluginSchedule) scheduleTask(scheduleTime time.Time, args map[string]in
 	task := &plugin_schedule.ScheduledTask{
 		Id:         0, // Auto increment
 		ExecuteAt:  scheduleTime,
-		ListenerId: p.listener.id,
+		ListenerId: p.config.Id,
 		Args:       args,
 	}
 
@@ -141,14 +179,14 @@ func (p *PluginSchedule) scheduleTask(scheduleTime time.Time, args map[string]in
 		return nil, errors.WithMessage(err, "failed to insert scheduled task in database")
 	}
 
-	return &PluginScheduleResult{task.Id}, nil
+	return &PluginScheduleResult{task.Id, task.ExecuteAt}, nil
 }
 
 func (p *PluginSchedule) loopIteration() (bool, error) {
 	/*
 		In each loop we want to look for db entries which match our listener
 	*/
-	listenerId := p.listener.id
+	listenerId := p.config.Id
 	if listenerId == "" {
 		// If something is wrong with the internal setup, we cannot proceed
 		return false, errors.New("listener id not initialized")
