@@ -30,6 +30,8 @@ jobs:
       - name: Get the tag name
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
+      - name: Init changelog
+        run: touch ${{ github.workspace }}/release-changelog.md
       - uses: docker://githubchangeloggenerator/github-changelog-generator
         name: Generate changelog for release
         with:
