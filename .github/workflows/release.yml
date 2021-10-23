@@ -30,13 +30,6 @@ jobs:
       - name: Get the tag name
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
-      - name: Init changelog
-        run: touch release-changelog.md
-      - uses: docker://githubchangeloggenerator/github-changelog-generator
-        name: Generate changelog for release
-        with:
-          args: --user cmaster11 --project go-to-exec --include-tags-regex "^${{ env.TAG }}$" --output release-changelog.md -t ${{ secrets.GITHUB_TOKEN }}
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
@@ -89,4 +82,3 @@ jobs:
         uses: softprops/action-gh-release@v0.1.13
         with:
           files: dist/*
-          body_path: release-changelog.md
