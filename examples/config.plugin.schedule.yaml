@@ -1,0 +1,58 @@
+# This example shows how to load a plugin, in this case the schedule plugin
+
+# All logging enabled
+debug: true
+
+defaults:
+  # To use the schedule plugin we need to define a postgres database
+  # to be used, and here are all possible fields you can use.
+  database:
+    host: localhost
+    port: 5432
+    dbName: postgres
+    username: postgres
+    password: password
+    # You can see available options at https://bun.uptrace.dev/postgres/#pgdriver
+    options:
+      sslmode: disable
+
+listeners:
+
+  # Test with:
+  #
+  # Schedule the execution after 3 seconds, observe the logs to see it working
+  # [200] curl "http://localhost:7055/hello/schedule/3s"
+  #
+  # Schedule the execution at a specific point in time using unix timestamp (seconds)
+  # [200] curl "http://localhost:7055/hello/schedule/1634917558"
+  #
+  # Schedule the execution at a specific point in time using unix timestamp (milliseconds)
+  # [200] curl "http://localhost:7055/hello/schedule/1634917558123"
+  #
+  /hello:
+    # Log all the execution elements, so it is easy to see the
+    # scheduled execution from the logs
+    log: all
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "This is a scheduled task, executed at {{ .__gteScheduleTime }}"
+        echo "Or, if you want the milliseconds: {{ .__gteScheduleTime.UnixMilli }}!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the schedule plugin, which will let us execute commands
+      # in the future
+      - schedule:
+          # We can customize how frequently the plugin will check for scheduled tasks
+          scanInterval: 1s
+
+          # We can customize the auth too, using the normal options you can see in [./config.auth.yaml]
+          # auth: ...
+
+          # We can customize the exposed route, defaults to `/schedule`
+          # route: /scheduleMeHere

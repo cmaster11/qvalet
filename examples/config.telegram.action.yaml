@@ -32,8 +32,6 @@ listeners:
       payload.yaml: |
         # Replace with your chat id
         chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
-        # Allow formatting
-        parse_mode: Markdown
         reply_markup:
           inline_keyboard: [
             - text: Press me!

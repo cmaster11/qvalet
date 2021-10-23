@@ -23,6 +23,18 @@ on:
 
 jobs:
   test:
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     if: ${{ !((github.event_name == 'push' && github.actor == 'dependabot[bot]') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success')) }}
     name: Run tests
     runs-on: ubuntu-latest
@@ -40,6 +52,7 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/test
         env:
+          GTE_DEFAULTS_DATABASE_HOST: postgres
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}

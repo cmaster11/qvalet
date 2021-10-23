@@ -89,7 +89,7 @@ func (p PluginHTTPResponse) Clone(newListener *CompiledListener) (PluginInterfac
 	return newPlugin, nil
 }
 
-func (p PluginHTTPResponse) HookOutput(c *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error) {
+func (p PluginHTTPResponse) HookOutput(writeOnlyContext *gin.Context, args map[string]interface{}, listenerResponse *ListenerResponse) (handled bool, err error) {
 	newArgs := make(map[string]interface{})
 
 	for key, val := range args {
@@ -108,7 +108,7 @@ func (p PluginHTTPResponse) HookOutput(c *gin.Context, args map[string]interface
 		out = strings.TrimSpace(out)
 
 		if out != "" {
-			c.Header(key, out)
+			writeOnlyContext.Header(key, out)
 		}
 	}
 
@@ -136,7 +136,7 @@ func (p PluginHTTPResponse) HookOutput(c *gin.Context, args map[string]interface
 		}
 	}
 
-	c.JSON(statusCode, listenerResponse)
+	writeOnlyContext.JSON(statusCode, listenerResponse)
 
 	handled = true
 	return

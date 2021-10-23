@@ -16,19 +16,45 @@ import (
 const keyAuthDefaultHTTPBasicUser = "gte"
 const keyAuthApiKeyQuery = "__gteApiKey"
 
-func MountRoutes(engine *gin.Engine, config *Config) {
+type RouteListenerMapping struct {
+	Route    string
+	Listener *CompiledListener
+}
+
+type MountRoutesResult struct {
+	listenersMap map[string]*CompiledListener
+}
+
+func MountRoutes(engine *gin.Engine, config *Config, listenerIdPrefix string) (*MountRoutesResult, error) {
 	storageCache := new(sync.Map)
+
+	listenersMap := make(map[string]*CompiledListener)
 
 	for route, listenerConfig := range config.Listeners {
 		log := logrus.WithField("listener", route)
 
-		listener := compileListener(&config.Defaults, listenerConfig, route, false, storageCache)
+		listener, err := compileListener(&config.Defaults, listenerConfig, route, false, storageCache)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "failed to compile listener for route %s", route)
+		}
 		handler := getGinListenerHandler(listener)
-		mountRoutesByMethod(engine, listener.config.Methods, route, handler)
+		mountedMethods := mountRoutesByMethod(engine, listener.config.Methods, route, handler)
+
+		// Populate the map of listeners so that we can later lookup listeners to perform async executions
+		for _, m := range mountedMethods {
+			id := spew.Sprintf("%s%s_%s", listenerIdPrefix, route, m)
+
+			listener.SetId(id)
+			if logrus.IsLevelEnabled(logrus.DebugLevel) {
+				logrus.WithField("id", id).Debug("set listener id")
+			}
+
+			listenersMap[id] = listener
+		}
 
 		for _, plugin := range listener.plugins {
 			if plugin, ok := plugin.(PluginHookMountRoutes); ok {
-				plugin.HookMountRoutes(engine, listener)
+				plugin.HookMountRoutes(engine)
 			}
 		}
 
@@ -40,15 +66,87 @@ func MountRoutes(engine *gin.Engine, config *Config) {
 			log.Info("added listener")
 		}
 	}
+
+	return &MountRoutesResult{
+		listenersMap,
+	}, nil
 }
 
-func mountRoutesByMethod(engine *gin.Engine, methods []string, route string, handler gin.HandlerFunc) {
+func mountRoutesByMethod(engine *gin.Engine, methods []string, route string, handler gin.HandlerFunc) []string {
+	var toReturn []string
+
 	if len(methods) == 0 {
 		engine.GET(route, handler)
 		engine.POST(route, handler)
+		toReturn = []string{http.MethodGet, http.MethodPost}
 	} else {
 		for _, method := range methods {
 			engine.Handle(method, route, handler)
+		}
+		toReturn = methods
+	}
+
+	logrus.WithField("methods", toReturn).Infof("mounted route %s", route)
+
+	return toReturn
+}
+
+func (r *MountRoutesResult) PluginsStart() error {
+	// For listeners which mount multiple methods, keep track of which plugins
+	// have been started, to prevent double OnStart()
+	var startedPlugins []PluginLifecycle
+
+	for _, listener := range r.listenersMap {
+		plugins := listener.Plugins()
+		for _, plugin := range plugins {
+			if plugin, ok := plugin.(PluginLifecycle); ok {
+				// Do not start the same plugin twice
+				found := false
+				for _, other := range startedPlugins {
+					if other == plugin {
+						found = true
+						break
+					}
+				}
+				if found {
+					continue
+				}
+
+				if err := plugin.OnStart(); err != nil {
+					logrus.WithError(err).Fatalf("failed to start plugin")
+				}
+				startedPlugins = append(startedPlugins, plugin)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *MountRoutesResult) PluginsStop() {
+	// For listeners which mount multiple methods, keep track of which plugins
+	// have been stopped, to prevent double OnStop()
+	var stoppedPlugins []PluginLifecycle
+
+	for _, listener := range r.listenersMap {
+		plugins := listener.Plugins()
+		for _, plugin := range plugins {
+			if plugin, ok := plugin.(PluginLifecycle); ok {
+				// Do not start the same plugin twice
+				found := false
+				for _, other := range stoppedPlugins {
+					if other == plugin {
+						found = true
+						break
+					}
+				}
+				if found {
+					continue
+				}
+
+				plugin.OnStop()
+				stoppedPlugins = append(stoppedPlugins, plugin)
+			}
 		}
 	}
 }

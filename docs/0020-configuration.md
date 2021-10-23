@@ -30,17 +30,26 @@ curl "http://localhost:7055/hello" -d '{"name":"Anderson"}' -H 'Content-Type: ap
 Also, all configuration entries can be re-mapped via environment variables. For example:
 
 ```yaml
+defaults:
+  database:
+    host: localhost
+
 listeners:
   /hello:
     command: cat
 ```
 
-can be remapped with `GTE_LISTENERS__HELLO_COMMAND=echo`.
+can be remapped with
+
+```
+GTE_DEFAULTS_DATABASE_HOST=postgres
+GTE_LISTENERS__HELLO_COMMAND=echo
+```
 
 Notes:
 
 * All environment variables need to be prefixed by `GTE_`.
-* Dynamic entries (where you can define any kind of keys), like the `listeners` map, **need to be defined in the initial
+* Dynamic entries (where the key/value pairs belong to a dynamic map), like the `listeners` map, **need to be defined in the initial
   config**, before they can be re-mapped using environment variables.
 * The environment variable name for a config entry is created by:
     1. Join all the keys' chain with `_`: `listeners_/hello_command`

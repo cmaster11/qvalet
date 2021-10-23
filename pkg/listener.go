@@ -24,6 +24,9 @@ import (
 )
 
 type CompiledListener struct {
+	// The id will be filled at runtime
+	id string
+
 	config *ListenerConfig
 	log    logrus.FieldLogger
 
@@ -49,16 +52,27 @@ type CompiledListener struct {
 	tplTmpFileNamesOriginalPaths map[string]string
 
 	plugins []PluginInterface
+
+	dbWrapper *BunDbWrapper
+}
+
+func (listener *CompiledListener) Plugins() []PluginInterface {
+	return listener.plugins
 }
 
 func (listener *CompiledListener) Logger() logrus.FieldLogger {
 	return logrus.WithField("listener", listener.route)
 }
 
+func (listener *CompiledListener) SetId(value string) {
+	listener.id = value
+}
+
 const funcMapKeyGTE = "gte"
 
 func (listener *CompiledListener) clone() (*CompiledListener, error) {
 	newListener := &CompiledListener{
+		listener.id,
 		listener.config,
 		listener.log,
 		listener.route,
@@ -75,6 +89,7 @@ func (listener *CompiledListener) clone() (*CompiledListener, error) {
 		map[string]interface{}{},
 		map[string]string{},
 		[]PluginInterface{},
+		listener.dbWrapper,
 	}
 
 	tplCmdClone, err := listener.tplCmd.CloneForListener(newListener)
@@ -142,7 +157,7 @@ func compileListener(
 	route string,
 	isErrorHandler bool,
 	storageCache *sync.Map,
-) *CompiledListener {
+) (*CompiledListener, error) {
 	sourceRoute := route
 	if isErrorHandler {
 		route = fmt.Sprintf("%s-on-error", route)
@@ -152,11 +167,11 @@ func compileListener(
 
 	listenerConfig, err := MergeListenerConfig(defaults, listenerConfig)
 	if err != nil {
-		log.WithError(err).Fatal("failed to merge listener config")
+		return nil, errors.WithMessage(err, "failed to merge listener config")
 	}
 
 	if err := utils.Validate.Struct(listenerConfig); err != nil {
-		log.WithError(err).Fatal("failed to validate listener config")
+		return nil, errors.WithMessage(err, "failed to validate listener config")
 	}
 
 	if isErrorHandler {
@@ -180,7 +195,11 @@ func compileListener(
 	}
 
 	if listenerConfig.ErrorHandler != nil {
-		listener.errorHandler = compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
+		errorHandler, err := compileListener(defaults, listenerConfig.ErrorHandler, route, true, storageCache)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to compile error handler listener")
+		}
+		listener.errorHandler = errorHandler
 	}
 
 	// If storage is defined, we need to initialize the storager
@@ -195,11 +214,12 @@ func compileListener(
 
 		storager, err := GetStoragerFromString(listenerConfig.Storage.Conn)
 		if err != nil {
-			log := log.WithError(err)
+			// Suffix for debugging purposes
+			suffix := ""
 			if logrus.IsLevelEnabled(logrus.DebugLevel) {
-				log = log.WithField("conn", listenerConfig.Storage.Conn)
+				suffix = fmt.Sprintf(" for conn %s", listenerConfig.Storage.Conn)
 			}
-			log.Fatal("failed to initialize storage")
+			return nil, errors.WithMessagef(err, "failed to initialize storage%s", suffix)
 		}
 
 		// Check that we can write there
@@ -212,7 +232,7 @@ func compileListener(
 			b := []byte(fmt.Sprintf("%d", nowNano))
 			_, err = storager.Write(p, bytes.NewBuffer(b), int64(len(b)))
 			if err != nil {
-				listener.log.WithError(err).Fatal("failed to check if storage is writable")
+				return nil, errors.WithMessage(err, "failed to check if storage is writable")
 			}
 
 			listener.log.WithField("path", p).Debug("written check writable file")
@@ -234,17 +254,45 @@ afterStorage:
 
 	// Group all plugins together
 	var listenerPlugins []PluginInterface
+	var dbRequiredForPlugins []PluginConfigNeedsDb
 	for _, pluginsEntry := range listenerConfig.Plugins {
 		list, err := pluginsEntry.ToPluginList(listener)
 		if err != nil {
-			listener.log.WithError(err).Fatal("failed to initialize plugins list")
+			return nil, errors.WithMessage(err, "failed to initialize plugins list")
+		}
+
+		for _, p := range list {
+			if p, ok := p.(PluginConfigNeedsDb); ok && p.NeedsDb() {
+				dbRequiredForPlugins = append(dbRequiredForPlugins, p)
+			}
 		}
 
 		listenerPlugins = append(listenerPlugins, list...)
 	}
 	listener.plugins = listenerPlugins
 
-	return listener
+	// If a database is defined and is required, connect!
+	if len(dbRequiredForPlugins) > 0 {
+		if listenerConfig.Database == nil {
+			return nil, errors.WithMessagef(err, "database is required for plugins %v to work", dbRequiredForPlugins)
+		}
+
+		db, err := NewDB(listenerConfig.Database)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "failed to initialize database at %s", listenerConfig.Database.ParsedLogSafeDSN())
+		}
+
+		// Perform any pending migrations
+		for _, p := range dbRequiredForPlugins {
+			if err := db.ApplyMigrations(p); err != nil {
+				return nil, errors.WithMessagef(err, "failed to apply migrations for plugin %s", p.Id())
+			}
+		}
+
+		listener.dbWrapper = db
+	}
+
+	return listener, nil
 }
 
 func (listener *CompiledListener) tplGTE() map[string]interface{} {

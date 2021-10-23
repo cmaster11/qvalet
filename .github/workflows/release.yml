@@ -11,6 +11,18 @@ jobs:
   generate:
     name: Generate cross-platform builds
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
@@ -36,6 +48,7 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/test
         env:
+          GTE_DEFAULTS_DATABASE_HOST: postgres
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
@@ -45,7 +58,7 @@ jobs:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Generate build files
-        uses: thatisuday/go-cross-build@v1.0.2
+        uses: ./.github/actions/build
         env:
           CGO_ENABLED: "0"
         with:
