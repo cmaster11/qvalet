@@ -277,7 +277,7 @@ afterStorage:
 
 		db, err := NewDB(listenerConfig.Database)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "failed to initialize database at %s", listenerConfig.Database.ParsedLogSafeDSN())
+			return nil, errors.WithMessagef(err, "failed to initialize database at %s", listenerConfig.Database.parsedLogSafeConnectionURL())
 		}
 
 		// Perform any pending migrations

@@ -17,14 +17,37 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
+const databaseSchemePostgres = "postgres"
+
 // @formatter:off
 /// [database-docs]
 
+/*
+Examples of configurations:
+
+- TCP connection:
+
+	host: localhost
+	port: 5432
+	dbName: myDb
+	username: hello
+	password: world
+	options:
+		sslmode: disable
+
+- Unix socket connection:
+
+	dbName: myDb
+	username: hello
+	password: world
+	options:
+		host: /var/lib/postgresql
+*/
 type DatabaseConfig struct {
-	// Database hostname, defaults to `localhost`
+	// Database hostname
 	Host string `mapstructure:"host"`
 
-	// Port to use, defaults to `5432`
+	// Port to use
 	Port int `mapstructure:"port"`
 
 	// Database name, e.g. `mydb`
@@ -44,34 +67,16 @@ type DatabaseConfig struct {
 /// [database-docs]
 // @formatter:on
 
-func (config *DatabaseConfig) ParsedUserPassDSN() string {
-	userDSN := ""
-	if config.Username != nil {
-		userDSN = *config.Username
-
-		if config.Password != nil {
-			userDSN = fmt.Sprintf("%s:%s", userDSN, *config.Password)
-		}
-
-		userDSN = fmt.Sprintf("%s@", userDSN)
+func (config *DatabaseConfig) ParsedUserInfo() *url.Userinfo {
+	if config.Username == nil {
+		return nil
 	}
-	return userDSN
-}
 
-func (config *DatabaseConfig) ParsedHostname() string {
-	hostname := "localhost"
-	if config.Host != "" {
-		hostname = config.Host
+	if config.Password != nil {
+		return url.UserPassword(*config.Username, *config.Password)
 	}
-	return hostname
-}
 
-func (config *DatabaseConfig) ParsedPort() int {
-	port := 5432
-	if config.Port != 0 {
-		port = config.Port
-	}
-	return port
+	return url.User(*config.Username)
 }
 
 func (config *DatabaseConfig) ParsedOptions() string {
@@ -82,12 +87,27 @@ func (config *DatabaseConfig) ParsedOptions() string {
 	return options.Encode()
 }
 
-func (config *DatabaseConfig) ParsedDSN() string {
-	return fmt.Sprintf("postgres://%s%s:%d/%s?%s", config.ParsedUserPassDSN(), config.ParsedHostname(), config.ParsedPort(), config.DbName, config.ParsedOptions())
+func (config *DatabaseConfig) parsedConnectionURL() *url.URL {
+	u := new(url.URL)
+	u.Scheme = databaseSchemePostgres
+	u.User = config.ParsedUserInfo()
+
+	if config.Port != 0 {
+		u.Host = fmt.Sprintf("%s:%d", config.Host, config.Port)
+	} else {
+		u.Host = config.Host
+	}
+
+	u.Path = "/" + config.DbName
+
+	u.RawQuery = config.ParsedOptions()
+	return u
 }
 
-func (config *DatabaseConfig) ParsedLogSafeDSN() string {
-	return fmt.Sprintf("%s:%d/%s", config.ParsedHostname(), config.ParsedPort(), config.DbName)
+func (config *DatabaseConfig) parsedLogSafeConnectionURL() string {
+	u := config.parsedConnectionURL()
+	u.User = nil
+	return u.String()
 }
 
 // We keep a global connection cache, in case a DB is reused
@@ -131,24 +151,24 @@ func (w *BunDbWrapper) ApplyMigrations(plugin PluginConfigNeedsDb) error {
 	migrator := migrate.NewMigrator(w.DB(), migrations)
 
 	if err := migrator.Init(context.Background()); err != nil {
-		return errors.WithMessagef(err, "failed to init migrations for %s in db %s", plugin.Id(), w.config.ParsedLogSafeDSN())
+		return errors.WithMessagef(err, "failed to init migrations for %s in db %s", plugin.Id(), w.config.parsedLogSafeConnectionURL())
 	}
 
 	group, err := migrator.Migrate(context.Background())
 	if err != nil {
-		return errors.WithMessagef(err, "failed to perform migrations for %s in db %s", plugin.Id(), w.config.ParsedLogSafeDSN())
+		return errors.WithMessagef(err, "failed to perform migrations for %s in db %s", plugin.Id(), w.config.parsedLogSafeConnectionURL())
 	}
 
 	if group.ID == 0 {
 		return nil
 	}
 
-	logrus.WithField("dsn", w.config.ParsedLogSafeDSN()).Infof("migrated plugin %s database to %s", plugin.Id(), group)
+	logrus.WithField("dsn", w.config.parsedLogSafeConnectionURL()).Infof("migrated plugin %s database to %s", plugin.Id(), group)
 	return nil
 }
 
 func NewDB(config *DatabaseConfig) (*BunDbWrapper, error) {
-	dsn := config.ParsedDSN()
+	dsn := config.parsedConnectionURL().String()
 
 	// Check if we already have a db for this DSN
 	if bunDBIntf, found := databaseConnectionCache.Load(dsn); found {
@@ -167,7 +187,7 @@ func NewDB(config *DatabaseConfig) (*BunDbWrapper, error) {
 		return nil, errors.WithMessage(err, "failed to connect to database")
 	}
 
-	logrus.WithField("dsn", config.ParsedLogSafeDSN()).Info("connected to database")
+	logrus.WithField("dsn", config.parsedLogSafeConnectionURL()).Info("connected to database")
 
 	wrapper := &BunDbWrapper{
 		config, bunDB, nil,
