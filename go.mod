@@ -5,10 +5,10 @@ go 1.16
 require (
 	github.com/Masterminds/goutils v1.1.1
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/beyondstorage/go-service-azblob/v2 v2.2.0
+	github.com/beyondstorage/go-service-azblob/v2 v2.3.0
 	github.com/beyondstorage/go-service-cos/v2 v2.3.0
 	github.com/beyondstorage/go-service-dropbox/v2 v2.2.0
-	github.com/beyondstorage/go-service-fs/v3 v3.3.0
+	github.com/beyondstorage/go-service-fs/v3 v3.5.0
 	github.com/beyondstorage/go-service-gcs/v2 v2.3.0
 	github.com/beyondstorage/go-service-kodo/v2 v2.3.0
 	github.com/beyondstorage/go-service-oss/v2 v2.4.0
@@ -17,9 +17,9 @@ require (
 	github.com/beyondstorage/go-storage/v4 v4.8.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-contrib/timeout v0.0.1
-	github.com/gin-gonic/gin v1.7.2
+	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/goccy/go-yaml v1.9.3
+	github.com/goccy/go-yaml v1.9.4
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12
