@@ -35,7 +35,7 @@ jobs:
       - uses: docker://githubchangeloggenerator/github-changelog-generator
         name: Generate changelog for release
         with:
-          args: --user cmaster11 --project go-to-exec --include-tags-regex "${{ env.TAG }}$" --since-tag "${{ env.TAG }}" --output ${{ github.workspace }}/release-changelog.md -t ${{ secrets.GITHUB_TOKEN }}
+          args: --user cmaster11 --project go-to-exec --include-tags-regex "${{ env.TAG }}$" --output ${{ github.workspace }}/release-changelog.md -t ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
