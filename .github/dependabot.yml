@@ -6,3 +6,4 @@ updates:
       - dependency-name: github.com/spf13/viper
     schedule:
       interval: daily
+    open-pull-requests-limit: 10
