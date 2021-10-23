@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.3.2](https://github.com/cmaster11/go-to-exec/tree/v1.3.2) (2021-10-23)
+
+[Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.1...v1.3.2)
+
+**Merged pull requests:**
+
+- Bump github.com/goccy/go-yaml from 1.9.3 to 1.9.4 [\#30](https://github.com/cmaster11/go-to-exec/pull/30) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/beyondstorage/go-service-azblob/v2 from 2.2.0 to 2.3.0 [\#29](https://github.com/cmaster11/go-to-exec/pull/29) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/gin-gonic/gin from 1.7.2 to 1.7.4 [\#28](https://github.com/cmaster11/go-to-exec/pull/28) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/beyondstorage/go-service-fs/v3 from 3.3.0 to 3.5.0 [\#26](https://github.com/cmaster11/go-to-exec/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Schedule plugin [\#25](https://github.com/cmaster11/go-to-exec/pull/25) ([cmaster11](https://github.com/cmaster11))
+
 ## [v1.3.1](https://github.com/cmaster11/go-to-exec/tree/v1.3.1) (2021-10-12)
 
 [Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.0...v1.3.1)
