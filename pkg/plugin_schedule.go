@@ -161,6 +161,7 @@ func (p *PluginSchedule) loopIteration() (bool, error) {
 	db := p.listener.dbWrapper.DB()
 
 	rowFound := false
+	var processingError error
 
 	err := db.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
 		task := new(plugin_schedule.ScheduledTask)
@@ -197,6 +198,9 @@ func (p *PluginSchedule) loopIteration() (bool, error) {
 
 		rowFound = true
 
+		args := task.Args
+		args[pluginSchedulePayloadTimeKey] = task.ExecuteAt
+
 		/*
 			Once we have the task, we just execute it
 		*/
@@ -204,7 +208,8 @@ func (p *PluginSchedule) loopIteration() (bool, error) {
 		writeOnlyContext, _ := gin.CreateTestContext(w)
 		_, _, err = p.listener.HandleRequest(writeOnlyContext, task.Args, nil)
 		if err != nil {
-			return errors.WithMessage(err, "failed to handle delayed request")
+			processingError = errors.WithMessage(err, "failed to handle delayed request")
+			return nil
 		}
 
 		_, _ = ioutil.ReadAll(w.Body)
@@ -212,7 +217,10 @@ func (p *PluginSchedule) loopIteration() (bool, error) {
 		return nil
 	})
 	if err != nil {
-		return false, errors.WithMessage(err, "failed to process next task")
+		return rowFound, errors.WithMessage(err, "failed to process next task (db error)")
+	}
+	if processingError != nil {
+		return rowFound, errors.WithMessage(processingError, "failed to process next task")
 	}
 
 	return rowFound, nil
@@ -273,7 +281,6 @@ func (p *PluginSchedule) HookMountRoutes(engine *gin.Engine) {
 
 		// Remove the param key, and add the parsed time one
 		delete(args, pluginScheduleUrlParamTimeKey)
-		args[pluginSchedulePayloadTimeKey] = *scheduleTime
 
 		result, err := p.scheduleTask(*scheduleTime, args)
 		if err != nil {

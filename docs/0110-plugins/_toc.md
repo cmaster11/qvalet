@@ -2,3 +2,4 @@
   - [HTTP response](/0110-plugins/http-response.md)
   - [Preview](/0110-plugins/preview.md)
   - [Retry](/0110-plugins/retry.md)
+  - [Schedule](/0110-plugins/schedule.md)

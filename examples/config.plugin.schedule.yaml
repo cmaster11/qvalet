@@ -20,8 +20,7 @@ listeners:
 
   # Test with:
   #
-  # Schedule the execution after 3 seconds, observe the logs
-  # to see it working
+  # Schedule the execution after 3 seconds, observe the logs to see it working
   # [200] curl "http://localhost:7055/hello/schedule/3s"
   #
   # Schedule the execution at a specific point in time using unix timestamp (seconds)
@@ -40,7 +39,8 @@ listeners:
     args:
       - -c
       - |
-        echo "This is a scheduled task!"
+        echo "This is a scheduled task, executed at {{ .__gteScheduleTime }}"
+        echo "Or, if you want the milliseconds: {{ .__gteScheduleTime.UnixMilli }}!"
 
     # Here is where we can define plugins to be loaded for this listener
     plugins:
@@ -49,7 +49,7 @@ listeners:
       # in the future
       - schedule:
           # We can customize how frequently the plugin will check for scheduled tasks
-          scheduleInterval: 1s
+          scanInterval: 1s
 
           # We can customize the auth too, using the normal options you can see in [./config.auth.yaml]
           # auth: ...

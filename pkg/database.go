@@ -37,8 +37,12 @@ type DatabaseConfig struct {
 	Password *string `mapstructure:"password"`
 
 	// Additional connection options, e.g. `sslmode: disable`
+	// See available options at https://bun.uptrace.dev/postgres/#pgdriver
 	Options map[string]string `mapstructure:"options"`
 }
+
+/// [database-docs]
+// @formatter:on
 
 func (config *DatabaseConfig) ParsedUserPassDSN() string {
 	userDSN := ""
@@ -85,9 +89,6 @@ func (config *DatabaseConfig) ParsedDSN() string {
 func (config *DatabaseConfig) ParsedLogSafeDSN() string {
 	return fmt.Sprintf("%s:%d/%s", config.ParsedHostname(), config.ParsedPort(), config.DbName)
 }
-
-/// [database-docs]
-// @formatter:on
 
 // We keep a global connection cache, in case a DB is reused
 var databaseConnectionCache = new(sync.Map)
