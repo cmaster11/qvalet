@@ -13,8 +13,8 @@ require (
 	github.com/beyondstorage/go-service-kodo/v2 v2.3.0
 	github.com/beyondstorage/go-service-oss/v2 v2.4.0
 	github.com/beyondstorage/go-service-qingstor/v3 v3.3.0
-	github.com/beyondstorage/go-service-s3/v2 v2.4.0
-	github.com/beyondstorage/go-storage/v4 v4.7.0
+	github.com/beyondstorage/go-service-s3/v2 v2.5.0
+	github.com/beyondstorage/go-storage/v4 v4.8.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-contrib/timeout v0.0.1
 	github.com/gin-gonic/gin v1.7.4
@@ -42,10 +42,13 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/azure-storage-blob-go v0.14.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Xuanwo/gg v0.2.0 // indirect
+	github.com/Xuanwo/go-bufferpool v0.2.0 // indirect
 	github.com/Xuanwo/templateutils v0.1.0 // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.10+incompatible // indirect
-	github.com/aws/aws-sdk-go v1.40.36 // indirect
+	github.com/aws/aws-sdk-go v1.40.58 // indirect
 	github.com/beyondstorage/go-endpoint v1.1.0 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/dave/dst v0.26.2 // indirect
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.2 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -76,13 +79,15 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
-	github.com/pelletier/go-toml v1.9.3 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/qingstor/go-mime v0.1.0 // indirect
 	github.com/qingstor/qingstor-sdk-go/v4 v4.4.0 // indirect
 	github.com/qiniu/go-sdk/v7 v7.9.8 // indirect
+	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
@@ -90,6 +95,7 @@ require (
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.31 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
+	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
