@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"gotoexec/pkg/utils"
+	"gotoexec/pkg/utils/timeout"
 
-	"github.com/gin-contrib/timeout"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/hashicorp/go-retryablehttp"

@@ -16,7 +16,6 @@ require (
 	github.com/beyondstorage/go-service-s3/v2 v2.5.0
 	github.com/beyondstorage/go-storage/v4 v4.8.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/gin-contrib/timeout v0.0.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/goccy/go-yaml v1.9.4
