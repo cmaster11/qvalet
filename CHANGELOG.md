@@ -1,11 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/cmaster11/go-to-exec/tree/HEAD)
+## [v1.3.3](https://github.com/cmaster11/go-to-exec/tree/v1.3.3) (2021-10-23)
 
-[Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.2...HEAD)
+[Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.2...v1.3.3)
 
 **Merged pull requests:**
 
+- Edits to release script [\#33](https://github.com/cmaster11/go-to-exec/pull/33) ([cmaster11](https://github.com/cmaster11))
 - Bump github.com/spf13/cast from 1.3.1 to 1.4.1 [\#31](https://github.com/cmaster11/go-to-exec/pull/31) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [v1.3.2](https://github.com/cmaster11/go-to-exec/tree/v1.3.2) (2021-10-23)
