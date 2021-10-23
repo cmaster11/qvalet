@@ -21,6 +21,7 @@ Links:
 * [Storage](https://cmaster11.github.io/go-to-exec/#/0050-storage) for payloads and execution results
 * [Trigger conditions](https://cmaster11.github.io/go-to-exec/#/0080-trigger-conditions) to evaluate if a command should be run or not
 * [AWS SNS](https://cmaster11.github.io/go-to-exec/#/0110-plugins/awssns) support, to automatically accept subscription requests and receive AWS SNS messages
+* [Scheduled tasks](https://cmaster11.github.io/go-to-exec/#/0110-plugins/schedule), to execute commands in the future
 * And more!
 
 ## Example
