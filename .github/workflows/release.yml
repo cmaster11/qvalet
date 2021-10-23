@@ -12,22 +12,24 @@ jobs:
     name: Generate cross-platform builds
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    #    services:
+    #      postgres:
+    #        image: postgres
+    #        env:
+    #          POSTGRES_PASSWORD: password
+    #        options: >-
+    #          --health-cmd pg_isready
+    #          --health-interval 10s
+    #          --health-timeout 5s
+    #          --health-retries 5
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
+
       - name: Get the tag name
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
@@ -38,24 +40,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # Test AWS SNS
-      - name: Configure AWS credentials from test account
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Run tests
-        uses: ./.github/actions/test
-        env:
-          GTE_DEFAULTS_DATABASE_HOST: postgres
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
-          GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
-          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      #      # Test AWS SNS
+      #      - name: Configure AWS credentials from test account
+      #        uses: aws-actions/configure-aws-credentials@v1
+      #        with:
+      #          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
+      #          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
+      #          aws-region: ${{ secrets.AWS_REGION }}
+      #      - name: Run tests
+      #        uses: ./.github/actions/test
+      #        env:
+      #          GTE_DEFAULTS_DATABASE_HOST: postgres
+      #          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      #          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      #          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
+      #          GTE_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.GTE_LISTENERS__GCS_STORAGE_CONN }}
+      #          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
+      #          AWS_REGION: ${{ secrets.AWS_REGION }}
+      #          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Generate build files
         uses: ./.github/actions/build
@@ -77,6 +79,6 @@ jobs:
             cmaster11/go-to-exec:${{ env.TAG }}
 
       - name: Release
-        uses: softprops/action-gh-release@v0.1.8
+        uses: softprops/action-gh-release@v0.1.13
         with:
           files: dist/*
