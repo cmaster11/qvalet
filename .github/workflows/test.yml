@@ -13,6 +13,9 @@ on:
       - '**'
     paths-ignore:
       - '.github/dependabot.yml'
+      - '.github/workflows/changelog.yml'
+      - '.github/workflows/dependabot-wf.yml'
+      - '.github/workflows/release.yml'
       - 'docs/**'
       - '.husky/**'
       - 'hack/autosidebar/**'

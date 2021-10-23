@@ -46,7 +46,7 @@ func (c *PluginPreviewConfig) IsUnique() bool {
 type PluginPreview struct {
 	PluginBase
 
-	config *PluginPreviewConfig
+	config   *PluginPreviewConfig
 	listener *CompiledListener
 }
 

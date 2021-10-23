@@ -182,11 +182,19 @@ echo "Testing SNS subscription..."
 # Test by generating a message and expecting the dump file to contain the right text
 DATE=$(date +%s%N)
 FILENAME="/tmp/dump_aws_sns_message"
+rm "$FILENAME" || true
 
 $AWS sns publish --topic-arn "$AWS_SNS_ARN" \
   --message "$DATE"
 
-sleep 1
+SECONDS=0
+until [[ -f $FILENAME ]]; do
+  if (( SECONDS > 20 )); then
+     echo "AWS SNS dump file not found!"
+     exit 1
+  fi
+  sleep 1
+done
 
 RESULT=$(cat $FILENAME)
 

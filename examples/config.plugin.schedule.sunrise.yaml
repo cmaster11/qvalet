@@ -24,7 +24,7 @@ listeners:
   # Test with:
   #
   # Trigger the initial command, which fetches the next sunrise and schedules the notification
-  # curl "http://localhost:7055/scheduleSunrise"
+  # [200] curl "http://localhost:7055/scheduleSunrise"
   #
   /scheduleSunrise:
     return: output
