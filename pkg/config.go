@@ -264,7 +264,7 @@ func groupConfigsByPort(configs ...*Config) (map[int][]*Config, error) {
 }
 
 func LoadConfig(filename string) (*Config, error) {
-	myViper := readConfigToViper(filename, "config")
+	myViper := readConfigToViper("GTE", filename, "config")
 
 	config := new(Config)
 
@@ -295,7 +295,7 @@ func LoadConfig(filename string) (*Config, error) {
 }
 
 func LoadDefaults(filename string) (*ListenerConfig, error) {
-	myViper := readConfigToViper(filename, "defaults")
+	myViper := readConfigToViper("GTE_DEFAULTS", filename, "defaults")
 
 	config := new(ListenerConfig)
 
@@ -309,7 +309,7 @@ func LoadDefaults(filename string) (*ListenerConfig, error) {
 	return config, nil
 }
 
-func readConfigToViper(filename string, defaultFilename string) *viper.Viper {
+func readConfigToViper(envPrefix string, filename string, defaultFilename string) *viper.Viper {
 	// If we got a stdin config, store it in a tmp file and then use
 	// the tmp file as source
 	if filename == "-" {
@@ -336,7 +336,7 @@ func readConfigToViper(filename string, defaultFilename string) *viper.Viper {
 		filename = tmp.Name()
 	}
 
-	myViper := getViper(filename, defaultFilename)
+	myViper := getViper(envPrefix, filename, defaultFilename)
 
 	err := myViper.ReadInConfig()
 	if err != nil {
@@ -345,7 +345,7 @@ func readConfigToViper(filename string, defaultFilename string) *viper.Viper {
 	return myViper
 }
 
-func getViper(filename string, defaultName string) *viper.Viper {
+func getViper(envPrefix string, filename string, defaultName string) *viper.Viper {
 	// TODO: once Viper supports casing, replace
 	// Ref: https://github.com/spf13/viper/pull/860
 	myViper := viper.NewWithOptions(
@@ -354,7 +354,7 @@ func getViper(filename string, defaultName string) *viper.Viper {
 		viper.KeyDelimiter("::"),
 	)
 
-	myViper.SetEnvPrefix("GTE")
+	myViper.SetEnvPrefix(envPrefix)
 	myViper.SetEnvKeyReplacer(strings.NewReplacer("::", "_", "/", "_"))
 	myViper.AutomaticEnv()
 

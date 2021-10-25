@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.3.4](https://github.com/cmaster11/go-to-exec/tree/v1.3.4) (2021-10-23)
+
+[Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.3...v1.3.4)
+
 ## [v1.3.3](https://github.com/cmaster11/go-to-exec/tree/v1.3.3) (2021-10-23)
 
 [Full Changelog](https://github.com/cmaster11/go-to-exec/compare/v1.3.2...v1.3.3)
