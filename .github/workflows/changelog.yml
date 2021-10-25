@@ -13,11 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - uses: docker://githubchangeloggenerator/github-changelog-generator
-        name: Generate changelog
         with:
-          args: --user cmaster11 --project go-to-exec --unreleased false --include-tags-regex "^v\d+\.\d+.\d+$" -t ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - uses: rhysd/changelog-from-release/action@v2
+        with:
+          file: CHANGELOG.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
