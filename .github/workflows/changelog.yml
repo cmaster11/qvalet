@@ -21,8 +21,3 @@ jobs:
           file: CHANGELOG.md
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          branch: main
-          commit_message: CHANGELOG.md
-          file_pattern: CHANGELOG.md
