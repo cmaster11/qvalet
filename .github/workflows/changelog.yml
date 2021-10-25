@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     if: |
-      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -16,7 +16,7 @@ jobs:
         with:
           ref: main
 
-      - uses: rhysd/changelog-from-release/action@v2
+      - uses: cmaster11/changelog-from-release/action@v2
         with:
           file: CHANGELOG.md
           github_token: ${{ secrets.GITHUB_TOKEN }}
