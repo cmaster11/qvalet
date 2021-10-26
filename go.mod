@@ -31,8 +31,8 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/uptrace/bun v1.0.14
 	github.com/uptrace/bun/dialect/pgdialect v1.0.14
-	github.com/uptrace/bun/driver/pgdriver v1.0.13
-	github.com/uptrace/bun/extra/bundebug v1.0.13
+	github.com/uptrace/bun/driver/pgdriver v1.0.14
+	github.com/uptrace/bun/extra/bundebug v1.0.14
 )
 
 require (
