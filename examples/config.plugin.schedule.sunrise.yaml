@@ -52,7 +52,14 @@ listeners:
 
         # The next sunrise comes formatted as ISO_8601 ( https://en.wikipedia.org/wiki/ISO_8601 ), so we can
         # directly use it to schedule our sunrise notification
-        curl -sS "http://localhost:7055/sunrise/schedule/$sunriseISO"
+        STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
+          "http://localhost:7055/sunrise/schedule/$sunriseISO")
+        
+        # Throw an error if we don't get the expected status code
+        if [ $STATUS -ne 200 ]; then
+          echo "Bad status code $STATUS"
+          exit 1
+        fi
 
   /sunrise:
     log: all
@@ -71,8 +78,6 @@ listeners:
         chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
         text: |
           It's sunrise time!!! ☀
-      # We store the response code to see if we need to retry (429)
-      curl_status: ""
 
     # Command to run, and list of arguments
     command: bash
@@ -90,8 +95,11 @@ listeners:
         {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
         EOF
         )
-        echo -n "$STATUS" > $GTE_FILES_curl_status
+        echo "Status: $STATUS"
 
+        # Our command should succeed ONLY if we got a 200 code.
+        # This will cause the script to exit with an error if
+        # we have not gotten the proper status code.
         [ $STATUS -eq 200 ]
 
     plugins:
@@ -100,5 +108,6 @@ listeners:
           id: sunrise
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
-          condition: eq (fileReadToString (gte).files.curl_status) "429"
+          condition: |
+            contains "Status: 429" .__gteRetry.PreviousResult.Output
           delay: "5s"

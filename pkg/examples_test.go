@@ -35,6 +35,7 @@ const testTempDir = "../.test"
 const optionErr = "ERR"
 
 const expectPrefixRaw = "raw"
+const expectPrefixContains = "contains"
 const expectPrefixError = "error"
 const expectPrefixErrorContains = "error contains"
 const expectPrefixErrorHandlerResult = "error handler result"
@@ -43,7 +44,7 @@ const localHost = "http://localhost:7055"
 
 // # curl "http://localhost:7055/auth/basic" -u myUser:helloBasic
 var regexTestCase = regexp.MustCompile(`(?im)^.*?# (?:\[(\d+)((?:,` + optionErr + `)+)?] )?curl "` + localHost + `/([^"]+)"(.*)$\n(?:.*?(# Expect .+$))?`)
-var regexExpectError = regexp.MustCompile(`^# Expect(?: (` + expectPrefixRaw + `|` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
+var regexExpectOptions = regexp.MustCompile(`^# Expect(?: (` + expectPrefixRaw + `|` + expectPrefixContains + `|` + expectPrefixError + `|` + expectPrefixErrorContains + `|` + expectPrefixErrorHandlerResult + `)) (".+)$`)
 var regexExpectOutput = regexp.MustCompile(`^# Expect (.+)$`)
 
 func TestExamples(t *testing.T) {
@@ -158,7 +159,7 @@ func TestExamples(t *testing.T) {
 						var expectPrefix = ""
 						var expect = ""
 						if expectString != "" {
-							if match := regexExpectError.FindStringSubmatch(expectString); match != nil {
+							if match := regexExpectOptions.FindStringSubmatch(expectString); match != nil {
 								expectPrefix = match[1]
 								expect = match[2]
 							} else if match := regexExpectOutput.FindStringSubmatch(expectString); match != nil {
@@ -226,6 +227,8 @@ func TestExamples(t *testing.T) {
 							switch expectPrefix {
 							case expectPrefixRaw:
 								require.EqualValues(t, expect, strings.TrimSpace(result.output))
+							case expectPrefixContains:
+								require.Contains(t, response.Output, expect)
 							case expectPrefixError:
 								require.EqualValues(t, expect, strings.TrimSpace(errStr))
 							case expectPrefixErrorContains:

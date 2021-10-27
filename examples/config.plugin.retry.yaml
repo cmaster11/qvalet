@@ -51,15 +51,12 @@ listeners:
   # Test with:
   #
   # [200] curl "http://localhost:7055/rateLimit"
-  # Expect "Status: 200\nAll good!"
+  # Expect contains "Status: 200\nAll good!"
   #
   /rateLimit:
     return: output
     # Verbose logging, to see what happens behind the scenes
     log: all
-
-    files:
-      curl_output: ""
 
     # Command to run, and list of arguments
     command: bash
@@ -72,7 +69,7 @@ listeners:
         # a 429 if we have not yet retried once (`.__gteRetry.RetryCount` will not be set).
         #
         # Also, we can store the curl output in a temporary file, if we need to reuse it or log it.
-        STATUS=$(curl -s -o "$GTE_FILES_curl_output" --write-out "%{http_code}" \
+        STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
           "http://localhost:7055/rateLimitEndpoint?retry={{ default 0 .__gteRetry.RetryCount }}")
 
         echo "Status: $STATUS"
@@ -81,6 +78,11 @@ listeners:
           echo "Oh no, we got rate limited!"
           exit 1
         fi
+
+        # Our command should succeed ONLY if we got a 200 code.
+        # This will cause the script to exit with an error if
+        # we have not gotten the proper status code.
+        [ $STATUS -eq 200 ]
 
         echo "All good!"
 

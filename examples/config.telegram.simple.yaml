@@ -27,8 +27,6 @@ listeners:
         chat_id: {{ coalesce (env "TELEGRAM_CHAT_ID") "123123123" }}
         text: |
           Hello {{ .name }}!
-      # We store the response code to see if we need to retry (429)
-      curl_status: ""
 
     # Command to run, and list of arguments
     command: bash
@@ -46,12 +44,16 @@ listeners:
         {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
         EOF
         )
-        echo -n "$STATUS" > $GTE_FILES_curl_status
+        echo "Status: $STATUS"
 
+        # Our command should succeed ONLY if we got a 200 code.
+        # This will cause the script to exit with an error if
+        # we have not gotten the proper status code.
         [ $STATUS -eq 200 ]
 
     plugins:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
-          condition: eq (fileReadToString (gte).files.curl_status) "429"
+          condition: |
+            contains "Status: 429" .__gteRetry.PreviousResult.Output
           delay: "5s"
