@@ -308,10 +308,17 @@ func (listener *CompiledListener) TplFuncMap() template.FuncMap {
 // @formatter:off
 /// [exec-command-result]
 type ExecCommandResult struct {
-	Command string   `json:"command,omitempty" yaml:"command,omitempty"`
-	Args    []string `json:"args,omitempty" yaml:"args,omitempty"`
-	Env     []string `json:"env,omitempty" yaml:"env,omitempty"`
-	Output  string   `json:"output,omitempty" yaml:"output,omitempty"`
+	// The command that has been executed
+	Command string `json:"command,omitempty" yaml:"command,omitempty"`
+
+	// The args, which have been passed to the command
+	Args []string `json:"args,omitempty" yaml:"args,omitempty"`
+
+	// The environment variables used with the command
+	Env []string `json:"env,omitempty" yaml:"env,omitempty"`
+
+	// The output of the executed command
+	Output string `json:"output,omitempty" yaml:"output,omitempty"`
 }
 
 /// [exec-command-result]

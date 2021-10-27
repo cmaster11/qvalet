@@ -51,7 +51,7 @@ listeners:
   # Test with:
   #
   # [200] curl "http://localhost:7055/rateLimit"
-  # Expect "All good!"
+  # Expect "Status: 200\nAll good!"
   #
   /rateLimit:
     return: output
@@ -59,8 +59,6 @@ listeners:
     log: all
 
     files:
-      # Temporary storage for curl status code
-      curl_status: ""
       curl_output: ""
 
     # Command to run, and list of arguments
@@ -77,8 +75,7 @@ listeners:
         STATUS=$(curl -s -o "$GTE_FILES_curl_output" --write-out "%{http_code}" \
           "http://localhost:7055/rateLimitEndpoint?retry={{ default 0 .__gteRetry.RetryCount }}")
 
-        # Store the status to re-use it in the retry condition
-        echo "$STATUS" > $GTE_FILES_curl_status
+        echo "Status: $STATUS"
 
         if [[ "$STATUS" -eq 429 ]]; then
           echo "Oh no, we got rate limited!"
@@ -91,7 +88,8 @@ listeners:
     plugins:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
-          condition: eq (trim (fileReadToString (gte).files.curl_status)) "429"
+          condition: |
+            contains "Status: 429" .__gteRetry.PreviousResult.Output
           delay: "1s"
 
       # Useful for debugging, especially if you are dealing with temporary files and

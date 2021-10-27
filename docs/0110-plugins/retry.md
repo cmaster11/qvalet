@@ -10,6 +10,10 @@ help you figure out if and when to retry:
 
 [filename](../../pkg/plugin_retry.go ':include :type=code :fragment=retry-payload')
 
+Here is the structure of `ExecCommandResult`:
+
+[filename](../../pkg/listener.go ':include :type=code :fragment=exec-command-result')
+
 NOTE: the `condition` field uses the syntax of an [if-template](/0900-appendix/if-templates.md).
 
 ## Configuration
