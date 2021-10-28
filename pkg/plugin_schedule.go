@@ -329,7 +329,7 @@ func (p *PluginSchedule) HookMountRoutes(engine *gin.Engine) {
 		c.AbortWithStatusJSON(http.StatusOK, result)
 	}
 
-	mountRoutesByMethod(engine, p.listener.config.Methods, fmt.Sprintf("%s%s/:%s", p.listener.route, route, pluginScheduleUrlParamTimeKey), handler)
+	mountRoutesForListener(engine, p.listener, fmt.Sprintf("%s%s/:%s", p.listener.route, route, pluginScheduleUrlParamTimeKey), handler)
 }
 
 func (p *PluginSchedule) OnStart() error {

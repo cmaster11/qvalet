@@ -72,6 +72,13 @@ type PluginHookMountRoutes interface {
 	HookMountRoutes(engine *gin.Engine)
 }
 
+type PluginHookGetMiddlewares interface {
+	PluginInterface
+
+	// Called on initialization, allows plugins to mount additional middlewares, BEFORE a route is mounted
+	HookGetMiddlewares(method string) []gin.HandlerFunc
+}
+
 type PluginHookPreExecute interface {
 	PluginInterface
 

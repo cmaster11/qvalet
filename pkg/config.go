@@ -49,7 +49,7 @@ type ListenerConfig struct {
 
 	// Which methods to enable for this listener. Defaults to GET, POST
 	// MUST be UPPERCASE!
-	Methods []string `mapstructure:"methods"`
+	Methods []string `mapstructure:"methods" validate:"dive,oneof='GET POST PUT PATCH HEAD DELETE OPTIONS'"`
 
 	// Define which temporary files you want to create
 	Files map[string]*ListenerTemplate `mapstructure:"files"`

@@ -36,11 +36,9 @@ Templates are populated with all parameters from:
 
 You can then use any fields of these objects in your templates.
 
-* The headers: all request headers will be copied into the `__gteHeaders` map, with their keys lower-cased:
+* The request: a global object `__gteRequest` will be available in every command template, and the structure will be:
 
-```
-{{ .__gteHeaders.x-my-token }}
-```
+[filename](../pkg/utils/payload.go ':include :type=code :fragment=gte-request')
 
 ## Array payload
 

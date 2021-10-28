@@ -25,6 +25,8 @@ error, there will be a standard response.
 
 [filename](../../pkg/plugin_http_response.go ':include :type=code :fragment=config')
 
+[filename](../../pkg/plugin_http_response.go ':include :type=code :fragment=config-cors')
+
 ## Examples
 
 This is an example on how to use the HTTP response plugin:
@@ -33,8 +35,18 @@ This is an example on how to use the HTTP response plugin:
 
 [filename](../../examples/config.plugin.httpresponse.yaml ':include :type=code')
 
+### Redirection
+
 And, another example, which makes use of temporary files to store a redirection target:
 
 > Example code at: [`/examples/config.plugin.httpresponse-file.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.httpresponse-file.yaml)
 
 [filename](../../examples/config.plugin.httpresponse-file.yaml ':include :type=code')
+
+### CORS
+
+Here you can see how you can use the CORS feature of the plugin, to allow CORS requests:
+
+> Example code at: [`/examples/config.plugin.httpresponse-cors.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.httpresponse-cors.yaml)
+
+[filename](../../examples/config.plugin.httpresponse-cors.yaml ':include :type=code')

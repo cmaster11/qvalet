@@ -102,5 +102,5 @@ func (p *PluginPreview) HookMountRoutes(engine *gin.Engine) {
 		c.AbortWithStatusJSON(http.StatusOK, toReturn)
 	}
 
-	mountRoutesByMethod(engine, p.listener.config.Methods, fmt.Sprintf("%s%s", p.listener.route, route), handler)
+	mountRoutesForListener(engine, p.listener, fmt.Sprintf("%s%s", p.listener.route, route), handler)
 }

@@ -23,6 +23,8 @@ var opts struct {
 }
 
 func main() {
+	logrus.SetOutput(os.Stdout)
+
 	_, err := flags.Parse(&opts)
 	if err != nil {
 		logrus.WithError(err).Fatalf("failed to parse flags")
@@ -37,6 +39,8 @@ func main() {
 	// Internal debug logging
 	if os.Getenv("GTE_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
 	}
 
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
@@ -65,10 +69,13 @@ func main() {
 	for port, configs := range configsByPort {
 		port := port
 
-		router := gin.Default()
+		router := gin.New()
+		router.Use(gin.Recovery())
+		router.Use(utils.GetGinLoggerHandler())
 		router.Use(gin.ErrorLogger())
 
 		router.GET("/healthz", func(context *gin.Context) {
+			context.Set(utils.GinContextDoNotLogEntry, true)
 			context.AbortWithStatus(http.StatusOK)
 		})
 
