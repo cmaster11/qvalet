@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"gotoexec/pkg/utils"
-	"gotoexec/pkg/utils/timeout"
+	"qvalet/pkg/utils"
+	"qvalet/pkg/utils/timeout"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"

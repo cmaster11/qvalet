@@ -18,9 +18,9 @@ You can use any of the following syntax's:
   the [Go documentation of the `time` package](https://pkg.go.dev/time#pkg-constants),
   like `curl "http://localhost:7055/hello/schedule/2021-10-23T05:18:37+00:00"`.
 
-Also, while evaluating the command templates, you will have access to the `__gteScheduleTime` key, which contains the
+Also, while evaluating the command templates, you will have access to the `__qvScheduleTime` key, which contains the
 command execution time. This field is of [`time.Time`](https://pkg.go.dev/time#Time) type, which means you can e.g.
-extract the Unix milliseconds value using `{{ .__gteScheduleTime.UnixMilli }}`.
+extract the Unix milliseconds value using `{{ .__qvScheduleTime.UnixMilli }}`.
 
 ## Configuration
 
@@ -30,7 +30,7 @@ NOTE: to use this plugin, you **have to** set up a [database](/0090-database.md)
 
 ## Examples
 
-> Example code at: [`/examples/config.plugin.schedule.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.schedule.yaml)
+> Example code at: [`/examples/config.plugin.schedule.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.schedule.yaml)
 
 This is a simple example on how to use the schedule plugin:
 

@@ -23,7 +23,7 @@ listeners:
       - |
         set -e
 
-        {{ $currentRetry := default -1 .__gteRetry.RetryCount }}
+        {{ $currentRetry := default -1 .__qvRetry.RetryCount }}
         echo "This is the retry {{ $currentRetry }}"
 
         {{ if eq $currentRetry 1 }}
@@ -40,7 +40,7 @@ listeners:
       # We initialize the retry plugin, and configure it to retry if we have thrown an error
       - retry:
           condition: |
-            contains "No retries detected" .__gteRetry.PreviousResult.Output
+            contains "No retries detected" .__qvRetry.PreviousResult.Output
           delay: "1s"
   ### [docs-retry-simple]
 
@@ -66,11 +66,11 @@ listeners:
         set -e
 
         # We send a request to the local rate limiting endpoint, which will return
-        # a 429 if we have not yet retried once (`.__gteRetry.RetryCount` will not be set).
+        # a 429 if we have not yet retried once (`.__qvRetry.RetryCount` will not be set).
         #
         # Also, we can store the curl output in a temporary file, if we need to reuse it or log it.
         STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
-          "http://localhost:7055/rateLimitEndpoint?retry={{ default 0 .__gteRetry.RetryCount }}")
+          "http://localhost:7055/rateLimitEndpoint?retry={{ default 0 .__qvRetry.RetryCount }}")
 
         echo "Status: $STATUS"
 
@@ -91,7 +91,7 @@ listeners:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
           condition: |
-            contains "Status: 429" .__gteRetry.PreviousResult.Output
+            contains "Status: 429" .__qvRetry.PreviousResult.Output
           delay: "1s"
 
       # Useful for debugging, especially if you are dealing with temporary files and

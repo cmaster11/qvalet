@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"sync"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const keyAuthDefaultHTTPBasicUser = "gte"
-const keyAuthApiKeyQuery = "__gteApiKey"
+const keyAuthDefaultHTTPBasicUser = "qv"
+const keyAuthApiKeyQuery = "__qvApiKey"
 
 type RouteListenerMapping struct {
 	Route    string
@@ -38,7 +38,7 @@ func MountRoutes(engine *gin.Engine, config *Config, listenerIdPrefix string) (*
 			return nil, errors.WithMessagef(err, "failed to compile listener for route %s", route)
 		}
 		handler := getGinListenerHandler(listener)
-		mountedMethods := mountRoutesByMethod(engine, listener.config.Methods, route, handler)
+		mountedMethods := mountRoutesForListener(engine, listener, route, handler)
 
 		// Populate the map of listeners so that we can later lookup listeners to perform async executions
 		for _, m := range mountedMethods {
@@ -72,23 +72,31 @@ func MountRoutes(engine *gin.Engine, config *Config, listenerIdPrefix string) (*
 	}, nil
 }
 
-func mountRoutesByMethod(engine *gin.Engine, methods []string, route string, handler gin.HandlerFunc) []string {
-	var toReturn []string
+func mountRoutesForListener(engine *gin.Engine, listener *CompiledListener, route string, handler gin.HandlerFunc) []string {
+	var methods []string
 
-	if len(methods) == 0 {
-		engine.GET(route, handler)
-		engine.POST(route, handler)
-		toReturn = []string{http.MethodGet, http.MethodPost}
+	if len(listener.config.Methods) == 0 {
+		methods = []string{http.MethodGet, http.MethodPost}
 	} else {
-		for _, method := range methods {
-			engine.Handle(method, route, handler)
-		}
-		toReturn = methods
+		methods = listener.config.Methods
 	}
 
-	logrus.WithField("methods", toReturn).Infof("mounted route %s", route)
+	for _, method := range methods {
+		var handlers []gin.HandlerFunc
 
-	return toReturn
+		for _, plugin := range listener.plugins {
+			if plugin, ok := plugin.(PluginHookGetMiddlewares); ok {
+				handlers = append(handlers, plugin.HookGetMiddlewares(method)...)
+			}
+		}
+
+		handlers = append(handlers, handler)
+		engine.Handle(method, route, handlers...)
+	}
+
+	logrus.WithField("methods", methods).Infof("mounted route %s", route)
+
+	return methods
 }
 
 func (r *MountRoutesResult) PluginsStart() error {

@@ -23,7 +23,7 @@ listeners:
     # which will be converted to JSON later.
     files:
       payload.yaml: |
-        username: Test Slack hook from GTE!
+        username: Test Slack hook from QV!
         icon_emoji: ":jack_o_lantern:"
         text: |
           Hello {{ .name }}!
@@ -39,7 +39,7 @@ listeners:
         # expect HTTP 200 code
         STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
           -X POST -H "Content-Type: application/json" "$SLACK_HOOK" --data-binary @- << EOF
-        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        {{ fileReadToString (qv).files.payload_yaml | yamlToJson }}
         EOF
         )
         echo "Status: $STATUS"
@@ -53,5 +53,5 @@ listeners:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
           condition: |
-            contains "Status: 429" .__gteRetry.PreviousResult.Output
+            contains "Status: 429" .__qvRetry.PreviousResult.Output
           delay: "5s"

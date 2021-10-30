@@ -1,4 +1,4 @@
-# This is an example to showcase what happens when an array payload is passed to a go-to-exec listener.
+# This is an example to showcase what happens when an array payload is passed to a qValet listener.
 
 # All logging enabled
 debug: true
@@ -28,10 +28,10 @@ listeners:
       - |
         {{/*
         We can iterate on the array entries by using the special
-        __gtePayloadArrayLength key
+        __qvPayloadArrayLength key
         */}}
 
-        {{ range $idx := until .__gtePayloadArrayLength }}
+        {{ range $idx := until .__qvPayloadArrayLength }}
 
         {{/*
         `$` is a synonym for `.`, when `.` is the root context. If you

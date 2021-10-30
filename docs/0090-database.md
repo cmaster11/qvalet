@@ -12,6 +12,6 @@ configuration in the defaults section.
 
 ## Example (schedule plugin)
 
-> Example code at: [`/examples/config.plugin.schedule.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.schedule.yaml)
+> Example code at: [`/examples/config.plugin.schedule.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.schedule.yaml)
 
 [filename](../examples/config.plugin.schedule.yaml ':include :type=code')

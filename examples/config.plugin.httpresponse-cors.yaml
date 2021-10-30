@@ -1,0 +1,42 @@
+# This example shows how to load a plugin, in this case the HTTP Response plugin
+
+# All logging enabled
+debug: true
+listeners:
+
+  # One functionality of the HTTP response plugin is to provide CORS support.
+  # This example shows the concept.
+  #
+  # Test FROM A BROWSER to make a call to:
+  #
+  # [200] curl "http://localhost:7055/cors"
+  # Expect "Hello!"
+  #
+  /cors:
+    # Returns the output of the command in the response.
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the HTTP response plugin, and use it to set some custom CORS allowed origin.
+      - httpResponse:
+          cors:
+            allowedOrigins:
+              - http://example.com
+              # You can allow partial wildcards, with the limit of one `*` per origin line
+              - http://localhost:*
+              # Uncomment to always return `*` as allowed origin.
+              # NOTE, however, that this global wildcard will NOT work together with [allowCredentials=true],
+              # because it is a bad practice, not allowed by modern browsers.
+              # - '*'
+
+            # Access-Control-Allow-Credentials
+            allowCredentials: true

@@ -1,8 +1,8 @@
 {
-  "name": "go-to-exec",
+  "name": "qvalet",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:cmaster11/go-to-exec.git",
+  "repository": "git@github.com:cmaster11/qvalet.git",
   "author": "Alberto Marchetti <cmaster11@gmail.com>",
   "license": "MIT",
   "dependencies": {

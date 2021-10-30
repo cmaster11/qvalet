@@ -14,16 +14,16 @@ if ! command -v ngrok; then
   exit 1
 fi
 
-DEV_SSH_ROOT="${DEV_SSH_ROOT:-.}"
+GENERATED_ROOT="${GENERATED_ROOT:-.}"
 AWS_PROFILE="${AWS_PROFILE:-default}"
-AWS_SNS_ARN=${AWS_SNS_ARN:-$(cat "$DEV_SSH_ROOT/aws/gte-test-sns-arn.generated")}
-AWS_REGION=${AWS_REGION:-$(cat "$DEV_SSH_ROOT/aws/aws-region.generated")}
+AWS_SNS_ARN=${AWS_SNS_ARN:-$(cat "$GENERATED_ROOT/aws/qv-test-sns-arn.generated")}
+AWS_REGION=${AWS_REGION:-$(cat "$GENERATED_ROOT/aws/aws-region.generated")}
 
 AWS="aws --region $AWS_REGION"
 
 # Start ngrok in the background, and make sure to kill it on exit
 NGROK_PID=
-GTE_PID=
+QV_PID=
 SUBSCRIPTION_ARN=
 
 trap cleanup err exit
@@ -34,8 +34,8 @@ cleanup() {
     kill -9 "$NGROK_PID" || true
   fi
 
-  if [[ -n "$GTE_PID" ]]; then
-    kill -9 "$GTE_PID" || true
+  if [[ -n "$QV_PID" ]]; then
+    kill -9 "$QV_PID" || true
   fi
 
   if [[ -n "$SUBSCRIPTION_ARN" ]]; then
@@ -101,8 +101,8 @@ start_ngrok() {
   return 0
 }
 
-start_gte() {
-  # Run gte
+start_qv() {
+  # Run qv
   TMP_BIN=$(mktemp)
   (
     echo "Building binary..."
@@ -110,8 +110,8 @@ start_gte() {
     go build -o "$TMP_BIN" ./cmd
     chmod +x "$TMP_BIN"
   )
-  nohup "$TMP_BIN" --config "$DIR/../../examples/config.plugin.awssns.yaml" >nohup-gte.log 2>&1 &
-  GTE_PID=$!
+  nohup "$TMP_BIN" --config "$DIR/../../examples/config.plugin.awssns.yaml" >nohup-qv.log 2>&1 &
+  QV_PID=$!
 
   STATUS=
 
@@ -122,10 +122,10 @@ start_gte() {
       break
     fi
 
-    if ! ps -p $GTE_PID >/dev/null; then
-      GTE_PID=
-      echo "go-to-exec has died"
-      cat nohup-gte.log || true
+    if ! ps -p $QV_PID >/dev/null; then
+      QV_PID=
+      echo "qValet has died"
+      cat nohup-qv.log || true
       break
     fi
 
@@ -134,8 +134,8 @@ start_gte() {
   done
 
   if [[ "$STATUS" != "200" ]]; then
-    echo "go-to-exec is not healthy"
-    cat nohup-gte.log || true
+    echo "qValet is not healthy"
+    cat nohup-qv.log || true
     return 1
   fi
 
@@ -143,7 +143,7 @@ start_gte() {
 }
 
 start_ngrok
-start_gte
+start_qv
 
 echo "Creating SNS subscription..."
 # Create an SNS subscription

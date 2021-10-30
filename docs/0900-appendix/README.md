@@ -1,5 +1,5 @@
 # Appendix
 
-Here we have some other notes about `go-to-exec` features.
+Here we have some other notes about qValet features.
 
 [TOC](_toc.md ':include')

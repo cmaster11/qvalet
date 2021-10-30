@@ -25,5 +25,5 @@ listeners:
         set -e
 
         # Retrieve the temporary file path in different ways
-        cat $GTE_FILES_tmp1
-        cat {{ (gte).files.tmp1 }}
+        cat $QV_FILES_tmp1
+        cat {{ (qv).files.tmp1 }}

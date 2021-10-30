@@ -28,7 +28,7 @@ listeners:
         # Here we write an URL to the temporary file, and we'll
         # use this URL while returning a new Location header, to perform the
         # redirection to the next listener.
-        echo "http://localhost:7055/redirectTarget" > $GTE_FILES_tmp1
+        echo "http://localhost:7055/redirectTarget" > $QV_FILES_tmp1
 
     # Here is where we can define plugins to be loaded for this listener
     plugins:
@@ -40,7 +40,7 @@ listeners:
           headers:
             # We get the location address from the temporary file we previously wrote to
             Location: |
-              {{ fileReadToString (gte).files.tmp1 }}
+              {{ fileReadToString (qv).files.tmp1 }}
 
   # This is the target of the previous redirect example
   /redirectTarget:

@@ -14,7 +14,7 @@ import (
 	"text/template"
 	"time"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/Masterminds/goutils"
 	"github.com/beyondstorage/go-storage/v4/types"
@@ -68,7 +68,7 @@ func (listener *CompiledListener) SetId(value string) {
 	listener.id = value
 }
 
-const funcMapKeyGTE = "gte"
+const funcMapKeyQV = "qv"
 
 func (listener *CompiledListener) clone() (*CompiledListener, error) {
 	newListener := &CompiledListener{
@@ -293,7 +293,7 @@ afterStorage:
 	return listener, nil
 }
 
-func (listener *CompiledListener) tplGTE() map[string]interface{} {
+func (listener *CompiledListener) tplQV() map[string]interface{} {
 	return map[string]interface{}{
 		"files": listener.tplTmpFileNames,
 	}
@@ -301,7 +301,7 @@ func (listener *CompiledListener) tplGTE() map[string]interface{} {
 func (listener *CompiledListener) TplFuncMap() template.FuncMap {
 	return template.FuncMap{
 		// Added here to make tpls parse, but will be overwritten on clone
-		funcMapKeyGTE: listener.tplGTE,
+		funcMapKeyQV: listener.tplQV,
 	}
 }
 
@@ -520,7 +520,7 @@ func (listener *CompiledListener) prepareExecution(args map[string]interface{}, 
 	}
 
 	for cleanPath, realPath := range listener.tplTmpFileNames {
-		cmdEnv = append(cmdEnv, fmt.Sprintf("GTE_FILES_%s=%s", cleanPath, realPath))
+		cmdEnv = append(cmdEnv, fmt.Sprintf("QV_FILES_%s=%s", cleanPath, realPath))
 	}
 	return &preparedExecutionResult{
 		Command: cmdStr,
@@ -541,7 +541,7 @@ func (listener *CompiledListener) HandleRequest(c *gin.Context, args map[string]
 		Create a new instance of the listener, to handle temporary files.
 
 		On every new run, we store files in different temporary folders, and we need to populate
-		the "files" map of the template with different values, which means pointing the "gte" function
+		the "files" map of the template with different values, which means pointing the "qv" function
 		to a different listener!
 	*/
 	l, err := listener.clone()
@@ -718,7 +718,7 @@ func (listener *CompiledListener) processFiles(args map[string]interface{}) erro
 		realFilePath := originalFilePath
 		if !path.IsAbs(originalFilePath) {
 			if filesDir == "" {
-				_filesDir, err := os.MkdirTemp("", "gte-")
+				_filesDir, err := os.MkdirTemp("", "qv-")
 				if err != nil {
 					err := errors.WithMessage(err, "failed to create temporary files directory")
 					log.WithError(err).Error("error")

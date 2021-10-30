@@ -3,8 +3,8 @@ package pkg
 import (
 	"fmt"
 
-	"gotoexec/pkg/snshttp"
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/snshttp"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"

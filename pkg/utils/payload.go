@@ -13,10 +13,26 @@ import (
 )
 
 const (
-	payloadKeyArrayLength       = "__gtePayloadArrayLength"
-	keyArgsHeadersKey           = "__gteHeaders"
+	payloadKeyArrayLength       = "__qvPayloadArrayLength"
+	keyArgsRequestKey           = "__qvRequest"
 	defaultFormMultipartMaxSize = 64 * 1024 * 1024
 )
+
+// @formatter:off
+/// [qv-request]
+type QVRequest struct {
+	// All headers provided with the request, with the keys
+	// being lower-cased, e.g `x-my-header: Hello`
+	Headers map[string]interface{} `json:"headers"`
+
+	// The current request method, e.g. `GET`
+	Method string `json:"method"`
+
+	// The guessed address of the client, e.g. `127.0.0.1:1234`
+	RemoteAddr string `json:"remoteAddr"`
+}
+/// [qv-request]
+// @formatter:off
 
 func ExtractArgsFromGinContext(c *gin.Context) (map[string]interface{}, error) {
 	args := make(map[string]interface{})
@@ -26,13 +42,20 @@ func ExtractArgsFromGinContext(c *gin.Context) (map[string]interface{}, error) {
 		args[param.Key] = param.Value
 	}
 
-	// Add headers to args
+	// Add all relevant request parameters to the payload context
 	{
 		headerMap := make(map[string]interface{})
 		for k := range c.Request.Header {
 			headerMap[strings.ToLower(k)] = c.GetHeader(k)
 		}
-		args[keyArgsHeadersKey] = headerMap
+
+		qvRequest := &QVRequest{
+			headerMap,
+			c.Request.Method,
+			c.Request.RemoteAddr,
+		}
+
+		args[keyArgsRequestKey] = qvRequest
 	}
 
 	if c.Request.ContentLength > 0 {

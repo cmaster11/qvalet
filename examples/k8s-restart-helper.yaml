@@ -56,7 +56,7 @@ spec:
           image: alpine:3.14.0
           imagePullPolicy: IfNotPresent
           # The port needs to be the same as the one defined in
-          # go-to-exec configuration
+          # qvalet configuration
           ports:
             - containerPort: 7055
               name: http
@@ -71,19 +71,19 @@ spec:
             - |
               set -ex
 
-              GOTOEXEC_VERSION="v1.2.3"
+              QVALET_VERSION="v2.0.0"
 
-              GOTOEXEC="/gotoexec"
+              QVALET="/qvalet"
               KUBECTL="/kubectl"
 
               # Download the required tools
-              wget -O "$GOTOEXEC" "https://github.com/cmaster11/go-to-exec/releases/download/$GOTOEXEC_VERSION/gotoexec-linux-amd64"
+              wget -O "$QVALET" "https://github.com/cmaster11/qvalet/releases/download/$QVALET_VERSION/qvalet-linux-amd64"
               wget -O "$KUBECTL" "https://dl.k8s.io/release/$(wget -O- https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
-              chmod +x "$GOTOEXEC"
+              chmod +x "$QVALET"
               chmod +x "$KUBECTL"
 
-              # Defines the configuration for go-to-exec
+              # Defines the configuration for qvalet
               cat << EOF > /config.yaml
               listeners:
 
@@ -101,9 +101,9 @@ spec:
               EOF
 
               # By using `exec`, we replace the current process with
-              # go-to-exec one, which allows the program to receive all
+              # qvalet one, which allows the program to receive all
               # system signals. Necessary for graceful shutdown
-              exec $GOTOEXEC
+              exec $QVALET
       restartPolicy: Always
   selector:
     matchLabels:

@@ -5,7 +5,7 @@ rate-limiting ones). For this purpose you can use the `retry` plugin!
 
 After every command execution, you can have one or more checks to verify if you need to retry the whole flow.
 
-Also, when evaluating the `condition` and `delay` fields, you will be able to access an additional `__gteRetry` map, which can
+Also, when evaluating the `condition` and `delay` fields, you will be able to access an additional `__qvRetry` map, which can
 help you figure out if and when to retry:
 
 [filename](../../pkg/plugin_retry.go ':include :type=code :fragment=retry-payload')
@@ -22,7 +22,7 @@ NOTE: the `condition` field uses the syntax of an [if-template](/0900-appendix/i
 
 ## Examples
 
-> Example code at: [`/examples/config.plugin.retry.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.retry.yaml)
+> Example code at: [`/examples/config.plugin.retry.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.retry.yaml)
 
 This is a simple example on how to use the retry plugin:
 

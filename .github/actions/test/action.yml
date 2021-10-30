@@ -1,5 +1,5 @@
-name: Test go-to-exec
-description: Runs tests in go-to-exec
+name: Test qValet
+description: Runs tests in qValet
 runs:
   using: 'docker'
   image: 'Dockerfile'

@@ -1,6 +1,6 @@
 # This example is part of the `config.combined.echo.yaml` config.
 #
-# gotoexec -c config.combined.echo.yaml -c config.combined.echo.part2.notest.yaml -f defaults.combined.echo.yaml
+# qvalet -c config.combined.echo.yaml -c config.combined.echo.part2.notest.yaml -f defaults.combined.echo.yaml
 #
 
 debug: true

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -70,6 +70,13 @@ type PluginHookMountRoutes interface {
 
 	// Called on initialization, allows plugins to mount additional routes
 	HookMountRoutes(engine *gin.Engine)
+}
+
+type PluginHookGetMiddlewares interface {
+	PluginInterface
+
+	// Called on initialization, allows plugins to mount additional middlewares, BEFORE a route is mounted
+	HookGetMiddlewares(method string) []gin.HandlerFunc
 }
 
 type PluginHookPreExecute interface {

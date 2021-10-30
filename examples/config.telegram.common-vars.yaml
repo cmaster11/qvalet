@@ -46,13 +46,13 @@ defaults:
       # to the command, which means that in this case we are populating the
       # `payload` bash variable with simple JSON content.
       read -r -d '' payload <<'EOF' || true
-      {{ $headerMap := fileReadToString (gte).files.payload_header | yamlDecode }}
+      {{ $headerMap := fileReadToString (qv).files.payload_header | yamlDecode }}
       {{/*
         Replace all sequences of more than 2 newlines, with 2 newlines, so it prevents
         groups of empty lines from appearing. Then, limits the result to 4096, as per
         Telegram API requirements.
       */}}
-      {{ $content := fileReadToString (gte).files.content | cleanNewLines | trim | trunc 4096 }}
+      {{ $content := fileReadToString (qv).files.content | cleanNewLines | trim | trunc 4096 }}
       {{ $payloadMap := merge $headerMap (dict "text" $content) }}
       {{ $payloadMap | toJson }}
       EOF
@@ -74,7 +74,7 @@ defaults:
     # We initialize the retry plugin, and configure it to retry if we have been rate-limited
     - retry:
         condition: |
-          contains "Status: 429" .__gteRetry.PreviousResult.Output
+          contains "Status: 429" .__qvRetry.PreviousResult.Output
         delay: "5s"
 
   # This is a generic catch-all handler, in case a listener fails to execute

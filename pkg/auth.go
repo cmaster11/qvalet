@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -33,11 +33,11 @@ type AuthConfig struct {
 	QueryAuth bool `mapstructure:"queryAuth"`
 
 	// The key to check for in the url query.
-	// Defaults to __gteApiKey if none is provided
+	// Defaults to `__qvApiKey` if none is provided
 	QueryAuthKey string `mapstructure:"queryAuthKey"`
 
 	// The basic auth HTTP username.
-	// Defaults to `gte` if none is provided
+	// Defaults to `qv` if none is provided
 	BasicAuthUser string `mapstructure:"basicAuthUser"`
 
 	// If provided, apiKeys will be searched for in these headers
