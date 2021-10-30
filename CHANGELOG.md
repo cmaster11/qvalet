@@ -1,7 +1,38 @@
+<a name="v2.0.0"></a>
+# [v2.0.0](https://github.com/cmaster11/qvalet/releases/tag/v2.0.0) - 30 Oct 2021
+
+qValet replaces the old `go-to-exec`!
+
+Some changes:
+
+* CORS support for HTTP response plugin
+* Log by default to `os.Stdout` instead of `os.Stderr`
+* Upgraded some dependencies
+
+BREAKING:
+
+* The repository URL is now `https://github.com/cmaster11/qvalet`
+* All new executables qill be prefixed with `qvalet`, e.g. `qvalet-linux-amd64`
+* The new Docker image will be `cmaster11/qvalet`
+* All environment variables' prefix is now `QV_` (instead of the old `GTE_`)
+* The old `__gteHeaders` payload object is now part of the `__qvRequest` object, as `__qvRequest.Headers`.
+* Prefix changes:
+  * `__gtePayloadArrayLength` -> `__qvPayloadArrayLength`
+  * `__gteResult` -> `__qvResult`
+  * `__gteRetry` -> `__qvRetry`
+  * `__gteScheduleTime` -> `__qvScheduleTime`
+  * `__gteApiKey` -> `__qvApiKey`
+  * `__gtePayloadArrayLength` -> `__qvPayloadArrayLength`
+
+
+
+[Changes][v2.0.0]
+
+
 <a name="v1.3.5"></a>
 # [v1.3.5](https://github.com/cmaster11/qvalet/releases/tag/v1.3.5) - 25 Oct 2021
 
-fix: When using a defaults file, env variables are now mapped using the `QV_DEFAULTS_` prefix
+fix: When using a defaults file, env variables are now mapped using the `GTE_DEFAULTS_` prefix
 
 [Changes][v1.3.5]
 
@@ -43,7 +74,7 @@ Retry plugin (#22)
 <a name="v1.3.0"></a>
 # [v1.3.0](https://github.com/cmaster11/qvalet/releases/tag/v1.3.0) - 28 Sep 2021
 
-breaking: renamed `__qvPayloadLength` to `__qvPayloadArrayLength` (#8)
+breaking: renamed `__gtePayloadLength` to `__gtePayloadArrayLength` (#8)
 
 docs: example for array payload, some sorting of docs
 
@@ -321,6 +352,7 @@ Test action (#3)
 [Changes][v1.0.0]
 
 
+[v2.0.0]: https://github.com/cmaster11/qvalet/compare/v1.3.5...v2.0.0
 [v1.3.5]: https://github.com/cmaster11/qvalet/compare/v1.3.4...v1.3.5
 [v1.3.4]: https://github.com/cmaster11/qvalet/compare/v1.3.3...v1.3.4
 [v1.3.3]: https://github.com/cmaster11/qvalet/compare/v1.3.2...v1.3.3
