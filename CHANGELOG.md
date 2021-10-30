@@ -1,6 +1,29 @@
 <a name="v2.0.0"></a>
 # [v2.0.0](https://github.com/cmaster11/qvalet/releases/tag/v2.0.0) - 30 Oct 2021
 
+qValet replaces the old `go-to-exec`!
+
+Some changes:
+
+* CORS support for HTTP response plugin
+* Log by default to `os.Stdout` instead of `os.Stderr`
+* Upgraded some dependencies
+
+BREAKING:
+
+* The repository URL is now `https://github.com/cmaster11/qvalet`
+* All new executables qill be prefixed with `qvalet`, e.g. `qvalet-linux-amd64`
+* The new Docker image will be `cmaster11/qvalet`
+* All environment variables' prefix is now `QV_` (instead of the old `GTE_`)
+* The old `__gteHeaders` payload object is now part of the `__qvRequest` object, as `__qvRequest.Headers`.
+* Prefix changes:
+  * `__gtePayloadArrayLength` -> `__qvPayloadArrayLength`
+  * `__gteResult` -> `__qvResult`
+  * `__gteRetry` -> `__qvRetry`
+  * `__gteScheduleTime` -> `__qvScheduleTime`
+  * `__gteApiKey` -> `__qvApiKey`
+  * `__gtePayloadArrayLength` -> `__qvPayloadArrayLength`
+
 
 
 [Changes][v2.0.0]
