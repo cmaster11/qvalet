@@ -71,7 +71,7 @@ spec:
             - |
               set -ex
 
-              QVALET_VERSION="v1.2.3"
+              QVALET_VERSION="v2.0.0"
 
               QVALET="/qvalet"
               KUBECTL="/kubectl"

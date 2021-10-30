@@ -33,7 +33,7 @@ type AuthConfig struct {
 	QueryAuth bool `mapstructure:"queryAuth"`
 
 	// The key to check for in the url query.
-	// Defaults to __qvApiKey if none is provided
+	// Defaults to `__qvApiKey` if none is provided
 	QueryAuthKey string `mapstructure:"queryAuthKey"`
 
 	// The basic auth HTTP username.

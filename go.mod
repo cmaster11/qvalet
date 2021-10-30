@@ -25,14 +25,15 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/pkg/errors v0.9.1
+	github.com/rs/cors v1.8.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/uptrace/bun v1.0.14
-	github.com/uptrace/bun/dialect/pgdialect v1.0.14
-	github.com/uptrace/bun/driver/pgdriver v1.0.14
-	github.com/uptrace/bun/extra/bundebug v1.0.14
+	github.com/uptrace/bun v1.0.15
+	github.com/uptrace/bun/dialect/pgdialect v1.0.15
+	github.com/uptrace/bun/driver/pgdriver v1.0.15
+	github.com/uptrace/bun/extra/bundebug v1.0.15
 )
 
 require (
@@ -84,7 +85,6 @@ require (
 	github.com/qingstor/go-mime v0.1.0 // indirect
 	github.com/qingstor/qingstor-sdk-go/v4 v4.4.0 // indirect
 	github.com/qiniu/go-sdk/v7 v7.9.8 // indirect
-	github.com/rs/cors v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
