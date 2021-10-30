@@ -69,7 +69,7 @@ jobs:
           dest: 'dist'
           name: 'qvalet'
 
-      - name: Push to Docker Hub
+      - name: Build and push to Docker Hub
         uses: docker/build-push-action@v2
         with:
           push: true
