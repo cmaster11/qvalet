@@ -20,13 +20,13 @@ You can use all functions from the [sprig](https://github.com/Masterminds/sprig)
 some [additional](#template-functions) functions.
 
 You can find some advanced use cases in our [use cases](/0120-use-cases/) page and in
-our [examples](https://github.com/cmaster11/go-to-exec/tree/main/examples) folder.
+our [examples](https://github.com/cmaster11/qvalet/tree/main/examples) folder.
 
 Templates are populated with all parameters from:
 
 * The path: when listening on `/hello/:myParam`, it is possible to use `{{ .myParam }}`.
 * The query: `?name=Anderson"` will let you use `{{ .name }}`.
-* The body; `go-to-exec` accepts and will parse the following content types:
+* The body; qValet accepts and will parse the following content types:
 
 | Format | Content types |
 | --- | --- |
@@ -36,23 +36,23 @@ Templates are populated with all parameters from:
 
 You can then use any fields of these objects in your templates.
 
-* The request: a global object `__gteRequest` will be available in every command template, and the structure will be:
+* The request: a global object `__qvRequest` will be available in every command template, and the structure will be:
 
-[filename](../pkg/utils/payload.go ':include :type=code :fragment=gte-request')
+[filename](../pkg/utils/payload.go ':include :type=code :fragment=qv-request')
 
 ## Array payload
 
 A special case applies when a listener receives an array payload (JSON/YAML content type). In this case, the processed
 payload will be an object, where there is one key for each array index (`0, 1, 2 -> "0", "1", "2"`), and the
-key `__gtePayloadArrayLength` will contain the length of the original array. This is an example:
+key `__qvPayloadArrayLength` will contain the length of the original array. This is an example:
 
-> Example code at: [`/examples/config.simple.array.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.simple.array.yaml)
+> Example code at: [`/examples/config.simple.array.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.simple.array.yaml)
 
 [filename](../examples/config.simple.array.yaml ':include :type=code')
 
 ## Template functions
 
-`go-to-exec` lets you use all function from the [sprig](https://github.com/Masterminds/sprig) library, and the following additional functions:
+qValet lets you use all function from the [sprig](https://github.com/Masterminds/sprig) library, and the following additional functions:
 
 | Function name | Args | Output | Example |
 |---|---|---|---|

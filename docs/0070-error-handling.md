@@ -18,6 +18,6 @@ Argument | Description
 You can see how to configure such a handler in the following example, where it will be triggered on every call
 to `/hello`:
 
-> Example code at: [`/examples/config.onerror.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.onerror.yaml)
+> Example code at: [`/examples/config.onerror.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.onerror.yaml)
 
 [filename](../examples/config.onerror.yaml ':include :type=code')

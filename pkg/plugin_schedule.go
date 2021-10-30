@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"gotoexec/pkg/plugin_schedule"
+	"qvalet/pkg/plugin_schedule"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -27,8 +27,8 @@ var _ PluginConfigValidateCheckOtherPlugins = (*PluginSchedule)(nil)
 var _ PluginHookMountRoutes = (*PluginSchedule)(nil)
 var _ PluginConfig = (*PluginScheduleConfig)(nil)
 
-const pluginScheduleUrlParamTimeKey = "__gteScheduleTime"
-const pluginSchedulePayloadTimeKey = "__gteScheduleTime"
+const pluginScheduleUrlParamTimeKey = "__qvScheduleTime"
+const pluginSchedulePayloadTimeKey = "__qvScheduleTime"
 const pluginScheduleScanIntervalMin = 100 * time.Millisecond
 
 // @formatter:off

@@ -25,7 +25,7 @@ listeners:
     args:
       - -c
       - |
-        echo $GTE_FILES__tmp_dump_aws_sns_message
+        echo $QV_FILES__tmp_dump_aws_sns_message
 
     # Here is where we can define plugins to be loaded for this listener
     plugins:

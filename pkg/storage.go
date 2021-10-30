@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/Masterminds/goutils"
 	"github.com/goccy/go-yaml"

@@ -28,7 +28,7 @@ get_latest_release() {
     sed -E 's/.*"([^"]+)".*/\1/'
 }
 
-REPO=cmaster11/go-to-exec
+REPO=cmaster11/qvalet
 RELEASE=$(get_latest_release)
 
 # Detect OS/ARCH
@@ -45,16 +45,16 @@ case $(uname -m) in
 esac
 
 # Download the right executable
-URL="https://github.com/$REPO/releases/download/$RELEASE/gotoexec-$OS-$ARCH"
+URL="https://github.com/$REPO/releases/download/$RELEASE/qvalet-$OS-$ARCH"
 
-GTE=$(mktemp)
-wget -q -O "$GTE" "$URL"
-chmod +x "$GTE"
+QV=$(mktemp)
+wget -q -O "$QV" "$URL"
+chmod +x "$QV"
 
 if [[ "$MODE" == "temporary" ]]; then
-  echo "$GTE"
+  echo "$QV"
   exit
 fi
 
-# Run go-to-exec
-exec "$GTE" --config -
+# Run qvalet
+exec "$QV" --config -

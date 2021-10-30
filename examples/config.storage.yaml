@@ -15,7 +15,7 @@ listeners:
     storage:
       # Replace with your credentials and details
       # NOTE: you can also replace this value using environment variables, e.g.
-      # GTE_LISTENERS__GCS_STORAGE_CONN=gcs://<bucket_name...
+      # QV_LISTENERS__GCS_STORAGE_CONN=gcs://<bucket_name...
       conn: 'gcs://<bucket_name>/<work_dir>?credential=file:<absolute_path_to_token_file>&project_id=<google_cloud_project_id>'
 
       # Store args, command and output
@@ -36,7 +36,7 @@ listeners:
   #
   /fs:
     storage:
-      conn: 'fs:///tmp/gotoexec_test_dir' # fs:///<path_from_root>
+      conn: 'fs:///tmp/qvalet_test_dir' # fs:///<path_from_root>
       store: all
 
       # In this case, store the result in YAML format
@@ -66,6 +66,6 @@ listeners:
       args:
         - '{{ dump . }}'
       storage:
-        conn: 'fs:///tmp/gotoexec_test_dir' # fs:///<path_from_root>
+        conn: 'fs:///tmp/qvalet_test_dir' # fs:///<path_from_root>
         store: all
         asYAML: true

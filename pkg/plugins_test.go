@@ -3,7 +3,7 @@ package pkg
 import (
 	"testing"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/stretchr/testify/require"
 )

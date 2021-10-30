@@ -12,7 +12,7 @@ listeners:
   #
   # To see the command preview (JSON format) use:
   #
-  # [200] curl "http://localhost:7055/hello/preview?word=Mr.%20Anderson" -u gte:myPassword
+  # [200] curl "http://localhost:7055/hello/preview?word=Mr.%20Anderson" -u qv:myPassword
   # Expect raw "{\"command\":\"echo\",\"args\":[\"Hello Mr. Anderson\"]}"
   #
   #

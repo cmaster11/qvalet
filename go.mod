@@ -1,4 +1,4 @@
-module gotoexec
+module qvalet
 
 go 1.17
 

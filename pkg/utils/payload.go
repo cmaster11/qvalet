@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	payloadKeyArrayLength       = "__gtePayloadArrayLength"
-	keyArgsRequestKey           = "__gteRequest"
+	payloadKeyArrayLength       = "__qvPayloadArrayLength"
+	keyArgsRequestKey           = "__qvRequest"
 	defaultFormMultipartMaxSize = 64 * 1024 * 1024
 )
 
 // @formatter:off
-/// [gte-request]
-type GTERequest struct {
+/// [qv-request]
+type QVRequest struct {
 	// All headers provided with the request, with the keys
 	// being lower-cased, e.g `x-my-header: Hello`
 	Headers map[string]interface{} `json:"headers"`
@@ -31,7 +31,7 @@ type GTERequest struct {
 	// The guessed address of the client, e.g. `127.0.0.1:1234`
 	RemoteAddr string `json:"remoteAddr"`
 }
-/// [gte-request]
+/// [qv-request]
 // @formatter:off
 
 func ExtractArgsFromGinContext(c *gin.Context) (map[string]interface{}, error) {
@@ -49,13 +49,13 @@ func ExtractArgsFromGinContext(c *gin.Context) (map[string]interface{}, error) {
 			headerMap[strings.ToLower(k)] = c.GetHeader(k)
 		}
 
-		gteRequest := &GTERequest{
+		qvRequest := &QVRequest{
 			headerMap,
 			c.Request.Method,
 			c.Request.RemoteAddr,
 		}
 
-		args[keyArgsRequestKey] = gteRequest
+		args[keyArgsRequestKey] = qvRequest
 	}
 
 	if c.Request.ContentLength > 0 {

@@ -58,7 +58,7 @@ listeners:
       # NOTE that empty headers will be ignored.
       - httpResponse:
           statusCode: |
-            {{ if eq .__gteResult.Output "Redirect me!" }}
+            {{ if eq .__qvResult.Output "Redirect me!" }}
             302
             {{ end }}
           headers:
@@ -66,7 +66,7 @@ listeners:
             # This will point to the listener defined below.
             # NOTE that you can use relative or absolute URLs in the location header.
             Location: |
-              {{ if eq .__gteResult.Output "Redirect me!" }}
+              {{ if eq .__qvResult.Output "Redirect me!" }}
               http://localhost:7055/redirectTarget
               {{ end }}
 

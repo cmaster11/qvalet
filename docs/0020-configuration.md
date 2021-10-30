@@ -11,7 +11,7 @@ Here are all available configuration entries:
 
 ## Configuration example
 
-> Example code at: [`/examples/config.simple.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.simple.yaml)
+> Example code at: [`/examples/config.simple.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.simple.yaml)
 
 [filename](../examples/config.simple.yaml ':include :type=code')
 
@@ -42,20 +42,20 @@ listeners:
 can be remapped with
 
 ```
-GTE_DEFAULTS_DATABASE_HOST=postgres
-GTE_LISTENERS__HELLO_COMMAND=echo
+QV_DEFAULTS_DATABASE_HOST=postgres
+QV_LISTENERS__HELLO_COMMAND=echo
 ```
 
 Notes:
 
-* All environment variables need to be prefixed by `GTE_`.
+* All environment variables need to be prefixed by `QV_`.
 * Dynamic entries (where the key/value pairs belong to a dynamic map), like the `listeners` map, **need to be defined in
   the initial config**, before they can be re-mapped using environment variables.
 * The environment variable name for a config entry is created by:
     1. Join all the keys' chain with `_`: `listeners_/hello_command`
     2. Replace all non `a-z`, `A-Z`, `0-9`, `_` characters with `_`: `listeners__hello_command`
     3. Turn the whole text to upper-case: `LISTENERS__HELLO_COMMAND`
-    4. Prefix with `GTE_`: `GTE_LISTENERS__HELLO_COMMAND`
+    4. Prefix with `QV_`: `QV_LISTENERS__HELLO_COMMAND`
 * When using a [multi part configuration](/0120-use-cases/multi-part-config.md), the `defaults` file will be mapped with
-  the `GTE_DEFAULTS_` prefix. This means that you can use exactly the same environment variables between a `defaults`
+  the `QV_DEFAULTS_` prefix. This means that you can use exactly the same environment variables between a `defaults`
   file and a normal configuration one.

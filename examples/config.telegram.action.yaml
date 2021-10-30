@@ -8,7 +8,7 @@
 # curl "http://localhost:7055/telegram"
 #
 # - The button will trigger the action
-# curl "http://localhost:7055/action?__gteApiKey=abcd123123123"
+# curl "http://localhost:7055/action?__qvApiKey=abcd123123123"
 #
 # and then press the "Press me!" button under the Telegram message
 #
@@ -41,7 +41,7 @@ listeners:
               # NOTE: Telegram will NOT accept a "localhost" domain, so you cannot test these
               # actions on a local machine!
               # Replace with your deployment URL.
-              url: "{{ coalesce (env "GTE_DEPLOYMENT_URL") "https://mydeployment.com" }}/action?__gteApiKey=abcd123123123"
+              url: "{{ coalesce (env "QV_DEPLOYMENT_URL") "https://mydeployment.com" }}/action?__qvApiKey=abcd123123123"
             ]
         text: |
           Hello, here comes an action!
@@ -59,7 +59,7 @@ listeners:
         # expect HTTP 200 code
         STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
           -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
-        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        {{ fileReadToString (qv).files.payload_yaml | yamlToJson }}
         EOF
         )
         echo "Status: $STATUS"
@@ -73,7 +73,7 @@ listeners:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
           condition: |
-            contains "Status: 429" .__gteRetry.PreviousResult.Output
+            contains "Status: 429" .__qvRetry.PreviousResult.Output
           delay: "5s"
 
   # This is the action we want to execute when clicking on the "Press me!" button.

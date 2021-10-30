@@ -1,6 +1,6 @@
 # AWS SNS
 
-You can create [AWS SNS](https://aws.amazon.com/sns/) subscriptions, and point them to a `go-to-exec` instance, to automatically confirm the
+You can create [AWS SNS](https://aws.amazon.com/sns/) subscriptions, and point them to a qValet instance, to automatically confirm the
 subscription and process SNS messages. The `awssns` plugin automatically verifies the validity of the messages.
 
 The AWS SNS plugin will add a `/sns` route to your listener, and you can refer to this route when you will add an SNS
@@ -15,7 +15,7 @@ https://mydomain.com/test <- can be used for simulations
 https://mydomain.com/test/sns <- automatically decode/support SNS messages
 ```
 
-Whenever AWS SNS sends a message to the `/sns` endpoint, `go-to-exec` will inject in your payload the SNS notification
+Whenever AWS SNS sends a message to the `/sns` endpoint, qValet will inject in your payload the SNS notification
 arguments.
 
 E.g. you can access the `Message` field via:
@@ -36,6 +36,6 @@ All the available SNS notification arguments are defined in the following struct
 
 This is an example on how to use the AWS SNS plugin:
 
-> Example code at: [`/examples/config.plugin.awssns.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.plugin.awssns.yaml)
+> Example code at: [`/examples/config.plugin.awssns.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.awssns.yaml)
 
 [filename](../../examples/config.plugin.awssns.yaml ':include :type=code')

@@ -92,7 +92,7 @@ listeners:
         # expect HTTP 200 code
         STATUS=$(curl -s -o /dev/stderr --write-out "%{http_code}" \
           -X POST -H "Content-Type: application/json" "$HOOK" --data-binary @- << EOF
-        {{ fileReadToString (gte).files.payload_yaml | yamlToJson }}
+        {{ fileReadToString (qv).files.payload_yaml | yamlToJson }}
         EOF
         )
         echo "Status: $STATUS"
@@ -109,5 +109,5 @@ listeners:
       # We initialize the retry plugin, and configure it to retry if we have been rate-limited
       - retry:
           condition: |
-            contains "Status: 429" .__gteRetry.PreviousResult.Output
+            contains "Status: 429" .__qvRetry.PreviousResult.Output
           delay: "5s"

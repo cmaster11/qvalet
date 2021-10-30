@@ -13,7 +13,7 @@ type mergoTransformerCustom struct {
 
 var mergoTypePtrBool reflect.Type
 var mergoTypeMapStringString reflect.Type
-var mergoTypeMapStringTemplate reflect.Type
+var mergoTypeMapStrinqvmplate reflect.Type
 var mergoTypeMapStringIfTemplate reflect.Type
 var mergoTypeMapStringListenerTemplate reflect.Type
 var mergoTypeMapStringListenerIfTemplate reflect.Type
@@ -30,7 +30,7 @@ func init() {
 	pB := &b
 	mergoTypePtrBool = reflect.TypeOf(pB)
 	mergoTypeMapStringString = reflect.TypeOf(map[string]string{})
-	mergoTypeMapStringTemplate = reflect.TypeOf(map[string]*Template{})
+	mergoTypeMapStrinqvmplate = reflect.TypeOf(map[string]*Template{})
 	mergoTypeMapStringIfTemplate = reflect.TypeOf(map[string]*IfTemplate{})
 	mergoTypeMapStringListenerTemplate = reflect.TypeOf(map[string]*ListenerTemplate{})
 	mergoTypeMapStringListenerIfTemplate = reflect.TypeOf(map[string]*ListenerIfTemplate{})
@@ -50,7 +50,7 @@ func (t mergoTransformerCustom) Transformer(typ reflect.Type) func(dst, src refl
 		typ == mergoTypePtrIfTemplate ||
 		typ == mergoTypePtrListenerTemplate ||
 		typ == mergoTypePtrListenerIfTemplate ||
-		typ == mergoTypeMapStringTemplate ||
+		typ == mergoTypeMapStrinqvmplate ||
 		typ == mergoTypeMapStringIfTemplate ||
 		typ == mergoTypeMapStringListenerTemplate ||
 		typ == mergoTypeMapStringListenerIfTemplate ||

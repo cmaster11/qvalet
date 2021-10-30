@@ -178,7 +178,7 @@ func NewDB(config *DatabaseConfig) (*BunDbWrapper, error) {
 	sqlDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	bunDB := bun.NewDB(sqlDB, pgdialect.New())
 
-	if logrus.IsLevelEnabled(logrus.DebugLevel) && os.Getenv("GTE_VERBOSE_DATABASE") == "true" {
+	if logrus.IsLevelEnabled(logrus.DebugLevel) && os.Getenv("QV_VERBOSE_DATABASE") == "true" {
 		bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
 

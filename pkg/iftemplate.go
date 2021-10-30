@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"

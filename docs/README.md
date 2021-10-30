@@ -1,6 +1,6 @@
-# go-to-exec
+# qValet
 
-`go-to-exec` listens for HTTP requests and executes commands on demand.
+qValet listens for HTTP requests and executes commands on demand.
 
 ## -->&nbsp;[Get started!](/0010-getting-started.md)&nbsp;<--
 

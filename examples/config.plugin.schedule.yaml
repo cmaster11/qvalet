@@ -42,8 +42,8 @@ listeners:
     args:
       - -c
       - |
-        echo "This is a scheduled task, executed at {{ .__gteScheduleTime }}"
-        echo "Or, if you want the milliseconds: {{ .__gteScheduleTime.UnixMilli }}!"
+        echo "This is a scheduled task, executed at {{ .__qvScheduleTime }}"
+        echo "Or, if you want the milliseconds: {{ .__qvScheduleTime.UnixMilli }}!"
 
     # Here is where we can define plugins to be loaded for this listener
     plugins:

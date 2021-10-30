@@ -1,4 +1,4 @@
-- [go-to-exec](/README.md)
+- [qValet](/README.md)
   - [Getting started](/0010-getting-started.md)
   - [Configuration](/0020-configuration.md)
   - [Templates](/0030-templates.md)

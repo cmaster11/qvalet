@@ -9,7 +9,7 @@ defaults:
   # message.
   errorHandler:
     storage:
-      conn: 'fs:///tmp/gotoexec-tests'
+      conn: 'fs:///tmp/qvalet-tests'
       store: output
 
     command: bash

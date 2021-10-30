@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"sync"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const keyAuthDefaultHTTPBasicUser = "gte"
-const keyAuthApiKeyQuery = "__gteApiKey"
+const keyAuthDefaultHTTPBasicUser = "qv"
+const keyAuthApiKeyQuery = "__qvApiKey"
 
 type RouteListenerMapping struct {
 	Route    string

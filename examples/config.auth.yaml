@@ -23,7 +23,7 @@ listeners:
       - apiKeys:
           - helloBasic
         basicAuth: true
-        # If not provided, defaults to `gte`
+        # If not provided, defaults to `qv`
         basicAuthUser: myUser
 
     command: bash
@@ -51,7 +51,7 @@ listeners:
       - apiKeys:
           - ENV{EXAMPLE_AUTH_BASIC_ENV_APIKEY}
         basicAuth: true
-        # If not provided, defaults to `gte`
+        # If not provided, defaults to `qv`
         basicAuthUser: myUser
 
     command: bash
@@ -72,7 +72,7 @@ listeners:
       - apiKeys:
           - helloQuery
         queryAuth: true
-        # If not provided, defaults to `__gteApiKey`
+        # If not provided, defaults to `__qvApiKey`
         queryAuthKey: myAuthKey
 
     command: bash
@@ -154,8 +154,8 @@ listeners:
   # Use the default authentication
   #
   # Test with:
-  # [200] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecret'
-  # [401] curl "http://localhost:7055/auth/default" -u 'gte:defaultSecretWrong'
+  # [200] curl "http://localhost:7055/auth/default" -u 'qv:defaultSecret'
+  # [401] curl "http://localhost:7055/auth/default" -u 'qv:defaultSecretWrong'
   /auth/default:
 
     command: bash

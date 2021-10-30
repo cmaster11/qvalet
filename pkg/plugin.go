@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

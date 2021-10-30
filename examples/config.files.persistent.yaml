@@ -9,7 +9,7 @@ listeners:
   # [200] curl "http://localhost:7055/persistent?name=Kitti"
   # Expect "Hello Kitti!\nHello Kitti!"
   #
-  # After the test execution, you will be able to see the content at /tmp/gte_listener_persistent_result
+  # After the test execution, you will be able to see the content at /tmp/qv_listener_persistent_result
   #
   # NOTE: using persistent files (with absolute paths), can lead to concurrent writes errors, so
   # use them ONLY if you know what you're doing!
@@ -19,7 +19,7 @@ listeners:
     # Here we define a persistent file, which you will be able to
     # inspect after the test execution
     files:
-      /tmp/gte_listener_persistent_result: |
+      /tmp/qv_listener_persistent_result: |
         Hello {{ .name }}!
 
     # Command to run, and list of arguments
@@ -30,5 +30,5 @@ listeners:
         set -e
 
         # Retrieve the file path in different ways
-        cat $GTE_FILES__tmp_gte_listener_persistent_result
-        cat {{ (gte).files._tmp_gte_listener_persistent_result }}
+        cat $QV_FILES__tmp_qv_listener_persistent_result
+        cat {{ (qv).files._tmp_qv_listener_persistent_result }}

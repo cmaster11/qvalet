@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-playground/validator/v10"
@@ -23,7 +23,7 @@ type Config struct {
 	// If true, enable all logging by default
 	Debug bool `mapstructure:"debug"`
 
-	// HTTP port used by go-to-exec to listen for incoming requests, defaults to 7055.
+	// HTTP port used by qValet to listen for incoming requests, defaults to 7055.
 	//
 	// NOTE: if multiple ports are defined in multiple config files, multiple listeners
 	// will be spawn, each on the defined port.
@@ -264,7 +264,7 @@ func groupConfigsByPort(configs ...*Config) (map[int][]*Config, error) {
 }
 
 func LoadConfig(filename string) (*Config, error) {
-	myViper := readConfigToViper("GTE", filename, "config")
+	myViper := readConfigToViper("QV", filename, "config")
 
 	config := new(Config)
 
@@ -295,7 +295,7 @@ func LoadConfig(filename string) (*Config, error) {
 }
 
 func LoadDefaults(filename string) (*ListenerConfig, error) {
-	myViper := readConfigToViper("GTE_DEFAULTS", filename, "defaults")
+	myViper := readConfigToViper("QV_DEFAULTS", filename, "defaults")
 
 	config := new(ListenerConfig)
 
@@ -313,7 +313,7 @@ func readConfigToViper(envPrefix string, filename string, defaultFilename string
 	// If we got a stdin config, store it in a tmp file and then use
 	// the tmp file as source
 	if filename == "-" {
-		tmp, err := os.CreateTemp("", fmt.Sprintf("gte-%s-*.yaml", defaultFilename))
+		tmp, err := os.CreateTemp("", fmt.Sprintf("qv-%s-*.yaml", defaultFilename))
 		if err != nil {
 			logrus.WithError(err).Fatalf("failed to create temporary file")
 		}

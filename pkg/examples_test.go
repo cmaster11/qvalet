@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
@@ -111,7 +111,7 @@ func TestExamples(t *testing.T) {
 
 			listener, _ := net.Listen("tcp4", "localhost:0")
 
-			router, mountRoutesResults := loadGTE(t, examplePath, listener)
+			router, mountRoutesResults := loadQV(t, examplePath, listener)
 
 			for _, r := range mountRoutesResults {
 				require.NoError(t, r.PluginsStart())
@@ -341,11 +341,11 @@ var regexPart = regexp.MustCompile(`\[PART=([^]]+)]`)
 
 var testRootCounter = 0
 
-func loadGTE(t *testing.T, configPath string, listener net.Listener) (*gin.Engine, []*MountRoutesResult) {
+func loadQV(t *testing.T, configPath string, listener net.Listener) (*gin.Engine, []*MountRoutesResult) {
 	newAddress := fmt.Sprintf("http://%s", listener.Addr().String())
-	os.Setenv("GTE_TEST_URL", newAddress)
+	os.Setenv("QV_TEST_URL", newAddress)
 
-	if os.Getenv("GTE_VERBOSE") == "true" {
+	if os.Getenv("QV_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
@@ -440,7 +440,7 @@ func replaceConfigInLocalhost(t *testing.T, configPath string, newAddress string
 	content = strings.ReplaceAll(content, localHost, newAddress)
 
 	// Write to a temporary file
-	tmp, err := ioutil.TempFile("", "gte_test_*.yaml")
+	tmp, err := ioutil.TempFile("", "qv_test_*.yaml")
 	require.NoError(t, err)
 
 	_, err = tmp.WriteString(content)

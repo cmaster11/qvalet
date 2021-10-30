@@ -44,7 +44,7 @@ type PluginRetryConfig struct {
 /// [retry-payload]
 // On every retry cycle, the [PluginRetryInfo] payload can be accessed
 // under the [pluginRetryKeyRetryInfo] key.
-const pluginRetryKeyRetryInfo = "__gteRetry"
+const pluginRetryKeyRetryInfo = "__qvRetry"
 
 type PluginRetryInfo struct {
 	// How much time has passed since the request started?

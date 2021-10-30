@@ -6,8 +6,8 @@ import (
 	"os"
 	"sync"
 
-	"gotoexec/pkg"
-	"gotoexec/pkg/utils"
+	"qvalet/pkg"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jessevdk/go-flags"
@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Internal debug logging
-	if os.Getenv("GTE_VERBOSE") == "true" {
+	if os.Getenv("QV_VERBOSE") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else {
 		logrus.SetLevel(logrus.InfoLevel)

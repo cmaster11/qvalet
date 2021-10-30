@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gotoexec/pkg/utils"
+	"qvalet/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -18,7 +18,7 @@ var _ PluginHookMountRoutes = (*PluginHTTPResponse)(nil)
 var _ PluginHookGetMiddlewares = (*PluginHTTPResponse)(nil)
 var _ PluginConfig = (*PluginHTTPResponseConfig)(nil)
 
-const keyPluginHTTPResponseListenerResponse = "__gteResult"
+const keyPluginHTTPResponseListenerResponse = "__qvResult"
 
 // @formatter:off
 /// [config]

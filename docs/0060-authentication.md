@@ -1,6 +1,6 @@
 # Authentication
 
-`go-to-exec` provides some basic authentication mechanisms:
+qValet provides some basic authentication mechanisms:
 
 * HTTP basic auth
 * Api key as query parameter
@@ -13,11 +13,11 @@ Here are all available auth configuration entries:
 
 [filename](../pkg/auth.go ':include :type=code :fragment=auth-docs')
 
-> Example code at: [`/examples/config.auth.yaml`](https://github.com/cmaster11/go-to-exec/tree/main/examples/config.auth.yaml)
+> Example code at: [`/examples/config.auth.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.auth.yaml)
 
 ## Basic auth
 
-The username is configurable via the `httpAuthUsername` config key, and will default to `gte` if none is provided.
+The username is configurable via the `httpAuthUsername` config key, and will default to `qv` if none is provided.
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-basic-auth')
 
@@ -27,7 +27,7 @@ And, basic authentication using environment variables:
 
 ## Api key in query string
 
-You can authenticate requests also by passing the api key in the url parameter `__gteApiKey`.
+You can authenticate requests also by passing the api key in the url parameter `__qvApiKey`.
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-query-auth')
 
@@ -55,6 +55,6 @@ authentication headers with additional content, like:
 X-Hub-Signature-256: sha256=53dac1b832da1a9c46285c9ddb7af65d139199690e62abd628063a6fbd697394
 ```
 
-`go-to-exec` generates a plain hash, without prefixes. To be able to match the two, you can use the `transform` field:
+qValet generates a plain hash, without prefixes. To be able to match the two, you can use the `transform` field:
 
 [filename](../examples/config.auth.yaml ':include :type=code :fragment=docs-header-auth-hmac-sha256-transform')

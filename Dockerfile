@@ -6,10 +6,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o gotoexec ./cmd
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o qvalet ./cmd
 
 FROM --platform=$BUILDPLATFORM scratch
 
-COPY --from=builder /app/gotoexec /usr/bin/gotoexec
+COPY --from=builder /app/qvalet /usr/bin/qvalet
 
-ENTRYPOINT ["gotoexec"]
+ENTRYPOINT ["qvalet"]
