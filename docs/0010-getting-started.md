@@ -1,5 +1,7 @@
 # Getting started
 
+> qValet listens for HTTP requests and executes commands on demand.
+
 To get a very simple listener running on any linux/Mac device, you can use:
 
 ```bash
