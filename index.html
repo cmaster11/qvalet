@@ -27,7 +27,52 @@
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4.12.1/lib/themes/vue.css">
 </head>
 <body>
-<div data-app id="main">Please wait...</div>
+<div data-app id="main">
+    <h1 id="qvalet">qValet</h1>
+<p><a href="https://www.buymeacoffee.com/cmaster11"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="&quot;Buy Me A Coffee&quot;"></a></p>
+<p>qValet listens for HTTP requests and executes commands on demand.</p>
+<p><a href="https://github.com/cmaster11/qvalet/releases"><img src="https://img.shields.io/github/v/release/cmaster11/qvalet?sort=semver" alt="GitHub release (latest SemVer)"></a>
+<img src="https://img.shields.io/github/downloads/cmaster11/qvalet/total" alt="GitHub all releases"></p>
+<h2 id="view-docs-at-httpscmaster11githubioqvalet">View <strong>docs</strong> at <a href="https://cmaster11.github.io/qvalet/#/0010-getting-started">https://cmaster11.github.io/qvalet/</a></h2>
+<p>Links:</p>
+<ul>
+<li><a href="https://hub.docker.com/r/cmaster11/qvalet/tags?page=1&amp;ordering=last_updated">Docker image</a></li>
+<li><a href="https://cmaster11.github.io/qvalet/#/0120-use-cases/">Some use cases</a></li>
+</ul>
+<h2 id="feature-list">Feature list</h2>
+<ul>
+<li>Command execution with <a href="https://cmaster11.github.io/qvalet/#/0030-templates">templatable</a> fields (command, arguments, environment variables, etc…)</li>
+<li>Some built-in <a href="https://cmaster11.github.io/qvalet/#/0060-authentication">authentication</a> methods</li>
+<li><a href="https://cmaster11.github.io/qvalet/#/0050-storage">Storage</a> for payloads and execution results</li>
+<li><a href="https://cmaster11.github.io/qvalet/#/0080-trigger-conditions">Trigger conditions</a> to evaluate if a command should be run or not</li>
+<li><a href="https://cmaster11.github.io/qvalet/#/0110-plugins/awssns">AWS SNS</a> support, to automatically accept subscription requests and receive AWS SNS messages</li>
+<li><a href="https://cmaster11.github.io/qvalet/#/0110-plugins/schedule">Scheduled tasks</a>, to execute commands in the future</li>
+<li>And more!</li>
+</ul>
+<h2 id="example">Example</h2>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">listeners:</span>
+
+  <span class="hljs-string">/hello:</span>
+
+    <span class="hljs-comment"># Returns the output of the command in the response</span>
+    <span class="hljs-attr">return:</span> <span class="hljs-string">output</span>
+
+    <span class="hljs-comment"># Command to run, and list of arguments</span>
+    <span class="hljs-attr">command:</span> <span class="hljs-string">bash</span>
+    <span class="hljs-attr">args:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">-c</span>
+      <span class="hljs-comment"># You can use templates to customize commands/arguments/env vars</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">|</span>
+        <span class="hljs-string">echo</span> <span class="hljs-string">&quot;Hello <span class="hljs-template-variable">{{ .name }}</span>&quot;</span>
+</code></pre>
+<p>Tested with:</p>
+<pre><code class="hljs language-bash">curl <span class="hljs-string">&quot;http://localhost:7055/hello?name=Mr.%20Anderson&quot;</span>
+</code></pre>
+<p>Will return:</p>
+<pre><code class="hljs language-bash">{<span class="hljs-string">&quot;output&quot;</span>:<span class="hljs-string">&quot;Hello Mr. Anderson\n&quot;</span>}
+</code></pre>
+
+</div>
 
 <script>
   window.$docsify = {

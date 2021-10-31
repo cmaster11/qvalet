@@ -28,7 +28,11 @@ endif
 
 .PHONY: sidebar
 sidebar:
-	cd hack/autosidebar; yarn tsc && node ./bin/index.js -d ../../docs
+	cd hack/autosidebar; \
+	yarn tsc autosidebar.ts && \
+	yarn tsc make-index.ts && \
+	node ./autosidebar.js -d ../../docs && \
+	node ./make-index.js
 
 .PHONY: postgres
 postgres:
