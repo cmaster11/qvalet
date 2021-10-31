@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "autosidebar.ts",
   "license": "MIT",
+  "scripts": {
+    "make-sidebar": "ts-node ./autosidebar.ts -d ../../docs",
+    "make-index": "ts-node ./make-index.ts"
+  },
   "dependencies": {
     "@types/node": "^16.10.1",
     "@types/yargs": "^17.0.3",
@@ -12,6 +16,6 @@
     "yargs": "^17.2.1"
   },
   "devDependencies": {
-    "ts-node": "^10.2.1"
+    "ts-node": "^10.4.0"
   }
 }
