@@ -184,8 +184,10 @@ DATE=$(date +%s%N)
 FILENAME="/tmp/dump_aws_sns_message"
 rm "$FILENAME" || true
 
+message="${DATE}"$"\n""Second line"
+
 $AWS sns publish --topic-arn "$AWS_SNS_ARN" \
-  --message "$DATE"
+  --message "$message"
 
 SECONDS=0
 until [[ -f $FILENAME ]]; do
@@ -198,7 +200,7 @@ done
 
 RESULT=$(cat $FILENAME)
 
-if [[ "$(echo "$RESULT" | tr -d '\r')" != "$DATE" ]]; then
+if [[ "$(echo "$RESULT" | tr -d '\r')" != "$message" ]]; then
   echo "Bad result in dump file!"
   exit 1
 fi
