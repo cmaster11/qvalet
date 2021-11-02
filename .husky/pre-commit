@@ -7,4 +7,4 @@ make sidebar
 
 git ls-files docs | grep '_sidebar.md' | xargs git add
 git ls-files docs | grep '_toc.md' | xargs git add
-git ls-files docs | grep 'index.html' | xargs git add
+git ls-files . | grep 'index.html' | xargs git add
