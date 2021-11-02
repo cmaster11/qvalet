@@ -17,6 +17,7 @@ on:
       - '.github/workflows/dependabot-wf.yml'
       - '.github/workflows/release.yml'
       - 'docs/**'
+      - 'assets/**'
       - '.husky/**'
       - 'hack/autosidebar/**'
       - 'README.md'
