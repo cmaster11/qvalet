@@ -50,3 +50,11 @@ Here you can see how you can use the CORS feature of the plugin, to allow CORS r
 > Example code at: [`/examples/config.plugin.httpresponse-cors.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.httpresponse-cors.yaml)
 
 [filename](../../examples/config.plugin.httpresponse-cors.yaml ':include :type=code')
+
+### Custom body
+
+If you want to customize the returned body (instead of the standard wrapped JSON output), you can specify a template to use:
+
+> Example code at: [`/examples/config.plugin.httpresponse-cors.yaml`](https://github.com/cmaster11/qvalet/tree/main/examples/config.plugin.httpresponse-body.yaml)
+
+[filename](../../examples/config.plugin.httpresponse-body.yaml ':include :type=code')

@@ -37,6 +37,12 @@ type PluginHTTPResponseConfig struct {
 	// If you want to allow CORS, you can specify the configuration
 	// here
 	CORS *CORSConfig `mapstructure:"cors"`
+
+	// If you want to customize the HTTP response body, you can define a template.
+	// This template has access to the listener response, so you can use e.g.
+	// `{{ .__qvResult.Output }}` to return the raw output of the listener,
+	// not wrapped by the `output` JSON key.
+	Body *ListenerTemplate `mapstructure:"body"`
 }
 
 /// [config]
@@ -85,6 +91,7 @@ type PluginHTTPResponse struct {
 
 	headerTemplates    map[string]*ListenerTemplate
 	statusCodeTemplate *ListenerTemplate
+	bodyTemplate       *ListenerTemplate
 	corsHandler        gin.HandlerFunc
 }
 
@@ -130,6 +137,7 @@ func (c *PluginHTTPResponseConfig) NewPlugin(listener *CompiledListener) (Plugin
 		c,
 		c.Headers,
 		c.StatusCode,
+		c.Body,
 		corsHandler,
 	}
 
@@ -137,7 +145,7 @@ func (c *PluginHTTPResponseConfig) NewPlugin(listener *CompiledListener) (Plugin
 }
 
 func (c *PluginHTTPResponseConfig) IsUnique() bool {
-	return false
+	return true
 }
 
 func (p *PluginHTTPResponse) Clone(newListener *CompiledListener) (PluginInterface, error) {
@@ -150,9 +158,17 @@ func (p *PluginHTTPResponse) Clone(newListener *CompiledListener) (PluginInterfa
 	if p.statusCodeTemplate != nil {
 		tpl, err := p.statusCodeTemplate.CloneForListener(newListener)
 		if err != nil {
-			return nil, errors.WithMessage(err, "failed to clone status template")
+			return nil, errors.WithMessage(err, "failed to clone status code template")
 		}
 		newPlugin.statusCodeTemplate = tpl
+	}
+
+	if p.bodyTemplate != nil {
+		tpl, err := p.bodyTemplate.CloneForListener(newListener)
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to clone body template")
+		}
+		newPlugin.bodyTemplate = tpl
 	}
 
 	{
@@ -217,7 +233,18 @@ func (p *PluginHTTPResponse) HookOutput(writeOnlyContext *gin.Context, args map[
 		}
 	}
 
-	writeOnlyContext.JSON(statusCode, listenerResponse)
+	if p.bodyTemplate != nil {
+		out, err := p.bodyTemplate.Execute(newArgs)
+		if err != nil {
+			err := errors.WithMessage(err, "failed to execute plugin http response body template")
+			p.listener.Logger().WithError(err).Error("error")
+			return false, err
+		}
+
+		_, err = writeOnlyContext.Writer.Write(StringToBytes(out))
+	} else {
+		writeOnlyContext.JSON(statusCode, listenerResponse)
+	}
 
 	handled = true
 	return

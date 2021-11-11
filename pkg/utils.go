@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"unsafe"
 )
 
 func SanitizeInterfaceToMapString(intf interface{}) interface{} {
@@ -33,4 +34,15 @@ func SanitizeInterfaceToMapString(intf interface{}) interface{} {
 
 func stringPtr(value string) *string {
 	return &value
+}
+
+// Taken straight from https://github.com/gin-gonic/gin/blob/ee4de846a894e9049321e809d69f4343f62d2862/internal/bytesconv/bytesconv.go
+// StringToBytes converts string to byte slice without a memory allocation.
+func StringToBytes(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(
+		&struct {
+			string
+			Cap int
+		}{s, len(s)},
+	))
 }

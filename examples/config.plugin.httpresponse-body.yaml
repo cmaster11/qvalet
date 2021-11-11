@@ -1,0 +1,61 @@
+# This example shows how to load a plugin, in this case the HTTP Response plugin, and use it to return a customized
+# HTTP response body.
+
+# All logging enabled
+debug: true
+listeners:
+
+  # [200] curl "http://localhost:7055/customBody"
+  # Expect raw "The listener output was: Hello!"
+  #
+  /customBody:
+    # Returns the output of the command in the response, which we can then
+    # access in the `__qvResult` object.
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the HTTP response plugin, and use it to set some custom CORS allowed origin.
+      - httpResponse:
+          body: |
+            The listener output was: {{ .__qvResult.Output }}
+
+
+  # If you want to return a custom body, e.g. a JSON object, you have to
+  # also set the `Content-Type` header, for your clients to be able to
+  # recognize the output.
+  #
+  # [200] curl "http://localhost:7055/customBodyJSON"
+  # Expect raw "{\"myOutput\":\"Hello!\\n\"}"
+  #
+  /customBodyJSON:
+    # Returns the output of the command in the response, which we can then
+    # access in the `__qvResult` object.
+    return: output
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Hello!"
+
+    # Here is where we can define plugins to be loaded for this listener
+    plugins:
+
+      # We initialize the HTTP response plugin, and use it to set some custom CORS allowed origin.
+      - httpResponse:
+          headers:
+            Content-Type: application/json
+          # We use the toJson function of the Sprig library
+          # https://masterminds.github.io/sprig/defaults.html#tojson-musttojson
+          body: |
+            {{ dict "myOutput" .__qvResult.Output | toJson }}
