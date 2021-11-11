@@ -14,6 +14,11 @@ listeners:
   #
   /hello:
 
+    # We can define which methods to support, defaults to GET and POST
+    methods:
+      - GET
+      - POST
+
     # Returns the output of the command in the response
     return: output
 
