@@ -1,7 +1,7 @@
 <a name="v2.0.2"></a>
 # [v2.0.2](https://github.com/cmaster11/qvalet/releases/tag/v2.0.2) - 11 Nov 2021
 
-
+feat: HTTP response plugin now supports returning a custom body via template
 
 [Changes][v2.0.2]
 
