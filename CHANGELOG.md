@@ -1,7 +1,15 @@
+<a name="v2.0.1"></a>
+# [v2.0.1](https://github.com/cmaster11/qvalet/releases/tag/v2.0.1) - 11 Nov 2021
+
+
+
+[Changes][v2.0.1]
+
+
 <a name="v2.0.0"></a>
 # [v2.0.0](https://github.com/cmaster11/qvalet/releases/tag/v2.0.0) - 30 Oct 2021
 
-qValet replaces the old `go-to-exec`!
+**qValet** replaces the old `go-to-exec`!
 
 Some changes:
 
@@ -352,6 +360,7 @@ Test action (#3)
 [Changes][v1.0.0]
 
 
+[v2.0.1]: https://github.com/cmaster11/qvalet/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/cmaster11/qvalet/compare/v1.3.5...v2.0.0
 [v1.3.5]: https://github.com/cmaster11/qvalet/compare/v1.3.4...v1.3.5
 [v1.3.4]: https://github.com/cmaster11/qvalet/compare/v1.3.3...v1.3.4
