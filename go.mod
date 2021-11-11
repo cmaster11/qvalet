@@ -30,10 +30,10 @@ require (
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/uptrace/bun v1.0.16
+	github.com/uptrace/bun v1.0.17
 	github.com/uptrace/bun/dialect/pgdialect v1.0.16
 	github.com/uptrace/bun/driver/pgdriver v1.0.16
-	github.com/uptrace/bun/extra/bundebug v1.0.16
+	github.com/uptrace/bun/extra/bundebug v1.0.17
 )
 
 require (
