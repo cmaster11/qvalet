@@ -9,6 +9,7 @@ import (
 	"qvalet/pkg"
 	"qvalet/pkg/utils"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 	"github.com/jessevdk/go-flags"
 	"github.com/joho/godotenv"
@@ -23,6 +24,10 @@ var opts struct {
 }
 
 func main() {
+	// Set some defaults for logging
+	logrus.StandardLogger().Formatter.(*logrus.TextFormatter).RenderFunc = func(value interface{}) string {
+		return spew.Sprintf("%#v", value)
+	}
 	logrus.SetOutput(os.Stdout)
 
 	_, err := flags.Parse(&opts)

@@ -124,3 +124,5 @@ require (
 )
 
 replace github.com/spf13/viper v1.9.0 => github.com/cmaster11/viper v1.6.3-0.20211025064843-b471e2653775
+
+replace github.com/sirupsen/logrus v1.8.1 => github.com/cmaster11/logrus v1.8.2-0.20211112124025-be16471e48c6

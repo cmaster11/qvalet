@@ -25,12 +25,16 @@ type QVRequest struct {
 	// being lower-cased, e.g `x-my-header: Hello`
 	Headers map[string]interface{} `json:"headers"`
 
+	// The hostname used for the request
+	Hostname string `json:"hostname"`
+
 	// The current request method, e.g. `GET`
 	Method string `json:"method"`
 
 	// The guessed address of the client, e.g. `127.0.0.1:1234`
 	RemoteAddr string `json:"remoteAddr"`
 }
+
 /// [qv-request]
 // @formatter:off
 
@@ -51,6 +55,7 @@ func ExtractArgsFromGinContext(c *gin.Context) (map[string]interface{}, error) {
 
 		qvRequest := &QVRequest{
 			headerMap,
+			c.Request.Host,
 			c.Request.Method,
 			c.Request.RemoteAddr,
 		}

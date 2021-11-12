@@ -1,0 +1,29 @@
+# This example just shows how to use the dump function, which prints the
+# content of the argument provided in a readable format.
+
+# All logging enabled
+debug: true
+listeners:
+
+  # Test with:
+  #
+  # [200] curl "http://localhost:7055/dump?name=Mr.%20Anderson" | jq -r .output
+  /dump:
+
+    # Returns the output of the command in the response
+    return: output
+
+    # Log everything about the command execution
+    log: all
+
+    files:
+      dump: |
+        {{ dump . }}
+
+    # Command to run, and list of arguments
+    command: bash
+    args:
+      - -c
+      # You can use templates to customize commands/arguments/env vars
+      - |
+        cat "$QV_FILES_dump"
