@@ -6,6 +6,8 @@ The customizable elements are:
 
 * HTTP headers
 * Status code (defaults to `200`)
+* CORS behavior
+* Response body
 
 You can use templates to customize the fields, and the context of the argument will match the context of the templates
 used in the normal listeners, plus an additional `__qvResult` map, which contains the command execution result.
