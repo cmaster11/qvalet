@@ -1,7 +1,7 @@
 <a name="v2.0.3"></a>
 # [v2.0.3](https://github.com/cmaster11/qvalet/releases/tag/v2.0.3) - 12 Nov 2021
 
-
+feat: The `__qvRequest` map now also contains the `Hostname` field
 
 [Changes][v2.0.3]
 
