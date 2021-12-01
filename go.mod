@@ -23,7 +23,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/joho/godotenv v1.4.0
-	github.com/mitchellh/mapstructure v1.4.2
+	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.0
 	github.com/sirupsen/logrus v1.8.1
