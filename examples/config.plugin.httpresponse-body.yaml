@@ -23,7 +23,7 @@ listeners:
     # Here is where we can define plugins to be loaded for this listener
     plugins:
 
-      # We initialize the HTTP response plugin, and use it to set some custom CORS allowed origin.
+      # We initialize the HTTP response plugin, and use it to set a custom http response
       - httpResponse:
           body: |
             The listener output was: {{ .__qvResult.Output }}
