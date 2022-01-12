@@ -18,7 +18,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/goccy/go-yaml v1.9.4
+	github.com/goccy/go-yaml v1.9.5
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jessevdk/go-flags v1.5.0
