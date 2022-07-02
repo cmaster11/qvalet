@@ -16,7 +16,7 @@ jobs:
         with:
           ref: main
 
-      - uses: cmaster11/changelog-from-release/action@v2
+      - uses: rhysd/changelog-from-release/action@v2
         with:
           file: CHANGELOG.md
           github_token: ${{ secrets.GITHUB_TOKEN }}
