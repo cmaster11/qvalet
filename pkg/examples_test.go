@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -361,7 +360,7 @@ func loadQV(t *testing.T, configPath string, listener net.Listener) (*gin.Engine
 		// Find the FIRST defaults
 		if match := regexDefaults.FindStringSubmatch(content); match != nil {
 			filename := match[1]
-			if !path.IsAbs(filename) {
+			if !filepath.IsAbs(filename) {
 				// Take the file name relative to the config
 				filename = filepath.Join(filepath.Dir(configPath), filename)
 			}
@@ -388,7 +387,7 @@ func loadQV(t *testing.T, configPath string, listener net.Listener) (*gin.Engine
 		if lines := regexPart.FindAllStringSubmatch(content, -1); lines != nil {
 			for _, match := range lines {
 				filename := match[1]
-				if !path.IsAbs(filename) {
+				if !filepath.IsAbs(filename) {
 					// Take the file name relative to the config
 					filename = filepath.Join(filepath.Dir(configPath), filename)
 				}

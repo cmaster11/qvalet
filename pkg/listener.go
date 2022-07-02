@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -716,7 +715,7 @@ func (listener *CompiledListener) processFiles(args map[string]interface{}) erro
 
 		originalFilePath := key
 		realFilePath := originalFilePath
-		if !path.IsAbs(originalFilePath) {
+		if !filepath.IsAbs(originalFilePath) {
 			if filesDir == "" {
 				_filesDir, err := os.MkdirTemp("", "qv-")
 				if err != nil {
@@ -758,7 +757,7 @@ func (listener *CompiledListener) cleanTemporaryFiles() {
 
 	for key, filePath := range listener.tplTmpFileNamesOriginalPaths {
 		// Do NOT remove files with absolute paths
-		if path.IsAbs(filePath) {
+		if filepath.IsAbs(filePath) {
 			continue
 		}
 

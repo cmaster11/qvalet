@@ -2,7 +2,7 @@
 import * as path from 'path';
 import * as fs from "fs";
 
-const marked = require('marked');
+const { marked } = require('marked');
 
 // Set options
 // `highlight` example uses https://highlightjs.org
