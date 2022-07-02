@@ -1,7 +1,19 @@
+<a name="v2.0.5"></a>
+# [v2.0.5](https://github.com/cmaster11/qvalet/releases/tag/v2.0.5) - 02 Jul 2022
+
+## What's Changed
+* fix: use proper github action for changelog by @cmaster11 in https://github.com/cmaster11/qvalet/pull/123
+
+
+**Full Changelog**: https://github.com/cmaster11/qvalet/compare/v2.0.4...v2.0.5
+
+[Changes][v2.0.5]
+
+
 <a name="v2.0.4"></a>
 # [v2.0.4](https://github.com/cmaster11/qvalet/releases/tag/v2.0.4) - 02 Jul 2022
 
-
+chore: updated many dependencies (#120)
 
 [Changes][v2.0.4]
 
@@ -384,6 +396,7 @@ Test action (#3)
 [Changes][v1.0.0]
 
 
+[v2.0.5]: https://github.com/cmaster11/qvalet/compare/v2.0.4...v2.0.5
 [v2.0.4]: https://github.com/cmaster11/qvalet/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/cmaster11/qvalet/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/cmaster11/qvalet/compare/v2.0.1...v2.0.2
