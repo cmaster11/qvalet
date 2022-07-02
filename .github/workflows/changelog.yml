@@ -1,6 +1,11 @@
 name: Changelog
 on:
   workflow_dispatch: {}
+  workflow_run:
+    workflows: [ "Release" ]
+    types:
+      - completed
+  # Manual releases
   release:
     types:
       - created
@@ -8,6 +13,10 @@ on:
       - deleted
 jobs:
   build:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'release' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

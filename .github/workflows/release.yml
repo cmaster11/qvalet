@@ -79,7 +79,8 @@ jobs:
             cmaster11/qvalet:${{ env.TAG }}
 
       - name: Release
-        uses: softprops/action-gh-release@v0.1.13
+        uses: softprops/action-gh-release@v0.1.14
         with:
           files: dist/*
           generate_release_notes: true
+          # token: ${{ secrets.PAT }}
