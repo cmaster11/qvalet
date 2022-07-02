@@ -1,10 +1,11 @@
 name: Changelog
 on:
   workflow_dispatch: {}
-  workflow_run:
-    workflows: [ "Release" ]
+  release:
     types:
-      - completed
+      - created
+      - edited
+      - deleted
 jobs:
   build:
     if: |
