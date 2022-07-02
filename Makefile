@@ -10,18 +10,12 @@ test-build-arm:
 branch-name-test:
 	@echo Suffix: $(NEW_BRANCH_SUFFIX)
 
-.PHONY: branch-release
-.PHONY: branch-test
+.PHONY: branch
 ifeq ($(BRANCH),main)
-branch-release:
-	git checkout -B release-$(NEW_BRANCH_SUFFIX)
-branch-test:
-	git checkout -B test-$(NEW_BRANCH_SUFFIX)
+branch:
+	git checkout -B change-$(NEW_BRANCH_SUFFIX)
 else
-branch-release:
-	@echo You need to be on the main branch!
-	@exit 1
-branch-test:
+branch:
 	@echo You need to be on the main branch!
 	@exit 1
 endif
