@@ -30,7 +30,7 @@ require (
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.8.0
-	github.com/uptrace/bun v1.1.5
+	github.com/uptrace/bun v1.1.6
 	github.com/uptrace/bun/dialect/pgdialect v1.1.5
 	github.com/uptrace/bun/driver/pgdriver v1.1.5
 	github.com/uptrace/bun/extra/bundebug v1.1.5
