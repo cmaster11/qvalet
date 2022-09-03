@@ -2,6 +2,11 @@ name: Release
 
 # on events
 on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
   push:
     tags:
       - v*
@@ -27,8 +32,13 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Get the tag name
+      - name: Get the tag from ref
+        if: ${{ github.event_type == "push" }}
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: Get the tag from job params
+        if: ${{ github.event_type == "workflow_call" }}
+        run: echo "${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
