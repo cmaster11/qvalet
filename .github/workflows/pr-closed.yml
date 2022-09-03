@@ -5,8 +5,11 @@ on:
     types: [closed]
 
 jobs:
-  release:
+  new-tag:
+    name: Push new tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump-semver.outputs.new_version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -26,9 +29,17 @@ jobs:
           level: ${{ steps.release-label.outputs.level }}
 
       - uses: actions-ecosystem/action-push-tag@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ steps.release-label.outputs.level != null }}
         with:
           tag: ${{ steps.bump-semver.outputs.new_version }}
           message: '${{ steps.bump-semver.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
+
+  invoke-release:
+    name: Trigger release flow
+    needs: 
+      - new-tag
+    uses: cmaster11/qvalet/.github/workflows/release.yml@main
+    if: ${{ steps.release-label.outputs.level != null }}
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit
