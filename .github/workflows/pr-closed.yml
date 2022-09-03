@@ -39,7 +39,6 @@ jobs:
     needs: 
       - new-tag
     uses: cmaster11/qvalet/.github/workflows/release.yml@main
-    if: ${{ steps.release-label.outputs.level != null }}
     with:
       tag: ${{ needs.release.outputs.tag }}
     secrets: inherit
