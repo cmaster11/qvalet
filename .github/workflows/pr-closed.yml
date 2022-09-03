@@ -26,6 +26,8 @@ jobs:
           level: ${{ steps.release-label.outputs.level }}
 
       - uses: actions-ecosystem/action-push-tag@v1
+        env:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ steps.release-label.outputs.level != null }}
         with:
           tag: ${{ steps.bump-semver.outputs.new_version }}
