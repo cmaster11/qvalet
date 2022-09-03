@@ -64,7 +64,7 @@ jobs:
         env:
           CGO_ENABLED: "0"
         with:
-          platforms: 'linux/386, linux/amd64, linux/arm, linux/arm64, darwin/amd64, windows/amd64'
+          platforms: 'linux/386, linux/amd64, linux/arm, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64'
           package: 'cmd'
           dest: 'dist'
           name: 'qvalet'
