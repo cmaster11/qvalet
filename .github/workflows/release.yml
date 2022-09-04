@@ -34,7 +34,7 @@ jobs:
 
       - name: Get the tag from job params
         if: ${{ inputs.tag != '' }}
-        run: echo "${{ inputs.tag }}" >> $GITHUB_ENV
+        run: echo "TAG=${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Get the tag from ref
         if: ${{ inputs.tag == '' }}
