@@ -1,3 +1,28 @@
+<a name="v2.1.0"></a>
+# [v2.1.0](https://github.com/cmaster11/qvalet/releases/tag/v2.1.0) - 04 Sep 2022
+
+## What's Changed
+* Go 1.19, some deps upgrades by @cmaster11 in https://github.com/cmaster11/qvalet/pull/147
+
+
+**Full Changelog**: https://github.com/cmaster11/qvalet/compare/v2.0.6...v2.1.0
+
+[Changes][v2.1.0]
+
+
+<a name="v2.0.6"></a>
+# [v2.0.6](https://github.com/cmaster11/qvalet/releases/tag/v2.0.6) - 04 Sep 2022
+
+## What's Changed
+* Dockerfile with SSL CA certs, darwin arm64 build by @cmaster11 in https://github.com/cmaster11/qvalet/pull/137
+* Test PR close by @cmaster11 in https://github.com/cmaster11/qvalet/pull/146
+
+
+**Full Changelog**: https://github.com/cmaster11/qvalet/compare/v2.0.5...v2.0.6
+
+[Changes][v2.0.6]
+
+
 <a name="v2.0.5"></a>
 # [v2.0.5](https://github.com/cmaster11/qvalet/releases/tag/v2.0.5) - 02 Jul 2022
 
@@ -396,6 +421,8 @@ Test action (#3)
 [Changes][v1.0.0]
 
 
+[v2.1.0]: https://github.com/cmaster11/qvalet/compare/v2.0.6...v2.1.0
+[v2.0.6]: https://github.com/cmaster11/qvalet/compare/v2.0.5...v2.0.6
 [v2.0.5]: https://github.com/cmaster11/qvalet/compare/v2.0.4...v2.0.5
 [v2.0.4]: https://github.com/cmaster11/qvalet/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/cmaster11/qvalet/compare/v2.0.2...v2.0.3
