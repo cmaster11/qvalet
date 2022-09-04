@@ -196,6 +196,10 @@ func TestExamples(t *testing.T) {
 
 						result, err := execGoTest(t, code)
 						if err != nil {
+							if result.parsed == nil {
+								require.NoError(t, err)
+							}
+
 							if result.parsed.Status != int(statusCode) {
 								require.NoErrorf(t, err, "go execution: %+v", result)
 							}
@@ -294,7 +298,7 @@ type execResult struct {
 func execGoTest(t *testing.T, code string) (*execResult, error) {
 	// Save the test to a temporary file, and execute
 	fileName := fmt.Sprintf("%s/test-%d.go", testTempDir, time.Now().UnixNano())
-	if err := ioutil.WriteFile(fileName, []byte(code), 0777); err != nil {
+	if err := os.WriteFile(fileName, []byte(code), 0777); err != nil {
 		return nil, err
 	}
 
