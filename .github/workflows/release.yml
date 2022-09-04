@@ -64,3 +64,10 @@ jobs:
           files: dist/*
           generate_release_notes: true
           tag_name: ${{ env.TAG }}
+
+  invoke-changelog:
+    name: Trigger changelog flow
+    needs:
+      - generate
+    uses: cmaster11/qvalet/.github/workflows/changelog.yml@main
+    secrets: inherit
