@@ -17,17 +17,6 @@ jobs:
     name: Generate cross-platform builds
     runs-on: ubuntu-latest
 
-    #    services:
-    #      postgres:
-    #        image: postgres
-    #        env:
-    #          POSTGRES_PASSWORD: password
-    #        options: >-
-    #          --health-cmd pg_isready
-    #          --health-interval 10s
-    #          --health-timeout 5s
-    #          --health-retries 5
-
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
@@ -41,33 +30,14 @@ jobs:
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      #      # Test AWS SNS
-      #      - name: Configure AWS credentials from test account
-      #        uses: aws-actions/configure-aws-credentials@v1
-      #        with:
-      #          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY_ID }}
-      #          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_ACCESS_KEY }}
-      #          aws-region: ${{ secrets.AWS_REGION }}
-      #      - name: Run tests
-      #        uses: ./.github/actions/test
-      #        env:
-      #          QV_DEFAULTS_DATABASE_HOST: postgres
-      #          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      #          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      #          SLACK_HOOK: ${{ secrets.SLACK_HOOK }}
-      #          QV_LISTENERS__GCS_STORAGE_CONN: ${{ secrets.QV_LISTENERS__GCS_STORAGE_CONN }}
-      #          AWS_SNS_ARN: ${{ secrets.AWS_SNS_ARN }}
-      #          AWS_REGION: ${{ secrets.AWS_REGION }}
-      #          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        uses: docker/setup-buildx-action@v2
 
       - name: Generate build files
         uses: ./.github/actions/build
@@ -80,7 +50,7 @@ jobs:
           name: 'qvalet'
 
       - name: Build and push to Docker Hub
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm
