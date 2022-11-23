@@ -30,10 +30,10 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.8.0
-	github.com/uptrace/bun v1.1.8
+	github.com/uptrace/bun v1.1.9
 	github.com/uptrace/bun/dialect/pgdialect v1.1.8
 	github.com/uptrace/bun/driver/pgdriver v1.1.8
-	github.com/uptrace/bun/extra/bundebug v1.1.8
+	github.com/uptrace/bun/extra/bundebug v1.1.9
 )
 
 require (
@@ -109,7 +109,7 @@ require (
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
