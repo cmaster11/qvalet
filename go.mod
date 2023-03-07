@@ -122,7 +122,7 @@ require (
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	mellium.im/sasl v0.3.0 // indirect
+	mellium.im/sasl v0.3.1 // indirect
 )
 
 replace github.com/spf13/viper v1.9.0 => github.com/cmaster11/viper v1.6.3-0.20211025064843-b471e2653775
